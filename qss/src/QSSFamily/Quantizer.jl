@@ -21,13 +21,13 @@ function computeNextTime(quantizer ::Quantizer,index::Int,currentTime::Float64,n
     quantizer.computeNext(quantizer,index,currentTime,nextTime,x,quantum)
 end
 
-
-
-#=
-function reComputeNextTime(states,i,order,qssmodel,x,q,tx,tq)
-    quantizer.reComputeNext(quantizer)
+function reComputeNextTime(quantizer ::Quantizer,index::Int,currentTime::Float64,nextTime::Vector{Float64},x::Vector{Array{Float64}} ,q::Vector{Array{Float64}},quantum::Vector{Float64})
+    quantizer.reComputeNext(quantizer,index,currentTime,nextTime,x,q,quantum)
 end
-=#
+
+
+
+
 
 function updateQ(quantizer ::Quantizer,index::Int,x::Vector{Array{Float64}} ,q::Vector{Array{Float64}},quantum::Vector{Float64})
     quantizer.updateQVar(quantizer,index,x,q,quantum)

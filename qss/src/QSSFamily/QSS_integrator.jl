@@ -1,6 +1,6 @@
 
 function QSS_integrate(qssSimulator:: QSS_simulator)
-    println("........started integration.........")
+   
     
     #scheduler=file that contains a function to find min and update time
     #quantizer=file that contains 3 functions: computeNext, recomputeNext, updateQ
@@ -24,11 +24,13 @@ function QSS_integrate(qssSimulator:: QSS_simulator)
     #--------time--------
     qsstime=qssSimulator.qssTime
     t=qsstime.time # make sure to update time after change...passbyValue
+    println("initial time= ", t)
     tx=qsstime.tx
     tq=qsstime.tq
     tn=qsstime.nextStateTime
     #---------model-------
     qssmodel=qssSimulator.qssModel
+    dep=qssmodel.dep
    # display(qssmodel.jacobian)
    quantizer=Quantizer(qssSimulator)
     #*************************************initialize************************************
@@ -55,7 +57,7 @@ function QSS_integrate(qssSimulator:: QSS_simulator)
     #-----------initial derivatives: ask framework to compute derivatives=f(x,t)
     #----------initial nextTimes: ask quantizer to compute nextChangeTime
     for i = 1:states
-        computeInitialDerivative(states,i,order,qssmodel,x,q,tx,tq)
+        computeDerivative(states,i,order,qssmodel,x,q,tx,tq)
         computeNextTime(quantizer,i,t,tn,x,quantum)
     end
 
@@ -63,12 +65,15 @@ function QSS_integrate(qssSimulator:: QSS_simulator)
     #----------ask scheduler to update time and finds next minTime and minIndex
     updateScheduler(qsstime)
     t=qsstime.time
+  
     index=qsstime.minIndex
     #**************************************integrate*************************************
 
-    #while t < ft
+    while t < ft
+       
+        #println("index $index at time $t ")
         elapsed=t-last(tx[index])
-        #integrateState(index,order,elapsed,x)
+        integrateState(index,order,elapsed,x)
         push!(tx[index],t)
         quantum[index]=relQ * abs( last(x[(order+1)*index-order]) ) 
         if quantum[index] < absQ
@@ -77,15 +82,28 @@ function QSS_integrate(qssSimulator:: QSS_simulator)
         updateQ(quantizer,index,x,q,quantum)# the whole quantum is not needed
         push!(tq[index],t)
         computeNextTime(quantizer,index,t,tn,x,quantum)
-        dep=qssmodel.dep
-        display(dep)
+       
+        
         for i=1:length(dep[index])
             j=qssmodel.dep[index][i]
-            println(j)
+            elapsed=t-last(tx[j])
+            integrateState(j,order,elapsed,x)
+            #if j != index
+                push!(tx[j],t)
+            #end
         end
+        computeDerivative(states,index,order,qssmodel,x,q,tx,tq)
+        reComputeNextTime(quantizer,index,t,tn,x,q,quantum)
+
+        updateScheduler(qsstime)
+        t=qsstime.time
+        index=qsstime.minIndex
+        
 
 
-
-    #end
+    end
 
 end
+
+
+# where did i stop: create func integrate state

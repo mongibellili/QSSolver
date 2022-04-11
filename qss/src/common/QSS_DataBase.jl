@@ -47,7 +47,7 @@ end
 mutable struct QSSmodel 
     
     jacobian :: Array{Float64, 2}   
-    dep ::  Vector{Array{Float64}}  
+    dep ::  Vector{Array{Int}}  
     #counter::  Array{Float64} 
    
     function QSSmodel(jac :: Array{Float64, 2}  )
@@ -63,7 +63,7 @@ mutable struct QSSmodel
        epselon=1e-6
        nRows=size(jac,1)
        nColumns=size(jac,2)
-       dep=Vector{Array{Float64}}(undef, nColumns)
+       dep=Vector{Array{Int}}(undef, nColumns)
 
        for j=1:nColumns
             dep[j]=Array{Float64}[]
