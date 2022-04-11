@@ -25,7 +25,7 @@ mutable struct ModelSettings
         mSettings
     end
     function computeStates(jacobian :: Array{Float64, 2})
-        # dimension of jac
-        return 2
+        # return number of rows
+        return size(jacobian,1)
     end
 end

@@ -1,25 +1,24 @@
-# database file contains three structs data , time , model
+#=
 mutable struct QSSdata    
-    #declare
     quantum :: Vector{Float64}   
     x :: Vector{Array{Float64}} 
     q :: Vector{Array{Float64}} 
     states :: Int 
     order :: Int
-    function QSSdata(states :: Int,order :: Int )
+    function QSSdata(states :: Int,order :: Int, initConditions ::Array{Float64} )
         d = new()
         d.states=states
         d.order=order
-        #create vectors
         d.quantum = Vector{Float64}(undef, states)
         d.x = Vector{Array{Float64}}(undef, (order+1)*states)#case1 for x case2 for DERx...
         d.q = Vector{Array{Float64}}(undef, (order+1)*states)
-        #create arrays inside vectors
-        for i = 1:(order+1)*states 
-            d.x[i]=Array{Float64}[]
+        for i = 1:states
+            d.x[2*i-1]=Array{Float64}[] # x occupy position 1 3 5
+            d.x[2*i]=Array{Float64}[]
+            push!(d.x[i],initConditions[i])#push===fill in first element of arr
             d.q[i]=Array{Float64}[]
+            push!(d.q[i],initConditions[i])
         end
-     
         d
     end
 end
@@ -33,51 +32,37 @@ mutable struct QSStime
     states :: Int 
     minValue :: Float64   
     minIndex :: Int 
-    function QSStime(states :: Int ,initTime :: Float64)
+    function QSStime(states :: Int , initTime :: Float64)
         t = new()
         t.states=states
         t.time= initTime
         t.nextStateTime=Vector{Float64}(undef, states)
         t.tx = Vector{Array{Float64}}(undef, states)
-        t.tq = Vector{Array{Float64}}(undef, states) # i think this is not needed. q can be plotted against tx
-        
+        t.tq = Vector{Array{Float64}}(undef, states)
+        for i = 1:states
+            t.tx[i]=Array{Float64}[]
+            push!(t.tx[i],initTime)
+            t.tq[i]=Array{Float64}[]
+            push!(t.tq[i],initTime)
+        end
         t
     end
 end
 mutable struct QSSmodel 
     
     jacobian :: Array{Float64, 2}   
-    dep ::  Vector{Array{Float64}}  
-    #counter::  Array{Float64} 
+    dep ::  Array{Float64, 2}   
    
     function QSSmodel(jac :: Array{Float64, 2}  )
         m = new()
         m.jacobian= jac
-        #m.counter=Array{Float64}[]
-        m.dep=createDependencyMatrix(jac)
-        
+        m.dep = createDependency(jac)
         m
     end
-    function createDependencyMatrix(jac :: Array{Float64, 2}  )
+    function createDependency(jac :: Array{Float64, 2}  )
        # extract dependency matrix from jac
-       epselon=1e-6
-       nRows=size(jac,1)
-       nColumns=size(jac,2)
-       dep=Vector{Array{Float64}}(undef, nColumns)
-
-       for j=1:nColumns
-            dep[j]=Array{Float64}[]
-            for i=1:nRows
-                if jac[i,j] < -epselon ||  jac[i,j] > epselon # different than zero
-                    push!(dep[j],i)
-                end
-            end
-        end
-        
-
-        return dep
-
-        
+        return jac 
     end
 
 end
+=#

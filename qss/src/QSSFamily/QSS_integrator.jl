@@ -1,17 +1,91 @@
-mutable struct QSS_integrator
-    settings :: ModelSettings
-    qssData :: QSSdata
-    qssTime :: QSStime
-    qssModel ::QSSmodel
-    function QSS_integrator(qssSimulator:: QSS_simulator )
-        integrator = new()
-        integrator.settings=qssSimulator.settings
-        integrator.qssData= qssSimulator.qssData
-        integrator.qssTime= qssSimulator.qssTime
-        integrator.qssModel= qssSimulator.qssModel
-        integrator
-    end
-end
-function INT_integrate(qssI::QSS_integrator,qssSimulator:: QSS_simulator)
+
+function QSS_integrate(qssSimulator:: QSS_simulator)
     println("........started integration.........")
+    
+    #scheduler=file that contains a function to find min and update time
+    #quantizer=file that contains 3 functions: computeNext, recomputeNext, updateQ
+    #framework= file that contains 3 functions: integrateState, compute 1 derivative, compute dependent derivatives
+   
+    #----------setting------
+    order=qssSimulator.settings.order
+    coeffx=order+1
+    ft=qssSimulator.settings.finalTime
+    initTime=qssSimulator.settings.initialTime
+    relQ=qssSimulator.settings.dQrel
+    absQ=qssSimulator.settings.dQmin
+    initConditions=qssSimulator.settings.initConditions
+
+    #---------data---------
+    qssdata=qssSimulator.qssData
+    states=qssdata.states 
+    x=qssdata.x
+    q=qssdata.q
+    quantum=qssdata.quantum
+    #--------time--------
+    qsstime=qssSimulator.qssTime
+    t=qsstime.time # make sure to update time after change...passbyValue
+    tx=qsstime.tx
+    tq=qsstime.tq
+    tn=qsstime.nextStateTime
+    #---------model-------
+    qssmodel=qssSimulator.qssModel
+   # display(qssmodel.jacobian)
+   quantizer=Quantizer(qssSimulator)
+    #*************************************initialize************************************
+    for i = 1:states
+    #---initial time for each variable
+        tx[i]=Array{Float64}[]
+        push!(tx[i],initTime)
+        tq[i]=Array{Float64}[]
+        push!(tq[i],initTime)
+   
+    # initial condition for each variable
+        #(order+1)*i-order means only the state, no derivatives
+        push!(x[(order+1)*i-order],initConditions[i])#push===fill in first element of arr           
+        push!(q[(order+1)*i-order],initConditions[i]) #normally q should be updated through quantizer
+      
+    #--compute initial deltaQ  
+        quantum[i]=relQ * abs( last(x[(order+1)*i-order]) ) 
+        if quantum[i] < absQ
+            quantum[i]=absQ
+        end
+        
+    end
+    
+    #-----------initial derivatives: ask framework to compute derivatives=f(x,t)
+    #----------initial nextTimes: ask quantizer to compute nextChangeTime
+    for i = 1:states
+        computeInitialDerivative(states,i,order,qssmodel,x,q,tx,tq)
+        computeNextTime(quantizer,i,t,tn,x,quantum)
+    end
+
+   
+    #----------ask scheduler to update time and finds next minTime and minIndex
+    updateScheduler(qsstime)
+    t=qsstime.time
+    index=qsstime.minIndex
+    #**************************************integrate*************************************
+
+    #while t < ft
+        elapsed=t-last(tx[index])
+        #integrateState(index,order,elapsed,x)
+        push!(tx[index],t)
+        quantum[index]=relQ * abs( last(x[(order+1)*index-order]) ) 
+        if quantum[index] < absQ
+            quantum[index]=absQ
+        end
+        updateQ(quantizer,index,x,q,quantum)# the whole quantum is not needed
+        push!(tq[index],t)
+        computeNextTime(quantizer,index,t,tn,x,quantum)
+        dep=qssmodel.dep
+        display(dep)
+        for i=1:length(dep[index])
+            j=qssmodel.dep[index][i]
+            println(j)
+        end
+
+
+
+    #end
+
 end

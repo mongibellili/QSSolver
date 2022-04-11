@@ -1,3 +1,5 @@
+# struct that glues the other 3 structs settings, data, time, model
+# information flow is done through it
 mutable struct QSS_simulator
     settings :: ModelSettings
     qssData :: QSSdata
@@ -6,7 +8,7 @@ mutable struct QSS_simulator
     function QSS_simulator(settings :: ModelSettings )
         simulator = new()
         simulator.settings=settings
-        simulator.qssData= QSSdata(settings.states, settings.initConditions)
+        simulator.qssData= QSSdata(settings.states,settings.order)
         simulator.qssTime= QSStime(settings.states, settings.initialTime)
         simulator.qssModel= QSSmodel(settings.jacobian)
         simulator
@@ -14,6 +16,5 @@ mutable struct QSS_simulator
 end
 function QSS_simulate(qssSimulator:: QSS_simulator)
     println("........started simulation.........")
-    integrator = QSS_integrator(qssSimulator);
-    INT_integrate(integrator, qssSimulator);
+    QSS_integrate(qssSimulator);
 end
