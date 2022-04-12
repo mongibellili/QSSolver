@@ -15,6 +15,6 @@ mutable struct QSS_simulator
     end
 end
 function QSS_simulate(qssSimulator:: QSS_simulator)
-    println("........started simulation.........")
+    #println("........started simulation.........")
     QSS_integrate(qssSimulator);
 end

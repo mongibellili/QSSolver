@@ -1,9 +1,9 @@
 
 using qss
 initialTime=0.1
-finalTime=2.0
-dQmin=0.001
-dQrel=0.05
+finalTime=4.0
+dQmin=0.0001
+dQrel=0.005
 order=1 # order2 means we will consider second derivatives
 solver="qss1"
 initConditions=[1.0,2.0]

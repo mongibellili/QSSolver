@@ -31,9 +31,10 @@ function plotX(simulator :: QSS_simulator)
     order=simulator.settings.order
 
    for i = 1:states
-       println(length(x[(order+1)*i-1]))
-        println(length(t[i]))
-        display(plot!(t[i],x[(order+1)*i-1]))
+       println("steps to solve eq$i= ",length(x[(order+1)*i-1]))
+        #println(length(t[i]))
+        display(plot!(t[i],x[(order+1)*i-1],xlims = (0.12,0.15),ylims = (1.23,1.26)))
+        #, xlims = (0,0.00005),ylims = (1,1.0001)))
     end
     readline()
 end

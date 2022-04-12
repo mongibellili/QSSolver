@@ -24,7 +24,7 @@ function QSS_integrate(qssSimulator:: QSS_simulator)
     #--------time--------
     qsstime=qssSimulator.qssTime
     t=qsstime.time # make sure to update time after change...passbyValue
-    println("initial time= ", t)
+   # println("initial time= ", t)
     tx=qsstime.tx
     tq=qsstime.tq
     tn=qsstime.nextStateTime
