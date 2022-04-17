@@ -17,11 +17,11 @@ mutable struct Quantizer
     end
 end
 
-function computeNextTime(quantizer ::Quantizer,index::Int,currentTime::Float64,nextTime::Vector{Float64},x::Vector{Array{Float64}} ,quantum::Vector{Float64})
+  function computeNextTime(quantizer ::Quantizer,index::Int,currentTime::Float64,nextTime::Vector{Float64},x:: Vector{Float64} ,quantum::Vector{Float64})
     quantizer.computeNext(quantizer,index,currentTime,nextTime,x,quantum)
 end
 
-function reComputeNextTime(quantizer ::Quantizer,index::Int,currentTime::Float64,nextTime::Vector{Float64},x::Vector{Array{Float64}} ,q::Vector{Array{Float64}},quantum::Vector{Float64})
+  function reComputeNextTime(quantizer ::Quantizer,index::Int,currentTime::Float64,nextTime::Vector{Float64},x:: Vector{Float64} ,q::Vector{Float64},quantum::Vector{Float64})
     quantizer.reComputeNext(quantizer,index,currentTime,nextTime,x,q,quantum)
 end
 
@@ -29,6 +29,6 @@ end
 
 
 
-function updateQ(quantizer ::Quantizer,index::Int,x::Vector{Array{Float64}} ,q::Vector{Array{Float64}},quantum::Vector{Float64})
+  function updateQ(quantizer ::Quantizer,index::Int,x::Vector{Float64} ,q::Vector{Float64},quantum::Vector{Float64})
     quantizer.updateQVar(quantizer,index,x,q,quantum)
 end

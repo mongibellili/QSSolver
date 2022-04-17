@@ -2,8 +2,9 @@
 mutable struct QSSdata    
     #declare
     quantum :: Vector{Float64}   
-    x :: Vector{Array{Float64}} 
-    q :: Vector{Array{Float64}} 
+    x :: Vector{Float64}
+   # q ::  Vector{Float64} 
+   q :: Vector{Float64}
     states :: Int 
     order :: Int
     function QSSdata(states :: Int,order :: Int )
@@ -12,12 +13,13 @@ mutable struct QSSdata
         d.order=order
         #create vectors
         d.quantum = Vector{Float64}(undef, states)
-        d.x = Vector{Array{Float64}}(undef, (order+1)*states)#case1 for x case2 for DERx...
-        d.q = Vector{Array{Float64}}(undef, (order+1)*states)
+        d.x =  Vector{Float64}(undef, (order+1)*states)#case1 for x case2 for DERx...
+       # d.q =  Vector{Float64}(undef, (order+1)*states)
+       d.q = Vector{Float64}(undef, (order+1)*states)
         #create arrays inside vectors
         for i = 1:(order+1)*states 
-            d.x[i]=Array{Float64}[]
-            d.q[i]=Array{Float64}[]
+            #d.x[i]=Array{Float64}[]
+           # d.q[i]=Array{Float64}[]
         end
      
         d
@@ -28,8 +30,9 @@ end
 mutable struct QSStime  
     time :: Float64
     nextStateTime :: Vector{Float64}   
-    tx :: Vector{Array{Float64}} 
-    tq :: Vector{Array{Float64}} 
+    tx ::  Vector{Float64} 
+    #tq ::  Vector{Float64} 
+    tq :: Vector{Float64} 
     states :: Int 
     minValue :: Float64   
     minIndex :: Int 
@@ -38,9 +41,9 @@ mutable struct QSStime
         t.states=states
         t.time= initTime
         t.nextStateTime=Vector{Float64}(undef, states)
-        t.tx = Vector{Array{Float64}}(undef, states)
-        t.tq = Vector{Array{Float64}}(undef, states) # i think this is not needed. q can be plotted against tx
-        
+        t.tx =  Vector{Float64}(undef, states)
+       # t.tq =  Vector{Float64}(undef, states) # i think this is needed for qss2 and higher
+        t.tq=Vector{Float64}(undef, states)
         t
     end
 end
