@@ -1,4 +1,4 @@
-function updateScheduler(qsstime::QSStime)
+ function updateScheduler(qsstime::QSStime)
     states=qsstime.states
     minTime=Inf
     min_index=0
