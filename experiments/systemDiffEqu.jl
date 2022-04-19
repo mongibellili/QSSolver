@@ -4,6 +4,8 @@ using Plots;gr()
 using qss
 using BenchmarkTools
 using Profile
+using TimerOutputs
+using StaticArrays
 function odeDiffEquPackage()
     function funcName(du,u,p,t)# api requires four args
     
@@ -17,18 +19,18 @@ function odeDiffEquPackage()
     de = ODESystem(eqs)
     funcName = ODEFunction(de, [x,y])
     =#
-    tspan = (0.0,5)
+    tspan = (0.10,0.5)
     u0 = [1.0,2.0]
     prob = ODEProblem(funcName,u0,tspan)
     #,BS3() 
     sol = solve(prob,abstol = 1e-6, reltol = 1e-3)
     #display(sol)
-    display(plot!(sol,line=(:dot, 4)))#, xlims = (0.12,0.15),ylims = (1.23,1.26)))
+   # display(plot!(sol,line=(:dot, 4)))#, xlims = (0.12,0.15),ylims = (1.23,1.26)))
     #, xlims = (0,0.00005),ylims = (1,1.0001)))
 end
 function qssApproach()
     initialTime=0.0
-    finalTime=2.5 # right now it only accepts float
+    finalTime=0.5 # right now it only accepts float
     dQmin=1e-6
     dQrel=1e-3
     order=1 # order2 means we will consider second derivatives
@@ -43,12 +45,15 @@ function qssApproach()
 
     simulator = QSS_simulator(settings)
     QSS_simulate(simulator)
-    #display(simulator.qssData.x)
+    #display(simulator)
     #plotX(simulator)
 end
-#odeDiffEquPackage()
+#reset_timer!()
 #qssApproach()
+# @timeit "odeDiffPackage" odeDiffEquPackage()
+ #@timeit "qssAproach" qssApproach()
 @btime qssApproach()
+
 #=@profile qssApproach()
 f = open("/home/unknown/QS_Solver/prof2.txt", "w")
 Profile.print(f)
@@ -56,6 +61,7 @@ close(f)
 =#
 #display(@benchmark qssApproach())
 
+#@time odeDiffEquPackage()
 #@btime odeDiffEquPackage()
-#display(@benchmark odeDiffEquPackage())
 #readline()
+#print_timer()

@@ -15,7 +15,7 @@ mutable struct ModelSettings
         mSettings.initConditions = initConditions
         mSettings.jacobian = jacobian
         mSettings.initialTime = it
-        mSettings.finalTime = ft
+        mSettings.finalTime = ft*1.0
         mSettings.dQmin = dQmin
         mSettings.dQrel = dQrel
         mSettings.order=order
