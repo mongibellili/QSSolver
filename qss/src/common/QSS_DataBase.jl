@@ -138,7 +138,7 @@ mutable struct QSSmodel
     
     jacobian :: Array{Float64, 2}   
     dep ::  Vector{Array{Int}}  
-    #counter::  Array{Float64} 
+    
    
     function QSSmodel(jac :: Array{Float64, 2}  )
         m = new()
