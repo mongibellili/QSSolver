@@ -143,7 +143,7 @@ mutable struct QSSmodel
     function QSSmodel(jac :: Array{Float64, 2}  )
         m = new()
         const m.jacobian= jac
-        #m.counter=Array{Float64}[]
+        
         const m.dep=createDependencyMatrix(jac)
         
         m
