@@ -118,8 +118,7 @@ end
 mutable struct QSStime  
     time :: Float64
     nextStateTime :: Vector{Float64}   
-    tx ::  Vector{Array{Float64}} 
-    #tq ::  Vector{Float64} 
+    tx ::  Vector{Array{Float64}}  
     tq :: Vector{Float64} 
     states :: Int 
     minValue :: Float64   

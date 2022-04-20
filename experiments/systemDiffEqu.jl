@@ -1,11 +1,13 @@
 #using ModelingToolkit
-using DifferentialEquations
+#using DifferentialEquations
+using OrdinaryDiffEq
 using Plots;gr()
 using qss
 using BenchmarkTools
 using Profile
-using TimerOutputs
-using StaticArrays
+using Juno
+#using TimerOutputs
+#using StaticArrays
 function odeDiffEquPackage()
     function funcName(du,u,p,t)# api requires four args
     
@@ -19,13 +21,13 @@ function odeDiffEquPackage()
     de = ODESystem(eqs)
     funcName = ODEFunction(de, [x,y])
     =#
-    tspan = (0.10,0.5)
+    tspan = (0.0,1.5)
     u0 = [1.0,2.0]
     prob = ODEProblem(funcName,u0,tspan)
     #,BS3() 
-    sol = solve(prob,abstol = 1e-6, reltol = 1e-3)
+    sol = solve(prob,BS3(),abstol = 1e-6, reltol = 1e-3)
     #display(sol)
-   # display(plot!(sol,line=(:dot, 4)))#, xlims = (0.12,0.15),ylims = (1.23,1.26)))
+    display(plot!(sol,line=(:dot, 4)))#, xlims = (0.12,0.15),ylims = (1.23,1.26)))
     #, xlims = (0,0.00005),ylims = (1,1.0001)))
 end
 function qssApproach()
@@ -49,10 +51,11 @@ function qssApproach()
     #plotX(simulator)
 end
 #reset_timer!()
-#qssApproach()
+#odeDiffEquPackage()
+ qssApproach() 
 # @timeit "odeDiffPackage" odeDiffEquPackage()
  #@timeit "qssAproach" qssApproach()
-@btime qssApproach()
+#@btime qssApproach()
 
 #=@profile qssApproach()
 f = open("/home/unknown/QS_Solver/prof2.txt", "w")

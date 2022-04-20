@@ -1,6 +1,6 @@
 # struct that glues the other 3 structs settings, data, time, model
 # information flow is done through it
-mutable struct QSS_simulator
+ struct QSS_simulator
     settings :: ModelSettings
     qssData :: QSSdata
     qssTime :: QSStime

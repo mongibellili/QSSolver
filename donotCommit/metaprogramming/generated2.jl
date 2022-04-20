@@ -31,16 +31,30 @@ end
 	end
 	ex #|> flatten
 end
+@generated function smallest1(arg1::F, arg2::F, args::F...) where F <: AbstractFloat
+	ex = quote m = arg1 < arg2 ? arg1 : arg2 end
+	for i in 1:length(args)
+		ex = quote
+			$ex #value of last m
+			# m = args[$i] < m ? args[$i] : m
+            @inbounds m = args[$i] < m ? args[$i] : m
+		end
+	end
+	ex #|> flatten
+end
 function smallest2(arg1::Float64, arg2::Float64, args::Float64...) 
 	 m = arg1 < arg2 ? arg1 : arg2 
 	for i in 1:length(args)
-		
-			
 			 m = args[i] < m ? args[i] : m
-           
-		
 	end
 	m
+end
+function smallest3(arg1::Float64, arg2::Float64, args::Float64...) 
+	m = arg1 < arg2 ? arg1 : arg2 
+	 for i in 1:length(args)
+		@inbounds m = args[i] < m ? args[i] : m
+   end
+   m
 end
 
 #display(smallest(1.0, 2.0, -3.0,0.5)) ;println()
@@ -52,19 +66,15 @@ r[1]=Array{Float64}[]
 #push!(r[1],0)
 #@show typeof(r[1])
 function test()
-    for i=1:40000
-      # push!(r[1],-i*1.2)
-        push!(x,-i*1.2)
-       
+    for i=1:4000
+        push!(x,-i*1.2)  
     end
-    
 end
 
 #display(x);println()
 
 test()
 #display(x)
-#@btime smallest(1.0,2.0,x...)
-#display(smallest(1.0,2.0,x...))
-@btime smallest2(1.0,2.0,x...)
+@btime smallest(1.0,2.0,x...)
+@btime smallest1(1.0,2.0,x...)
 #display(smallest2(1.0,2.0,x...))
