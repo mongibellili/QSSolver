@@ -118,8 +118,7 @@ end
 mutable struct QSStime  
     time :: Float64
     nextStateTime :: Vector{Float64}   
-    tx ::  Vector{Array{Float64}} 
-    #tq ::  Vector{Float64} 
+    tx ::  Vector{Array{Float64}}  
     tq :: Vector{Float64} 
     states :: Int 
     minValue :: Float64   
@@ -139,12 +138,12 @@ mutable struct QSSmodel
     
     jacobian :: Array{Float64, 2}   
     dep ::  Vector{Array{Int}}  
-    #counter::  Array{Float64} 
+    
    
     function QSSmodel(jac :: Array{Float64, 2}  )
         m = new()
         const m.jacobian= jac
-        #m.counter=Array{Float64}[]
+        
         const m.dep=createDependencyMatrix(jac)
         
         m
