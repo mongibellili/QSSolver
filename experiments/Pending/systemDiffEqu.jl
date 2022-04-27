@@ -1,11 +1,13 @@
 #using ModelingToolkit
 #using DifferentialEquations
 using OrdinaryDiffEq
-using Plots;gr()
-using qss
+#using Plots;gr()
 using BenchmarkTools
-using Profile
-using Juno
+using StaticArrays
+#using qss
+
+#using Profile
+
 #using TimerOutputs
 #using StaticArrays
 function odeDiffEquPackage()
@@ -36,26 +38,27 @@ function qssApproach()
     dQmin=1e-6
     dQrel=1e-3
     order=1 # order2 means we will consider second derivatives
-    solver="qss1"
+    solver=qss1()
    # initConditions=[1.0,-1.0,1.0]
    # jacobian=[0.0 1.0 0.0;-1.0 -1.0 0.0;1.0 0.0 -1.0]
     initConditions=[1.0,2.0]
-    jacobian=[0.0 1.0;-1.0 -1.0 ]
-
-    settings = ModelSettings(initialTime,finalTime,dQmin,dQrel,order,solver,initConditions,jacobian)
+   # jacobianGiven=[0.0 1.0;-1.0 -1.0 ]
+    #jacobian=SMatrix{2,2}(jacobianGiven)
+    jacobian=@SMatrix[0.0 1.0;-1.0 -1.0 ]
+    settings = ModelSettings(initConditions,jacobian,finalTime)
     
-
-    simulator = QSS_simulator(settings)
-    QSS_simulate(simulator)
+   display(settings)
+   # simulator = QSS_simulator(settings)
+   #QSS_integrate(settings)
     #display(simulator)
     #plotX(simulator)
 end
 #reset_timer!()
 #odeDiffEquPackage()
- qssApproach() 
+# qssApproach() 
 # @timeit "odeDiffPackage" odeDiffEquPackage()
  #@timeit "qssAproach" qssApproach()
-#@btime qssApproach()
+ qssApproach()
 
 #=@profile qssApproach()
 f = open("/home/unknown/QS_Solver/prof2.txt", "w")
@@ -64,7 +67,7 @@ close(f)
 =#
 #display(@benchmark qssApproach())
 
-@time odeDiffEquPackage()
+#@time odeDiffEquPackage()
 #@btime odeDiffEquPackage()
 #readline()
 #print_timer()
