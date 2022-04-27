@@ -5,5 +5,7 @@
 			"name": "QSS-WorkSpace"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"julia.environmentPath": "/home/unknown/QS_Solver"
+	}
 }

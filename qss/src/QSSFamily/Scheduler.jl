@@ -1,14 +1,16 @@
- function updateScheduler(qsstime::QSStime)
-    states=qsstime.states
+
+ function updateScheduler(states::Int,nextStateTime::MVector{2,Float64},mintimevalue::MVector{1,Float64},minIndex::MVector{1,Int})
+    
     minTime=Inf
     min_index=0
     for i=1:states
-        if qsstime.nextStateTime[i]<minTime
-            minTime=qsstime.nextStateTime[i]
+        if nextStateTime[i]<minTime
+            minTime=nextStateTime[i]
             min_index=i
         end
     end
-    qsstime.time=minTime
-    qsstime.minIndex=min_index
+    mintimevalue[1]=minTime
+    minIndex[1]=min_index
+
 
 end

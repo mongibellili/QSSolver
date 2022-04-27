@@ -49,19 +49,19 @@ function plotX(simulator :: QSS_simulator)
 end
 =#
 
-function integrateState(j::Int,order::Int,elapsed::Float64,x::  Vector{Array{Float64}})
+function integrateState(j::Int,order::Int,elapsed::Float64,x::  MVector{4,Float64})
    
     if order ==1
         
        
-        push!(x[2*j-1],last(x[2*j-1])+ elapsed * last(x[2*j]))
+        x[2*j-1]=(x[2*j-1])+ elapsed * (x[2*j])
     else
         println("keep coding next orders")
     end
     
 end
 
-function minPosRoot(coeff::Vector{Float64}, order ::Int)
+function minPosRoot(coeff::SVector{2,Float64}, order ::Int)
     mpr=-1
     if order==1
         if coeff[2] == 0 
@@ -80,7 +80,7 @@ function minPosRoot(coeff::Vector{Float64}, order ::Int)
     return mpr
 end
 
-function plotX(simulator :: QSS_simulator)
+#=function plotX(simulator :: QSS_simulator)
     x=simulator.qssData.x
     t=simulator.qssTime.tx
     states=simulator.settings.states
@@ -95,4 +95,4 @@ function plotX(simulator :: QSS_simulator)
     end
     
     readline()
-end
+end =#

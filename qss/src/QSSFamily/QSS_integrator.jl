@@ -1,307 +1,155 @@
 
-#=
-#integrate without saving
-  #using TimerOutputs
-  function QSS_integrate(qssSimulator:: QSS_simulator)
-  #  reset_timer!()
-    #scheduler=file that contains a function to find min and update time
-    #quantizer=file that contains 3 functions: computeNext, recomputeNext, updateQ
-    #framework= file that contains 3 functions: integrateState, compute 1 derivative, compute dependent derivatives
-
-    #----------setting------
-    order=qssSimulator.settings.order
-    casesVect = Vector{Float64}(undef, 2) #to be used for cases when recomputing nexttime
-    ft=qssSimulator.settings.finalTime
-    initTime=qssSimulator.settings.initialTime
-    relQ=qssSimulator.settings.dQrel
-    absQ=qssSimulator.settings.dQmin
-    initConditions=qssSimulator.settings.initConditions
-    solver=qssSimulator.settings.solver
-
-    #---------data---------
-    qssdata=qssSimulator.qssData
-    states=qssdata.states 
-    x=qssdata.x
-    q=qssdata.q
-    quantum=qssdata.quantum
-    #--------time--------
-    qsstime=qssSimulator.qssTime
-    t=qsstime.time # make sure to update time after change...passbyValue
-
-    tx=qsstime.tx
-    tq=qsstime.tq
-    tn=qsstime.nextStateTime
-    #---------model-------
-    qssmodel=qssSimulator.qssModel
-    dep=qssmodel.dep
-   # display(qssmodel.jacobian)
-   quantizer=Quantizer(qssSimulator)
-    #*************************************initialize************************************
-    for i = 1:states
-    #---initial time for each variable
-         # tx[i]=Array{Float64}[]
-        tx[i]=initTime
-        #tq[i]=Array{Float64}[]
-        #push!(tq[i],initTime)
-           tq[i]=initTime
-
-    # initial condition for each variable
-        #(order+1)*i-order means only the state, no derivatives
-        x[(order+1)*i-order]=initConditions[i]#push===fill in first element of arr     
-          #--compute initial deltaQ  
-      quantum[i]=relQ * abs(x[(order+1)*i-order]) 
-      if quantum[i] < absQ
-            quantum[i]=absQ
-      end      
-        #push!(q[(order+1)*i-order],initConditions[i]) #normally q should be updated through quantizer
-          #q[(order+1)*i-order]=initConditions[i]
-          updateQ(solver,quantizer,i,x,q,quantum)
-
-
-    end
-
-    #-----------initial derivatives: ask framework to compute derivatives=f(x,t)
-    #----------initial nextTimes: ask quantizer to compute nextChangeTime
-    for i = 1:states
-        computeDerivative(states,i,order,qssmodel,x,q,tx,tq)
-         computeNextTime(solver,quantizer,i,t,tn,x,quantum)
-        #reComputeNextTime(quantizer,i,t,tn,x,q,quantum,casesVect)
-    end
-
-
-    #----------ask scheduler to update time and finds next minTime and minIndex
-    updateScheduler(qsstime)
-    t=qsstime.time
-
-    index=qsstime.minIndex
-    #**************************************integrate*************************************
-
-   while t < ft
-
-       # println("index $index at time $t ")
-        elapsed=t-tx[index]
-        #@timeit "integrate state" integrateState(index,order,elapsed,x)
-         integrateState(index,order,elapsed,x)
-          tx[index]=t
-           quantum[index]=relQ * abs( x[(order+1)*index-order] ) 
-        if quantum[index] < absQ
-              quantum[index]=absQ
-        end
-       # @timeit "updateQ" updateQ(quantizer,index,x,q,quantum)# the whole quantum is not needed
-        updateQ(solver,quantizer,index,x,q,quantum)
-       # if length(tq[index])!=0
-         #   pop!(tq[index])
-       # end
-        #push!(tq[index],t)
-         tq[index]=t
-        # @timeit "compute next" computeNextTime(quantizer,index,t,tn,x,quantum)
-         computeNextTime(solver,quantizer,index,t,tn,x,quantum)
-
-
-        for i=1:length(dep[index])
-             j=qssmodel.dep[index][i]
-                elapsed=t-tx[j]
-           integrateState(j,order,elapsed,x)
-           # println("derx= ", x[(order+1)*j])
-            #if j != index
-
-                tx[j]=t
-            #end
-          #  @timeit "compute deriv"  computeDerivative(states,j,order,qssmodel,x,q,tx,tq)
-           computeDerivative(states,j,order,qssmodel,x,q,tx,tq)
-           #@timeit "recompute next" reComputeNextTime(quantizer,j,t,tn,x,q,quantum)
-
-            reComputeNextTime(solver,quantizer,j,t,tn,x,q,quantum,casesVect)
-        end
-        #computeDerivative(states,index,order,qssmodel,x,q,tx,tq)
-        #reComputeNextTime(quantizer,index,t,tn,x,q,quantum)
-        #println("x= ", x[(order+1)*index-order])
-       # println("derx= ", x[(order+1)*index])
-        updateScheduler(qsstime)
-
-        t=qsstime.time
-        index=qsstime.minIndex
-       # print_timer()
-
-
+function createDependencyMatrix(jac :: SMatrix{2,2,Float64}  )
+  # extract dependency matrix from jac
+ #=  epselon=1e-6
+  nRows=size(jac,1)
+  nColumns=size(jac,2)
+  dep=MVector{nColumns,Array{Int}}([],[])###################################optimize meeeeeeee
+  for j=1:nColumns
+       #dep[j]=Array{Float64}[]
+       for i=1:nRows
+           if jac[i,j] < -epselon ||  jac[i,j] > epselon # different than zero
+               push!(dep[j],i)
+           end
+       end
    end
+  # dep=@SVector{nColumns,}
+  return dep   =#
+  epselon=1e-6
+  nRows=size(jac,1)
+  nColumns=size(jac,2)
+  dep=Vector{Array{Int}}(undef, nColumns)
 
+  for j=1:nColumns
+       dep[j]=Array{Float64}[]
+       for i=1:nRows
+           if jac[i,j] < -epselon ||  jac[i,j] > epselon # different than zero
+               push!(dep[j],i)
+           end
+       end
+   end
+   
 
-
-
-  #=
-    println("derx1= ", x[(order+1)*1])
-    println("derx2= ", x[(order+1)*2])
-    println("q1= ", q[1])
-    println("q2= ", q[3])
-    println("tq1= ", tq[1])
-    println("tq2= ", tq[2])
-
-    println("tx1= ", tx[1])
-    println("x1= ", x[1])
-    println("tx2= ", tx[2])
-    println("x2= ", x[2])
-    println("tn1= ", tn[1])
-    println("tn2= ", tn[2])
-  =#
- # println("qssdata= ", qssdata)
- # println("qsstime= ", qsstime)
- # println("qssmodel= ", qssmodel)
-
+   return dep
 end
+function computeStates(jacobian :: SMatrix{2,2,Float64})
+   # return number of rows
+   #return size(jacobian,1)
+   return 2
+end
+function getOrderfromSolverMethod(::Val{1})
+    1
+end
+function modifyJacobian(jacobian :: SMatrix{2,2,Float64})
+  #test use of svector of svectos
+end
+function QSS_integrate(settings::ModelSettings)
+  #*********************************settings*****************************************
 
-
-
-=#
-
-#using TimerOutputs
-function QSS_integrate(qssSimulator::QSS_simulator)
-  #  reset_timer!()
-  #scheduler=file that contains a function to find min and update time
-  #quantizer=file that contains 3 functions: computeNext, recomputeNext, updateQ
-  #framework= file that contains 3 functions: integrateState, compute 1 derivative, compute dependent derivatives
-
-  #----------setting------
-  order = qssSimulator.settings.order
-  casesVect = Vector{Float64}(undef, 2) #to be used for cases when recomputing nexttime
-  ft = qssSimulator.settings.finalTime
-  initTime = qssSimulator.settings.initialTime
-  relQ = qssSimulator.settings.dQrel
-  absQ = qssSimulator.settings.dQmin
-  initConditions = qssSimulator.settings.initConditions
-  solver = qssSimulator.settings.solver
-
-  #---------data---------
-  qssdata = qssSimulator.qssData
-  states = qssdata.states
-  x = qssdata.x
-  q = qssdata.q
-  quantum = qssdata.quantum
-  #--------time--------
-  qsstime = qssSimulator.qssTime
-  t = qsstime.time # make sure to update time after change...passbyValue
-
-  tx = qsstime.tx
-  tq = qsstime.tq
-  tn = qsstime.nextStateTime
-  #---------model-------
-  qssmodel = qssSimulator.qssModel
-  dep = qssmodel.dep
-  # display(qssmodel.jacobian)
-  quantizer = Quantizer(qssSimulator)
+  ft = settings.finalTime
+  initTime = settings.initialTime
+  relQ = settings.dQrel
+  absQ = settings.dQmin
+  initConditions = settings.initConditions
+  solver = settings.solver
+  jacobian = settings.jacobian
+  savetimeincrement=settings.savetimeincrement
+  #********************************helper values*******************************
+  order=getOrderfromSolverMethod(solver)
+  savetime=savetimeincrement
+  dep = createDependencyMatrix(jacobian)
+  states = computeStates(jacobian)
+  #modifiedJac=modifyJacobian(jacobian) #either modify to transpose or create svector of svectors...to be used inside compute derivatives
+  jacobian= SMatrix{2,2,Float64}(transpose(jacobian))
+  savedVars=SVector{2,Array{Float64}}([],[])# !!!!!!!!this will have to be generated cuz of number of [][] [] []
+  savedTimes=Array{Float64}([0.0])
+  #*********************************data*****************************************
+  quantum = @MVector zeros(2)
+  x = @MVector zeros(4)
+  q = @MVector zeros(4)
+  nextStateTime = @MVector zeros(2)
+  tx = @MVector zeros(2)
+  tq = @MVector zeros(2)
+  #reset_timer!() 
+  minTimeValue = @MVector zeros(1)
+  minTimeValue[1] = initTime
+  minIndex = MVector{1,Int}(0) #minindex = 0 not tested meaning of =0
   #*************************************initialize************************************
   for i = 1:states
-    #---initial time for each variable
-    tx[i] = Array{Float64}[]
-
-    #tq[i]=Array{Float64}[]
-    push!(tx[i], initTime)
+    tx[i] = initTime
     tq[i] = initTime
-
-    # initial condition for each variable
-    #(order+1)*i-order means only the state, no derivatives
-    push!(x[(order+1)*i-order], initConditions[i])#push===fill in first element of arr     
-    #--compute initial deltaQ  
-    quantum[i] = relQ * abs(last(x[(order+1)*i-order]))
+    x[(order+1)*i-order] = initConditions[i]
+    push!(savedVars[i],initConditions[i])
+    quantum[i] = relQ * abs(x[(order+1)*i-order])
     if quantum[i] < absQ
       quantum[i] = absQ
     end
-    #push!(q[(order+1)*i-order],initConditions[i]) #normally q should be updated through quantizer
-    #q[(order+1)*i-order]=initConditions[i]
-    updateQ(solver, quantizer, i, x, q, quantum)
-
-
+    updateQ(solver, i, x, q, quantum)
   end
-
-  #-----------initial derivatives: ask framework to compute derivatives=f(x,t)
-  #----------initial nextTimes: ask quantizer to compute nextChangeTime
   for i = 1:states
-    computeDerivative(states, i, order, qssmodel, x, q, tx, tq)
-    computeNextTime(solver, quantizer, i, t, tn, x, quantum)
-    #reComputeNextTime(quantizer,i,t,tn,x,q,quantum,casesVect)
+    computeDerivative(states, i, order, jacobian, x, q, tx, tq)
+    computeNextTime(solver, i, minTimeValue[1], nextStateTime, x, quantum)
   end
-
-
-  #----------ask scheduler to update time and finds next minTime and minIndex
-  updateScheduler(qsstime)
-  t = qsstime.time
-
-  index = qsstime.minIndex
+  updateScheduler(states, nextStateTime, minTimeValue, minIndex)
+  t = minTimeValue[1]
+  index = minIndex[1]
   #**************************************integrate*************************************
-
-  while t < ft
-
-    # println("index $index at time $t ")
-    elapsed = t - last(tx[index])
-    #@timeit "integrate state" integrateState(index,order,elapsed,x)
-    integrateState(index, order, elapsed, x)
-    push!(tx[index], t)
-    quantum[index] = relQ * abs(last(x[(order+1)*index-order]))
-    if quantum[index] < absQ
-      quantum[index] = absQ
+  if savetimeincrement ==0
+    while t < ft
+      elapsed = t - tx[index]
+      integrateState(index, order, elapsed, x)
+      tx[index] = t
+      quantum[index] = relQ * abs(x[(order+1)*index-order])
+      if quantum[index] < absQ
+        quantum[index] = absQ
+      end
+      updateQ(solver, index, x, q, quantum)
+      tq[index] = t
+      computeNextTime(solver, index, t, nextStateTime, x, quantum)
+      for i = 1:length(dep[index])
+        j = dep[index][i]
+        elapsed = t - tx[j]
+        integrateState(j, order, elapsed, x)
+        tx[j] = t
+        computeDerivative(states, j, order, jacobian, x, q, tx, tq)
+        reComputeNextTime(solver, j, t, nextStateTime, x, q, quantum)
+      end
+      updateScheduler(states, nextStateTime, minTimeValue, minIndex)
+      t = minTimeValue[1]
+      index = minIndex[1]
     end
-    # @timeit "updateQ" updateQ(quantizer,index,x,q,quantum)# the whole quantum is not needed
-    updateQ(solver, quantizer, index, x, q, quantum)
-    # if length(tq[index])!=0
-    #   pop!(tq[index])
-    # end
-    #push!(tq[index],t)
-    tq[index] = t
-    # @timeit "compute next" computeNextTime(quantizer,index,t,tn,x,quantum)
-    computeNextTime(solver, quantizer, index, t, tn, x, quantum)
-
-
-    for i = 1:length(dep[index])
-      j = qssmodel.dep[index][i]
-      elapsed = t - last(tx[j])
-      integrateState(j, order, elapsed, x)
-      # println("derx= ", x[(order+1)*j])
-      #if j != index
-
-      push!(tx[j], t)
-      #end
-      #  @timeit "compute deriv"  computeDerivative(states,j,order,qssmodel,x,q,tx,tq)
-      computeDerivative(states, j, order, qssmodel, x, q, tx, tq)
-      #@timeit "recompute next" reComputeNextTime(quantizer,j,t,tn,x,q,quantum)
-
-      reComputeNextTime(solver, quantizer, j, t, tn, x, q, quantum, casesVect)
+  else
+    while t < ft
+      elapsed = t - tx[index]
+      integrateState(index, order, elapsed, x)
+      tx[index] = t
+      quantum[index] = relQ * abs(x[(order+1)*index-order])
+      if quantum[index] < absQ
+        quantum[index] = absQ
+      end
+      updateQ(solver, index, x, q, quantum)
+      tq[index] = t
+      computeNextTime(solver, index, t, nextStateTime, x, quantum)
+      for i = 1:length(dep[index])
+        j = dep[index][i]
+        elapsed = t - tx[j]
+        integrateState(j, order, elapsed, x)
+        tx[j] = t
+        computeDerivative(states, j, order, jacobian, x, q, tx, tq)
+        reComputeNextTime(solver, j, t, nextStateTime, x, q, quantum)
+      end
+      updateScheduler(states, nextStateTime, minTimeValue, minIndex)
+      t = minTimeValue[1]
+      index = minIndex[1]
+      if t>savetime
+        savetime+=savetimeincrement
+        for k=1:states
+          push!(savedVars[k],x[(order+1)*k-order])
+          
+        end
+        push!(savedTimes,t)
+      end
     end
-    #computeDerivative(states,index,order,qssmodel,x,q,tx,tq)
-    #reComputeNextTime(quantizer,index,t,tn,x,q,quantum)
-    #println("x= ", x[(order+1)*index-order])
-    # println("derx= ", x[(order+1)*index])
-    updateScheduler(qsstime)
-
-    t = qsstime.time
-    index = qsstime.minIndex
-    # print_timer()
-
-
   end
-
-
-
-
-  #=
-    println("derx1= ", x[(order+1)*1])
-    println("derx2= ", x[(order+1)*2])
-    println("q1= ", q[1])
-    println("q2= ", q[3])
-    println("tq1= ", tq[1])
-    println("tq2= ", tq[2])
-
-    println("tx1= ", tx[1])
-    println("x1= ", x[1])
-    println("tx2= ", tx[2])
-    println("x2= ", x[2])
-    println("tn1= ", tn[1])
-    println("tn2= ", tn[2])
-  =#
-  # println("qssdata= ", qssdata)
-  # println("qsstime= ", qsstime)
-  # println("qssmodel= ", qssmodel)
-
+ (savedTimes,savedVars)
 end
-
-
-# where did i stop: create func integrate state

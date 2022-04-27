@@ -45,29 +45,25 @@ end
 =#
 
 
-function QSS1_init(quantizer::Quantizer, qssSimulator::QSS_simulator)
-  quantizer.computeNext = QSS1_ComputeNext
-  quantizer.reComputeNext = QSS1_reComputeNext
-  quantizer.updateQVar = QSS1_update
-end
-function QSS1_update(quantizer::Quantizer, index::Int, x::Vector{Array{Float64}}, q::Vector{Float64}, quantum::Vector{Float64})
+function updateQ(::Val{1},index::Int, x::MVector{4,Float64}, q::MVector{4,Float64}, quantum::MVector{2,Float64})
   #q=x
-  q[(2)*index-1] = last(x[(2)*index-1])
+  q[(2)*index-1] = (x[(2)*index-1])
   #q[index]=1.5
 end
-function QSS1_ComputeNext(quantizer::Quantizer, index::Int, currentTime::Float64, nextTime::Vector{Float64}, x::Vector{Array{Float64}}, quantum::Vector{Float64})
-  if last(x[(2)*index]) != 0
+function computeNextTime(::Val{1}, index::Int, currentTime::Float64, nextTime::MVector{2,Float64}, x::MVector{4,Float64}, quantum::MVector{2,Float64})
+  if (x[(2)*index]) != 0
     # if 0!=0
-    nextTime[index] = currentTime + abs(quantum[index] / last(x[(2)*index]))
+    nextTime[index] = currentTime + abs(quantum[index] / (x[(2)*index]))
   else
     nextTime[index] = Inf
   end
 end
-function QSS1_reComputeNext(quantizer::Quantizer, index::Int, currentTime::Float64, nextTime::Vector{Float64}, x::Vector{Array{Float64}}, q::Vector{Float64}, quantum::Vector{Float64}, coef::Vector{Float64})
-  coef[1] = q[(2)*index-1] - last(x[(2)*index-1]) - quantum[index] #q-x-deltaQ
-  coef[2] = -last(x[(2)*index])  #-derX
+function reComputeNextTime(::Val{1}, index::Int, currentTime::Float64, nextTime::MVector{2,Float64}, x::MVector{4,Float64}, q::MVector{4,Float64}, quantum::MVector{2,Float64})
+  #temp1=q[(2)*index-1] - (x[(2)*index-1]) - quantum[index]
+  #temp2=-(x[(2)*index]) 
+  coef=@SVector [q[(2)*index-1] - (x[(2)*index-1]) - quantum[index], -x[(2)*index]]
   time1 = currentTime + minPosRoot(coef, 1)# 1 because order1
-  coef[1] = q[(2)*index-1] - last(x[(2)*index-1]) + quantum[index] #q-x-deltaQ
+  coef=setindex(coef,q[(2)*index-1] - (x[(2)*index-1]) + quantum[index],1)
   time2 = currentTime + minPosRoot(coef, 1)# 1 because order1
   #println("time1= ",time1);println("time2= ",time2)
   nextTime[index] = time1 < time2 ? time1 : time2
