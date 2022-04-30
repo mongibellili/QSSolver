@@ -1,56 +1,9 @@
-#=
-#without saving
-function QSS1_init(quantizer ::Quantizer,qssSimulator ::QSS_simulator)
-   quantizer.computeNext=QSS1_ComputeNext
-   quantizer.reComputeNext=QSS1_reComputeNext
-   quantizer.updateQVar=QSS1_update
-end
- function QSS1_update(quantizer ::Quantizer,index::Int,x::Vector{Float64} ,q::Vector{Float64},quantum::Vector{Float64})
-   #q=x
-  #= if length(q[(2)*index-1])!=0
-       pop!(q[(2)*index-1])  
-   end
-   push!(q[(2)*index-1],(x[(2)*index-1]))# not tested
-   =#
-   q[(2)*index-1]=x[(2)*index-1]
-   #q[index]=1.5
-end
- function QSS1_ComputeNext(quantizer::Quantizer,index::Int,currentTime::Float64,nextTime::Vector{Float64},x:: Vector{Float64} ,quantum::Vector{Float64})
-
-   if (x[(2)*index])!=0
-    # if 0!=0
-         nextTime[index]=currentTime+abs(quantum[index]/(x[(2)*index]))
-   else
-         nextTime[index]=Inf
-
-   end
-end
- function QSS1_reComputeNext(quantizer::Quantizer,index::Int,currentTime::Float64,nextTime::Vector{Float64},x:: Vector{Float64},q::Vector{Float64} ,quantum::Vector{Float64},coef::Vector{Float64})
-
-
-
-     coef[1]=q[(2)*index-1]-(x[(2)*index-1])-quantum[index] #q-x-deltaQ
-     coef[2]=-(x[(2)*index])  #-derX
-   time1=currentTime+minPosRoot(coef,1)# 1 because order1
-     coef[1]=q[(2)*index-1]-(x[(2)*index-1])+ quantum[index] #q-x-deltaQ
-   time2=currentTime+minPosRoot(coef,1)# 1 because order1
-   #println("time1= ",time1);println("time2= ",time2)
-   nextTime[index]= time1 < time2 ? time1 : time2
-
-
-
-
-end
-
-=#
-
-
-function updateQ(::Val{1},index::Int, x::MVector{4,Float64}, q::MVector{4,Float64}, quantum::MVector{2,Float64})
+function updateQ(::Val{1},index::Int, x::MVector{O,Float64}, q::MVector{O,Float64}, quantum::MVector{T,Float64}) where{T,O}
   #q=x
   q[(2)*index-1] = (x[(2)*index-1])
   #q[index]=1.5
 end
-function computeNextTime(::Val{1}, index::Int, currentTime::Float64, nextTime::MVector{2,Float64}, x::MVector{4,Float64}, quantum::MVector{2,Float64})
+function computeNextTime(::Val{1}, index::Int, currentTime::Float64, nextTime::MVector{T,Float64}, x::MVector{O,Float64}, quantum::MVector{T,Float64})where{T,O}
   if (x[(2)*index]) != 0
     # if 0!=0
     nextTime[index] = currentTime + abs(quantum[index] / (x[(2)*index]))
@@ -58,13 +11,58 @@ function computeNextTime(::Val{1}, index::Int, currentTime::Float64, nextTime::M
     nextTime[index] = Inf
   end
 end
-function reComputeNextTime(::Val{1}, index::Int, currentTime::Float64, nextTime::MVector{2,Float64}, x::MVector{4,Float64}, q::MVector{4,Float64}, quantum::MVector{2,Float64})
-  #temp1=q[(2)*index-1] - (x[(2)*index-1]) - quantum[index]
-  #temp2=-(x[(2)*index]) 
-  coef=@SVector [q[(2)*index-1] - (x[(2)*index-1]) - quantum[index], -x[(2)*index]]
-  time1 = currentTime + minPosRoot(coef, 1)# 1 because order1
-  coef=setindex(coef,q[(2)*index-1] - (x[(2)*index-1]) + quantum[index],1)
-  time2 = currentTime + minPosRoot(coef, 1)# 1 because order1
-  #println("time1= ",time1);println("time2= ",time2)
-  nextTime[index] = time1 < time2 ? time1 : time2
+function reComputeNextTime(::Val{1}, index::Int, currentTime::Float64, nextTime::MVector{T,Float64}, x::MVector{O,Float64}, q::MVector{O,Float64}, quantum::MVector{T,Float64})where{T,O}
+#= mpr=-1
+if x[(2)*index] == 0 
+  mpr = Inf
+else 
+    mpr1 = (q[(2)*index-1] - (x[(2)*index-1]) - quantum[index]) / x[(2)*index];
+    mpr2 = (q[(2)*index-1] - (x[(2)*index-1]) + quantum[index]) / x[(2)*index];            
+    if mpr1 < 0
+        mpr1 = Inf
+    end
+    if mpr2 < 0
+      mpr2 = Inf
+    end
+    mpr=mpr1 < mpr2 ? mpr1 : mpr2
 end
+nextTime[index] = currentTime +mpr
+end =#
+
+#mpr=-1
+# epselon=10
+#=if abs(x[(2)*index])< epselon 
+  mpr = Inf =#
+ if x[(2)*index] == 0 
+  mpr = Inf
+else 
+    mpr1 = (q[(2)*index-1] - (x[(2)*index-1]) - quantum[index]) / x[(2)*index];
+    mpr2 = (q[(2)*index-1] - (x[(2)*index-1]) + quantum[index]) / x[(2)*index];            
+    if mpr1 < 0
+        mpr1 = Inf    
+      if mpr2 < 0
+        mpr = Inf
+      else
+        mpr=mpr2
+      end
+    else
+      if mpr2 < 0
+        mpr = mpr1
+      else
+        mpr=mpr1 < mpr2 ? mpr1 : mpr2
+      end
+    end
+end
+nextTime[index] = currentTime +mpr
+end
+ 
+
+
+
+
+#=   coef=@SVector [q[(2)*index-1] - (x[(2)*index-1]) - quantum[index], -x[(2)*index]]
+  time1 = currentTime + minPosRoot(coef, Val(1))# 1 because order1
+  coef=setindex(coef,q[(2)*index-1] - (x[(2)*index-1]) + quantum[index],1)
+  time2 = currentTime + minPosRoot(coef, Val(1))# 1 because order1
+  #println("time1= ",time1);println("time2= ",time2)
+  nextTime[index] = time1 < time2 ? time1 : time2 =#

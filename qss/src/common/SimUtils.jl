@@ -1,4 +1,38 @@
 
+function minPosRoot(coeff::SVector{2,Float64}, ::Val{1}) # coming from val(1) means coef has x and derx only...size 2
+    mpr=-1
+        if coeff[2] == 0 
+            mpr = Inf
+        else 
+            mpr = -coeff[1] / coeff[2];
+        end
+        if mpr < 0
+            mpr = Inf
+        end
+    return mpr
+end
+
+#= function minPosRoot(coeff::SVector{N,Float64}, order ::Int) where{N}
+    mpr=-1
+    if order==1
+        if coeff[2] == 0 
+            mpr = Inf
+        else 
+            mpr = -coeff[1] / coeff[2];
+            #println(mpr)
+        end
+        if mpr < 0
+            mpr = Inf
+        end
+
+    else
+        println("logicof order2")
+    end
+    return mpr
+end =#
+
+
+
 #=
 function integrateState(j::Int,order::Int,elapsed::Float64,x::  Vector{Float64} )
    
@@ -49,36 +83,9 @@ function plotX(simulator :: QSS_simulator)
 end
 =#
 
-function integrateState(j::Int,order::Int,elapsed::Float64,x::  MVector{4,Float64})
-   
-    if order ==1
-        
-       
-        x[2*j-1]=(x[2*j-1])+ elapsed * (x[2*j])
-    else
-        println("keep coding next orders")
-    end
-    
-end
 
-function minPosRoot(coeff::SVector{2,Float64}, order ::Int)
-    mpr=-1
-    if order==1
-        if coeff[2] == 0 
-            mpr = Inf
-        else 
-            mpr = -coeff[1] / coeff[2];
-            #println(mpr)
-        end
-        if mpr < 0
-            mpr = Inf
-        end
 
-    else
-        println("logicof order2")
-    end
-    return mpr
-end
+
 
 #=function plotX(simulator :: QSS_simulator)
     x=simulator.qssData.x

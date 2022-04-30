@@ -9,9 +9,9 @@ function simulatorSvector()
   # m=:($n)
   #v1 = SVector{:($n),Float64}(undef)
   s=0.0
-  v1 = @SVector rand(Float64, 1000)
+  v1 = @SVector rand(Float64, 100)
   for i = 1:1e+3
-    for j = 1:1000
+    for j = 1:100
         s=s+v1[j]
      end
   end
@@ -21,9 +21,9 @@ function simulatorMvector()
   # m=:($n)
   #v1 = SVector{:($n),Float64}(undef)
   s=0.0
-  v1 = @MVector rand(Float64, 1000)
+  v1 = @MVector rand(Float64, 100)
   for i = 1:1e+3
-    for j = 1:1000
+    for j = 1:100
         s=s+v1[j]
      end
   end
@@ -31,10 +31,10 @@ function simulatorMvector()
 end
 function simulatorvector()
   s=0.0
-  #v1 = Vector{Float64}(undef, 10)
-  v1 = rand(1000)
+  #v1 = Vector{Float64}(undef, 100)
+  v1 = rand(100)
   for i = 1:1e+3
-    for j = 1:1000
+    for j = 1:100
         s=s+v1[j]
      end
   end

@@ -1,43 +1,28 @@
-# struct that glues the other 3 structs settings, data, time, model
-# information flow is done through it
-struct QSS_simulator
-   
-    x :: Vector{Array{Float64}}
-    tx ::  Vector{Array{Float64}} 
-   #= q :: MVector{L,Float64} where {L} 
-    tq :: MVector{M,Float64} where {M}
-    quantum :: MVector{N,Float64} where {N} 
-    nextStateTime :: MVector{P,Float64} where {P}  
-    =#
-    q :: Vector{Float64} 
-    tq :: Vector{Float64} 
-    quantum :: Vector{Float64} 
-    nextStateTime :: Vector{Float64} 
-    wRegister::MVector{2,Float64}(undef)#time,minValue   
-    minIndex :: MVector{1,Float64}(undef) 
-    jacobian :: Array{Float64, 2}   
-    dep ::  Vector{Array{Int}}  
-
-
-
+struct QSS_simulator{T,O}
+#=     savedVars::SVector{T,Array{Float64}}
+    savedTimes::Array{Float64} =#
+    quantum :: MVector{T,Float64} 
+    x :: MVector{O,Float64}
+    q :: MVector{O,Float64} 
+    tx ::  MVector{T,Float64} 
+    tq :: MVector{T,Float64} 
+    nextStateTime :: MVector{T,Float64}    
 end
-function QSS_simulate(settings :: ModelSettings)
-    #println("........started simulation.........")
-
-        const d.states=states
-        const d.order=order
-        #create Vectors
-        d.quantum = Vector{Float64}(undef, states)
-        d.x =  Vector{Array{Float64}}(undef, (order+1)*states)#case1 for x case2 for DERx...
-       # d.q =  Vector{Float64}(undef, (order+1)*states)
-       d.q = Vector{Float64}(undef, (order+1)*states)
-        #create arrays inside Vectors
-        for i = 1:(order+1)*states 
-            d.x[i]=Array{Float64}[]
-           # d.q[i]=Array{Float64}[]
-        end
-     
-        d
-    
-   QSS_integrate(qssSimulator);
+function QSS_simGenerate(settings :: ModelSettings)
+    order=getOrderfromSolverMethod(settings.solver)
+    states = computeStates(settings.initConditions)
+#=     arr=[]
+    for i = 1:states 
+        push!(arr,[])        
+    end
+    savedVars=SVector{states,Array{Float64}}(tuple(arr...))
+    savedTimes=Array{Float64}([0.0]) =#
+    quantum = @MVector zeros(states)
+    x = @MVector zeros(states*(order+1))#4=states*(order+1)
+    q = @MVector zeros(states*(order+1))
+    nextStateTime = @MVector zeros(states)
+    tx = @MVector zeros(states)
+    tq = @MVector zeros(states)
+    qssSimulator= QSS_simulator(quantum,x,q,tx,tq,nextStateTime)
+    QSS_integrate(qssSimulator,settings)   
 end

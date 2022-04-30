@@ -1,11 +1,11 @@
-struct ModelSettings    
-    initConditions ::SVector{2,Float64}  
-    jacobian::SMatrix{2,2,Float64}
+struct ModelSettings{N}   
+    initConditions ::SVector{N,Float64} 
+    jacobian::SMatrix{N,N,Float64}
     finalTime:: Float64   
     initialTime :: Float64    
     dQmin ::Float64    
     dQrel ::Float64  
-    solver ::Val{T} where {T}
+    solver ::Val{T} where{T}
     savetimeincrement::Float64
 end
 function ModelSettings(initConditions ,jacobian ,finalTime; initialTime=0.0,dQmin=1e-6,dQrel=1e-3,solver=Val(1),savetimeincrement=0)
@@ -14,10 +14,12 @@ end
 #= function ModelSettings(initConditions ,jacobian ,finalTime,solver; initialTime=0.0,dQmin=1e-6,dQrel=1e-3,order=1,savetime=0)
     return ModelSettings(initConditions, jacobian, finalTime,initialTime,dQmin,dQrel,order,solver,savetime)
 end =#
-function ModelSettings(initConditions ,jacobian ,finalTime,savetimeincrement; initialTime=0.0,dQmin=1e-6,dQrel=1e-3,solver=Val(1))
+#= function ModelSettings(initConditions ,jacobian ,finalTime,savetimeincrement; initialTime=0.0,dQmin=1e-6,dQrel=1e-3,solver=Val(1))
+    return ModelSettings(initConditions, jacobian, finalTime,initialTime,dQmin,dQrel,solver,savetimeincrement)
+end =#
+function ModelSettings(initConditions ,jacobian ,finalTime,savetimeincrement,solver; initialTime=0.0,dQmin=1e-6,dQrel=1e-3)
     return ModelSettings(initConditions, jacobian, finalTime,initialTime,dQmin,dQrel,solver,savetimeincrement)
 end
-
  function saveat(savetimeincrement::Float64)
     savetimeincrement
 end 

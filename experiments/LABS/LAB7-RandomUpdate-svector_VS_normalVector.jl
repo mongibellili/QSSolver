@@ -3,7 +3,7 @@ using BenchmarkTools
 #TP7: compare stack-recreate vs heap-update via vectors and svectors and Mvectors and random
 function simulatorSvector()
   #v1 = SVector{:($n),Float64}(undef)
-  v1 = @SVector rand(Float64, 100)
+  v1 = @SVector rand(100)
   for i = 1:1e+3
     for j = 1:100
       n=rand(1:100)
@@ -14,7 +14,7 @@ function simulatorSvector()
 end
 function simulatorMvector()
   #v1 = SVector{:($n),Float64}(undef)
-  v1 = @MVector rand(Float64,100)
+  v1 = @MVector rand(100)
   for i = 1:1e+3
     for j = 1:100
       n=rand(1:100)
@@ -39,5 +39,5 @@ end
 
 
 #display(simulatorSvector());println()
-display(simulatorvector())
+#display(simulatorvector())
 
