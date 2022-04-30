@@ -1,51 +1,8 @@
+#using TimerOutputs
 
-function createDependencyMatrix(jac :: SMatrix{2,2,Float64}  )
-  # extract dependency matrix from jac
- #=  epselon=1e-6
-  nRows=size(jac,1)
-  nColumns=size(jac,2)
-  dep=MVector{nColumns,Array{Int}}([],[])###################################optimize meeeeeeee
-  for j=1:nColumns
-       #dep[j]=Array{Float64}[]
-       for i=1:nRows
-           if jac[i,j] < -epselon ||  jac[i,j] > epselon # different than zero
-               push!(dep[j],i)
-           end
-       end
-   end
-  # dep=@SVector{nColumns,}
-  return dep   =#
-  epselon=1e-6
-  nRows=size(jac,1)
-  nColumns=size(jac,2)
-  dep=Vector{Array{Int}}(undef, nColumns)
-
-  for j=1:nColumns
-       dep[j]=Array{Float64}[]
-       for i=1:nRows
-           if jac[i,j] < -epselon ||  jac[i,j] > epselon # different than zero
-               push!(dep[j],i)
-           end
-       end
-   end
-   
-
-   return dep
-end
-function computeStates(jacobian :: SMatrix{2,2,Float64})
-   # return number of rows
-   #return size(jacobian,1)
-   return 2
-end
-function getOrderfromSolverMethod(::Val{1})
-    1
-end
-function modifyJacobian(jacobian :: SMatrix{2,2,Float64})
-  #test use of svector of svectos
-end
-function QSS_integrate(settings::ModelSettings)
+function QSS_integrate(s::QSS_simulator,settings::ModelSettings)
+  #reset_timer!()
   #*********************************settings*****************************************
-
   ft = settings.finalTime
   initTime = settings.initialTime
   relQ = settings.dQrel
@@ -55,31 +12,37 @@ function QSS_integrate(settings::ModelSettings)
   jacobian = settings.jacobian
   savetimeincrement=settings.savetimeincrement
   #********************************helper values*******************************
-  order=getOrderfromSolverMethod(solver)
+  states = computeStates(settings.initConditions) 
+  order=getOrderfromSolverMethod(settings.solver)
   savetime=savetimeincrement
+  #dep = createDependencyMatrix(jacobian)
+  jacobian=modifyJacobian(jacobian) #either modify to transpose or create svector of svectors...to be used inside compute derivatives
+  #jacobian= SMatrix{2,2,Float64}(transpose(jacobian)) #change workshop when removed. the test showed bad performance but it might be worth it for large jacobians
   dep = createDependencyMatrix(jacobian)
-  states = computeStates(jacobian)
-  #modifiedJac=modifyJacobian(jacobian) #either modify to transpose or create svector of svectors...to be used inside compute derivatives
-  jacobian= SMatrix{2,2,Float64}(transpose(jacobian))
-  savedVars=SVector{2,Array{Float64}}([],[])# !!!!!!!!this will have to be generated cuz of number of [][] [] []
+  #dep=((2),(1, 2))
+  #dep=[[2],[1, 2]]
+  #dep= @SVector[[2],[1,2]]
+#=   display(dep);println()
+  display(typeof(dep));println() =#
+  arr=[]
+  for i = 1:states 
+      push!(arr,[])        
+  end
+  savedVars=SVector{states,Array{Float64}}(tuple(arr...))
   savedTimes=Array{Float64}([0.0])
   #*********************************data*****************************************
-  quantum = @MVector zeros(2)
-  x = @MVector zeros(4)
-  q = @MVector zeros(4)
-  nextStateTime = @MVector zeros(2)
-  tx = @MVector zeros(2)
-  tq = @MVector zeros(2)
-  #reset_timer!() 
-  minTimeValue = @MVector zeros(1)
-  minTimeValue[1] = initTime
-  minIndex = MVector{1,Int}(0) #minindex = 0 not tested meaning of =0
+  quantum=s.quantum 
+  x=s.x 
+  q=s.q 
+  nextStateTime=s.nextStateTime 
+  tx=s.tx
+  tq=s.tq 
   #*************************************initialize************************************
   for i = 1:states
     tx[i] = initTime
     tq[i] = initTime
     x[(order+1)*i-order] = initConditions[i]
-    push!(savedVars[i],initConditions[i])
+    push!(savedVars[i],initConditions[i]) #savedTimes assumed to be always initially equals zero!!!!!no
     quantum[i] = relQ * abs(x[(order+1)*i-order])
     if quantum[i] < absQ
       quantum[i] = absQ
@@ -87,69 +50,75 @@ function QSS_integrate(settings::ModelSettings)
     updateQ(solver, i, x, q, quantum)
   end
   for i = 1:states
-    computeDerivative(states, i, order, jacobian, x, q, tx, tq)
-    computeNextTime(solver, i, minTimeValue[1], nextStateTime, x, quantum)
+    computeDerivative( i, order, jacobian, x, q, tx, tq)
+    computeNextTime(solver, i, initTime, nextStateTime, x, quantum)
   end
-  updateScheduler(states, nextStateTime, minTimeValue, minIndex)
-  t = minTimeValue[1]
-  index = minIndex[1]
+  sch=updateScheduler(nextStateTime)
+  t = sch[2]
+  index = sch[1]
   #**************************************integrate*************************************
   if savetimeincrement ==0
     while t < ft
       elapsed = t - tx[index]
-      integrateState(index, order, elapsed, x)
-      tx[index] = t
+      integrateState(index, solver, elapsed, x)
+       tx[index] = t
       quantum[index] = relQ * abs(x[(order+1)*index-order])
       if quantum[index] < absQ
         quantum[index] = absQ
       end
-      updateQ(solver, index, x, q, quantum)
+       updateQ(solver, index, x, q, quantum)
       tq[index] = t
-      computeNextTime(solver, index, t, nextStateTime, x, quantum)
+       computeNextTime(solver, index, t, nextStateTime, x, quantum)
       for i = 1:length(dep[index])
-        j = dep[index][i]
+         if dep[index][i]!=0
+            j = dep[index][i]
+         
         elapsed = t - tx[j]
-        integrateState(j, order, elapsed, x)
-        tx[j] = t
-        computeDerivative(states, j, order, jacobian, x, q, tx, tq)
-        reComputeNextTime(solver, j, t, nextStateTime, x, q, quantum)
+          integrateState(j, solver, elapsed, x)
+         tx[j] = t
+         computeDerivative( j, order, jacobian, x, q, tx, tq)
+         reComputeNextTime(solver, j, t, nextStateTime, x, q, quantum)
+         end
       end
-      updateScheduler(states, nextStateTime, minTimeValue, minIndex)
-      t = minTimeValue[1]
-      index = minIndex[1]
+        sch=updateScheduler(nextStateTime)
+      t = sch[2]
+      index = sch[1]
     end
   else
     while t < ft
       elapsed = t - tx[index]
-      integrateState(index, order, elapsed, x)
-      tx[index] = t
+      integrateState(index, solver, elapsed, x)
+       tx[index] = t
       quantum[index] = relQ * abs(x[(order+1)*index-order])
       if quantum[index] < absQ
         quantum[index] = absQ
       end
-      updateQ(solver, index, x, q, quantum)
+       updateQ(solver, index, x, q, quantum)
       tq[index] = t
-      computeNextTime(solver, index, t, nextStateTime, x, quantum)
+       computeNextTime(solver, index, t, nextStateTime, x, quantum)
       for i = 1:length(dep[index])
-        j = dep[index][i]
+         if dep[index][i]!=0
+            j = dep[index][i]
+         
         elapsed = t - tx[j]
-        integrateState(j, order, elapsed, x)
-        tx[j] = t
-        computeDerivative(states, j, order, jacobian, x, q, tx, tq)
-        reComputeNextTime(solver, j, t, nextStateTime, x, q, quantum)
+          integrateState(j, solver, elapsed, x)
+         tx[j] = t
+         computeDerivative( j, order, jacobian, x, q, tx, tq)
+         reComputeNextTime(solver, j, t, nextStateTime, x, q, quantum)
+         end
       end
-      updateScheduler(states, nextStateTime, minTimeValue, minIndex)
-      t = minTimeValue[1]
-      index = minIndex[1]
-      if t>savetime
+        sch=updateScheduler(nextStateTime)
+      t = sch[2]
+      index = sch[1]
+      if t>savetime   #if the user picks very small saveatincrements then this is inefficient; it is worse than saving original x everytime
         savetime+=savetimeincrement
         for k=1:states
           push!(savedVars[k],x[(order+1)*k-order])
-          
         end
         push!(savedTimes,t)
       end
     end
   end
  (savedTimes,savedVars)
+ #print_timer()
 end

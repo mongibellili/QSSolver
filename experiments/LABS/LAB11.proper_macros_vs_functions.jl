@@ -6,11 +6,16 @@ macro computeSome_thing(states, x,index ,j)
         $x[$index]+=$x[$j]*0.5 end
     end)
 end
-function computeSome_thing(states, x,index )
+#= @generated function computeSome_thing(states, x,index)
+    esc(quote for $j in 1:$states
+        $x[$index]+=$x[$j]*0.5 end
+    end)
+end =#
+#= function computeSome_thing(states, x,index )
     for j = 1:states
       x[index] += x[j] * 0.5 
     end
-end
+end =#
 
 function usefunction(v2::MVector{2,Float64})
     for i =1:1e+1
