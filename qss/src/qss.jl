@@ -4,7 +4,7 @@ module qss
     using StaticArrays 
     #using TimerOutputs
     # list of public (API) to the user, not between files as those are linked as if in one file
-    export ModelSettings,QSS_simulate,QSS_simGenerate, QSS_integrate , plotX, qss1,qss2,qss3,saveat,liqss,liqss2
+    export ModelSettings,QSS_simGenerate ,  qss1,qss2,qss3,liqss,liqss2,saveat
     
     #export @make_simulator, QSS_simulator, ModelSettings
     #export computeStates
@@ -15,7 +15,9 @@ module qss
     include("QSSFamily/QSS_modelworkshop.jl")
     include("QSSFamily/QSS_simulator.jl")
     include("QSSFamily/QSS_integrator.jl")
+    include("QSSFamily/QSS2_integrator.jl")
     include("QSSFamily/QSS1.jl")
+    include("QSSFamily/QSS2.jl")
     include("QSSFamily/Scheduler.jl")
     include("common/SimUtils.jl")
     
