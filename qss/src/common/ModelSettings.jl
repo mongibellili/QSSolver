@@ -20,14 +20,14 @@ end =#
 function ModelSettings(initConditions ,jacobian ,finalTime,savetimeincrement,solver; initialTime=0.0,dQmin=1e-6,dQrel=1e-3)
     return ModelSettings(initConditions, jacobian, finalTime,initialTime,dQmin,dQrel,solver,savetimeincrement)
 end
- function saveat(savetimeincrement::Float64)
+#saveat(savetimeincrement::Float64)=savetimeincrement
+function saveat(savetimeincrement::Float64)
     savetimeincrement
 end 
-
 qss1()=Val(1)
 qss2()=Val(2)
 qss3()=Val(3)
-liqss()=Val(4)
+liqss1()=Val(4)
 liqss2()=Val(5)
 
 

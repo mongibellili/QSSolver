@@ -2,7 +2,7 @@
  function updateScheduler(nextStateTime::MVector{T,Float64})where{T}
     
     minTime=Inf
-    min_index=0
+    min_index=0  # what if all nextstateTime= Inf ????? min_index stays 0!!!
     for i=1:T
         if nextStateTime[i]<minTime
             minTime=nextStateTime[i]

@@ -72,24 +72,24 @@ v2 =  @MVector randn(Float64,n)
 display(v2);println() =#
 
 #SVector{nColumns,Array{Int}}
-v1 = tuple( [1,2,3]...)
+#= v1 = tuple( [1,2,3]...)
 v2 = tuple(  [1,3]...)
 v3 =  tuple( [1,3,4,5]...)
 arr=[]
 push!(arr,v1)
 push!(arr,v2)
-push!(arr,v3)
+push!(arr,v3) =#
 #arr=[v1,v2,v22]
 #display(arr)
 #push!(arr,v1)
 #= for i = 1:states 
     push!(arr,[])        
 end =#
-v4= SVector{3, SArray{Tuple, Int64, 1}}
-v5=(tuple(arr...)) 
+#v4= SVector{3, SArray{Tuple, Int64, 1}}
+#v5=(tuple(arr...)) 
 #v3 = @SVector [v1,v2,v22]
 #display(typeof(v5));println()
-display(v5[1][2]);println()
+#display(v5[1][2]);println()
 #dep=SVector{3, SArray{S, Int64, 1} where S<:Tuple}
 #dep=setindex(dep,[1,2],1) error
 #display(dep[1]);println()  error
@@ -116,12 +116,16 @@ display(v1);println() =#
 
 ########################################SMatrix#########################################
 #2×2 SMatrix{2, 2, Int64, 4} 
-#=  m1 = SMatrix{2,2}(1, 2, 3, 4)
-display(m1);println() 
-m2 = @SMatrix[1 2;3 4]
-display(m2);println() =#
+#=  m1 = SMatrix{2,2}(0, -11, -1, -1)
+display(m1);println()  =#
+m2 = @SMatrix[0 1;-1 -1]
+display(m2);println()
 #  error: no constructor m1 = SMatrix(1,2,3,4);m1 = @SMatrix(1,2,3,4)
 #=  m3 = SMatrix{2,2}([1 3 ; 2 4])
 display(m3);println() 
 m3 = transpose(m3)
 display(m3);println()  =#
+m3=m2*m2
+#= mul!(m4, m1, m1)
+display(m3)
+display(m4) =#
