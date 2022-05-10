@@ -9,6 +9,7 @@ function minPosRoot(coeff::SVector{2,Float64}, ::Val{1}) # coming from val(1) me
         if mpr < 0
             mpr = Inf
         end
+       # println("mpr inside minPosRoot in utils= ",mpr)
     return mpr
 end
 function minPosRoot(coeff::SVector{3,Float64}, ::Val{2}) # credit goes to github.com/CIFASIS/qss-solver

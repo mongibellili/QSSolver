@@ -22,8 +22,9 @@ n=5
 v1 = @SVector zeros(n) 
 p = DataSvector(v1, 5)  
 display(p) =#
-arr=[[],[],[]]
+#= arr=[[],[],[]]
 #= arr=[]
 push!(arr,[]) =#
 t=tuple(arr...)
-display(t)
+display(t) =#
+display(sign(5))

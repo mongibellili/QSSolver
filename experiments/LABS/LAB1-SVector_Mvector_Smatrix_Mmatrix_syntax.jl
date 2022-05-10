@@ -32,6 +32,13 @@ push!(r[1],0)
 
 
 ########################################Svectors##########################################
+#= v1 = SVector(0)
+display(typeof(v1));println()
+display(v1[1]);println() =#
+#= v1=SVector{0,Int}()
+display(typeof(v1));println() =#
+
+#display(v1[1]);println()
 #= 
 v0=SA[1,2,3]
 #display(v0[1]);println()
@@ -93,6 +100,11 @@ end =#
 #dep=SVector{3, SArray{S, Int64, 1} where S<:Tuple}
 #dep=setindex(dep,[1,2],1) error
 #display(dep[1]);println()  error
+#= u(t)=t+1
+v(t)=t
+w(t)=2-t
+v4=SVector{3,Function}(u,v,w)
+display(v4[1](3)) =#
 ######################################## MVector #########################################
 #= v1 = MVector(1,2,3)
 #display(v1);println()
@@ -116,16 +128,34 @@ display(v1);println() =#
 
 ########################################SMatrix#########################################
 #2×2 SMatrix{2, 2, Int64, 4} 
-#=  m1 = SMatrix{2,2}(0, -11, -1, -1)
+#=  m1 = SMatrix{4,1}(0, -11, -1, -1)
 display(m1);println()  =#
-m2 = @SMatrix[0 1;-1 -1]
-display(m2);println()
+#= m1 = SMatrix{4,1}(zeros(4))
+display(m1);println()  =#
+#m2 = @SMatrix[0 1;-1 -1]
+#display(m2);println()
 #  error: no constructor m1 = SMatrix(1,2,3,4);m1 = @SMatrix(1,2,3,4)
 #=  m3 = SMatrix{2,2}([1 3 ; 2 4])
 display(m3);println() 
 m3 = transpose(m3)
 display(m3);println()  =#
-m3=m2*m2
+#m3=m2*m2
 #= mul!(m4, m1, m1)
 display(m3)
 display(m4) =#
+#= sm=SMatrix{5,1,Float64}([0 0 0 0 0])
+display(sm)  =#
+#= quantum = @MVector zeros(5)
+display(quantum)  =#
+
+#= v3=MVector{1,Int}(3)
+v3[1]-=1
+display(v3) =#
+
+m1 = MMatrix{2,2}(zeros(4))
+
+m1[1,1]=-1.0
+m1[1,2]=2.12
+m1[2,1]=1.0
+m1[2,2]=23.2312
+display(m1)

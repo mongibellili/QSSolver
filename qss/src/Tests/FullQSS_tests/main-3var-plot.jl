@@ -21,8 +21,12 @@ function qssApproachInitialInside()
     initConditions=@SVector[1.0,2.0,1.0]
     jacobian=@SMatrix[0.0 1.0 -1.0;-1.0 -1.0 0.0;1.0 0.0 -2.0]
     #states=2
-    settings = ModelSettings(initConditions,jacobian,5.0,saveat(0.2),qss2())#do not call saveat to not save, i should fix when called with zero; it does not save at all
-    sol=QSS_simGenerate(settings)
+    psettings = ProblemSettings(5.0,saveat(0.1),qss1())
+    prob = QSS_Problem(initConditions,jacobian,inputVars)
+ 
+    
+
+    sol=QSS_Solve(psettings,prob)
     display(plot!(sol[1],sol[2][1]))
     display(plot!(sol[1],sol[2][2]))
     display(plot!(sol[1],sol[2][3]))
