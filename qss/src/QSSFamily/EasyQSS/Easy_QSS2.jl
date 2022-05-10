@@ -14,14 +14,15 @@ end
 
 
 
-function computeInitDerivative(j::Int, ::Val{2}, jacobian::SVector{T,SVector{T,Float64}} ,x::MVector{O,Float64} , q::MVector{R,Float64}, tx::MVector{T,Float64}, tq::MVector{T,Float64}  )where{R,T,O}
+function computeInitDerivative(j::Int, ::Val{2}, jacobian::SVector{T,SVector{T,Float64}} ,x::MVector{O,Float64} , q::MVector{R,Float64}, tx::MVector{T,Float64}, tq::MVector{T,Float64} , inputVars::SVector{U,Float64}  )where{R,T,O,U}
   #for now i will not consider time ie derx=f(x)   
   x[(3)*j-1]=0
   for k = 1:T
-    x[(3)*j-1] += jacobian[j][k] * q[2*k-1]  
+    x[(3)*j-1] += jacobian[j][k] * q[2*k-1]      
   end
+  x[(3)*j-1] +=  inputVars[j] 
 end
-  function computeInitsecondDerivative(j::Int, ::Val{2}, jacobian::SVector{T,SVector{T,Float64}} ,x::MVector{O,Float64} , q::MVector{R,Float64}, tx::MVector{T,Float64}, tq::MVector{T,Float64}  )where{R,T,O}
+  function computeInitsecondDerivative(j::Int, ::Val{2}, jacobian::SVector{T,SVector{T,Float64}} ,x::MVector{O,Float64} , q::MVector{R,Float64}, tx::MVector{T,Float64}, tq::MVector{T,Float64}, inputVars::SVector{U,Float64}  )where{R,T,O,U}
     #for now i will not consider time ie derx=f(x)    
     x[3*j] =0
     for k = 1:T
@@ -32,15 +33,16 @@ end
 end
 
 
-function computeDerivative(t::Float64,index::Int,j::Int, ::Val{2}, jacobian::SVector{T,SVector{T,Float64}}  ,x::MVector{O,Float64} , q::MVector{R,Float64}, tx::MVector{T,Float64}, tq::MVector{T,Float64}  )where{R,T,O}
+function computeDerivative(t::Float64,index::Int,j::Int, ::Val{2}, jacobian::SVector{T,SVector{T,Float64}}  ,x::MVector{O,Float64} , q::MVector{R,Float64}, tx::MVector{T,Float64}, tq::MVector{T,Float64} ,inputVars::SVector{U,Float64}  )where{R,T,O,U}
   #for now i will not consider time ie derx=f(x)   
   x[(3)*j-1]=0
   x[3*j] =0
   for k = 1:T               
-    x[(3)*j-1] += jacobian[j][k] * q[2*k-1]  
+    x[(3)*j-1] += jacobian[j][k] * q[2*k-1]  # this q should be updated using q=q+elapsedQ*derQ if not already been updated using q=x ;(qindex, and qj those that undergone reintegrateState)
     x[3*j] +=jacobian[j][k] *  q[(2)*k]
     
   end 
+  x[(3)*j-1] +=  inputVars[j] 
  # println("derx",j,"= ",x[(3)*j-1])
 end
 

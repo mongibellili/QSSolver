@@ -1,36 +1,33 @@
 #using TimerOutputs
 
-function QSS_integrate(::Val{2}, s::QSS_simulator, settings::ModelSettings)
-  #reset_timer!()
-  #*********************************settings*****************************************
+function QSS_integrate(::Val{2}, s::EasyQSS_simulator, settings::ProblemSetting,prob::qssProblem)
   ft = settings.finalTime
   initTime = settings.initialTime
   relQ = settings.dQrel
   absQ = settings.dQmin
-  initConditions = settings.initConditions
+  initConditions = prob.initConditions
+  inputVars=prob.inputVars
+  #inputJac=settings.inputJac
   solver = settings.solver
   #display(solver);println()
-  jacobian = settings.jacobian
+  jacobian = prob.jacobian
   savetimeincrement = settings.savetimeincrement
   #********************************helper values*******************************
-  states = computeStates(settings.initConditions)
+  states = computeStates(prob.initConditions)
+  #inputs = computeInputs(prob.inputVars)
   order = getOrderfromSolverMethod(settings.solver)
   #display(order);println()
   savetime = savetimeincrement
   #dep = createDependencyMatrix(jacobian)
   #jacobian=modifyJacobian(jacobian) #either modify to transpose or create svector of svectors...to be used inside compute derivatives
-  #derJacobian = derivateJacobian(jacobian) #here der= jaco*jaco
-  #use svector of svectors instead of smatrix
   jacobian = modifyJacobian(jacobian)
- # display(jacobian);println()
-  #derJacobian = modifyJacobian(derJacobian)
- # display(derJacobian);println()
+  #display(jacobian);println()
   #jacobian= SMatrix{2,2,Float64}(transpose(jacobian)) #change workshop when removed. the test showed bad performance but it might be worth it for large jacobians
   dep = createDependencyMatrix(jacobian)
   #dep=((2),(1, 2))
   #dep=[[2],[1, 2]]
   #dep= @SVector[[0,2],[1,2]]
-#=     display(dep);println()
+  #=   display(dep);println()
     display(typeof(dep));println() =#
   arr = []
   for i = 1:states
@@ -60,7 +57,7 @@ function QSS_integrate(::Val{2}, s::QSS_simulator, settings::ModelSettings)
   end
 
   for i = 1:states
-    computeInitDerivative(i, solver, jacobian,  x, q, tx, tq)
+    computeInitDerivative(i, solver, jacobian,  x, q, tx, tq,inputVars)
     #computeNextTime(solver, i, initTime, nextStateTime, x, quantum)
   end
   for i = 1:states
@@ -71,7 +68,7 @@ function QSS_integrate(::Val{2}, s::QSS_simulator, settings::ModelSettings)
   display(q)
   println() =#
   for i = 1:states
-    computeInitsecondDerivative(i, solver, jacobian,  x, q, tx, tq)
+    computeInitsecondDerivative(i, solver, jacobian,  x, q, tx, tq,inputVars)
     #computeNextTime(solver, i, initTime, nextStateTime, x, quantum)
   end
   for i = 1:states
@@ -117,7 +114,7 @@ function QSS_integrate(::Val{2}, s::QSS_simulator, settings::ModelSettings)
             tx[j] = t
             tq[j] = t #----------------------this is needed for derx=f(q,t)   !!!!!!!!!!!!!!!!!!
           end
-          computeDerivative(t,index,j, solver, jacobian,  x, q, tx, tq)
+          computeDerivative(t,index,j, solver, jacobian,  x, q, tx, tq,inputVars)
           reComputeNextTime(solver, j, t, nextStateTime, x, q, quantum)
      
         end
@@ -155,7 +152,7 @@ function QSS_integrate(::Val{2}, s::QSS_simulator, settings::ModelSettings)
             tx[j] = t
             tq[j] = t #----------------------this is needed for derx=f(q,t)   !!!!!!!!!!!!!!!!!!
           end
-          computeDerivative(t,index,j, solver, jacobian,  x, q, tx, tq)
+          computeDerivative(t,index,j, solver, jacobian,  x, q, tx, tq,inputVars)  # qss in c did this in another dependency loop
           reComputeNextTime(solver, j, t, nextStateTime, x, q, quantum)
      
         end
