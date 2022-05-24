@@ -1,8 +1,8 @@
 #using TimerOutputs
 
-function QSS_integrate(::Val{1}, s::QSS_simulator, settings::ProblemSetting,prob::qssProblem)
+function QSS_integrate(::Val{1}, s::QSS_data, settings::ProblemSetting,prob::qssProblem)
   #reset_timer!()
-  println("normal integration! ")
+  #println("normal integration! ")
   #*********************************settings*****************************************
   ft = settings.finalTime
   initTime = settings.initialTime
@@ -65,7 +65,7 @@ function QSS_integrate(::Val{1}, s::QSS_simulator, settings::ProblemSetting,prob
     computeNextTime(solver, i, initTime, nextStateTime, x, quantum)
   end
   for i=1:events
-    println("event i= ", i)
+    #println("event i= ", i)
     output=zcFunctions[i](q,discreteVars,initTime,1)
     oldsignValue[i,1]=output[1] #sign
     oldsignValue[i,2]=output[2] #value
@@ -80,7 +80,7 @@ function QSS_integrate(::Val{1}, s::QSS_simulator, settings::ProblemSetting,prob
   t = initTime
   if savetimeincrement == 0
     while t < ft
-      sch = updateScheduler(counter,nextStateTime,nextEventTime)
+      sch = updateScheduler(nextStateTime,nextEventTime)
       t = sch[2]
       index = sch[1]
 
@@ -121,10 +121,10 @@ function QSS_integrate(::Val{1}, s::QSS_simulator, settings::ProblemSetting,prob
     end #end while
   else
     while t < ft
-      sch = updateScheduler(counter,nextStateTime,nextEventTime)
+      sch = updateScheduler(nextStateTime,nextEventTime)
       t = sch[2]
       index = sch[1]
-      if sch[3] ==1
+      if sch[3] ==:ST_STATE
         #decide here on type state or event
         # if state ----------------------------------------------------------
 
@@ -170,7 +170,7 @@ function QSS_integrate(::Val{1}, s::QSS_simulator, settings::ProblemSetting,prob
            # println("index SZ= ",index)
             j = SZ[index,i] # zc function number j depends on x[index]
             #normally and later i should update q (integrate q=q+e derQ  for higher orders)
-            computeNextEventTime(elapsed,counter,solver,j,zcFunctions,oldsignValue,dt,t,  nextEventTime, q,discreteVars,tq,x, quantum)
+            computeNextEventTime(elapsed,counter,solver,j,zcFunctions,oldsignValue,dt,t,  nextEventTime, q,discreteVars,tq,x, quantum)  #inside this fun zc is evaluated
             #println("there is a state var that influenced zc ")
           end  
         end
@@ -179,9 +179,9 @@ function QSS_integrate(::Val{1}, s::QSS_simulator, settings::ProblemSetting,prob
         #if event
     else
       #if sch[3]==2
-        println("handling event ",index," at time= ",t)
+       # println("handling event ",index," at time= ",t)
         eventHandlerFunctions[index](q,discreteVars,tq)
-        nextEventTime[index]=Inf
+        nextEventTime[index]=Inf   
         for i = 1:size(HD,1)  # n rows
               for k=1:size(HD,2)
                 if HD[i,k] != 0
