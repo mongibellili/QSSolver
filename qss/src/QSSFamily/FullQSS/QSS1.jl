@@ -34,7 +34,7 @@ function computeNextEventTime(elapsed,counter,solver,j,zcFunctions,oldsignValue,
     end
     counter[1]-=1
   else
-    nextEventTime[j] = Inf
+    nextEventTime[j] = Inf  #later we can estimate the time
   
     
   #  println("newoutput2= ",newOutput[2])

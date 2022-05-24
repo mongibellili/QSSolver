@@ -1,5 +1,5 @@
 
- function updateScheduler(counter,nextStateTime::MVector{T,Float64},nextEventTime :: MVector{Z,Float64} )where{T,Z}   
+ function updateScheduler(nextStateTime::MVector{T,Float64},nextEventTime :: MVector{Z,Float64} )where{T,Z}   
     
     # which is faster? finding the minimum or implementing a priority queue
     minStateTime=Inf
@@ -23,17 +23,38 @@
 
 
 
-    if minState_index==0 
+#=     if minState_index==0 
         println(" static system! all derivatives are null!")
         return (1,minTime) # later throw exception or maybe draw horizontal lines at initial conditions
-    end 
+    end  =#
     if minEventTime<minStateTime
        # println("an event N",minEvent_index, "about to occur! at time= ",minEventTime)
-        return (minEvent_index,minEventTime,ST_EVENT)
+        return (minEvent_index,minEventTime,:ST_EVENT)
     else
-        return (minState_index,minStateTime,ST_STATE)
+        return (minState_index,minStateTime,:ST_STATE)
     end
 
 
     
+end
+
+
+function updateScheduler(nextStateTime::MVector{T,Float64} )where{T}   
+    minTime=Inf
+    min_index=0  # what if all nextstateTime= Inf ...especially at begining????? min_index stays 0!!!
+
+    for i=1:T
+        if nextStateTime[i]<minTime
+            minTime=nextStateTime[i]
+            min_index=i
+        end
+    end
+#=     mintimevalue[1]=minTime
+    minIndex[1]=min_index =#
+
+    if min_index==0
+        println(" static system! all derivatives are null!")
+        return (1,minTime) # later throw exception or maybe draw horizontal lines at initial conditions
+    end 
+    (min_index,minTime)
 end

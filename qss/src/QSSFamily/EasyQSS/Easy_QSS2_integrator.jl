@@ -1,6 +1,6 @@
 #using TimerOutputs
 
-function QSS_integrate(::Val{2}, s::EasyQSS_simulator, settings::ProblemSetting,prob::easyqssProblem)
+function QSS_integrate(::Val{2}, s::EasyQSS_data, settings::ProblemSetting,prob::easyqssProblem)
   ft = settings.finalTime
   initTime = settings.initialTime
   relQ = settings.dQrel
