@@ -1,10 +1,4 @@
 
-module smallqss
-using StaticArrays
-using SymEngine
-using InteractiveUtils
-
-
 #abstract type  AbstractEventHandler end
 struct EventHandlerStruct{T,D} #<: AbstractEventHandler
     id::Int
@@ -22,7 +16,7 @@ struct ODEProblem{T,D,Z,Y}
     inputVars::SVector{T,Float64} 
     ZC_jacobian::SVector{Z,SVector{T,Float64}}  
     ZC_jacDiscrete::SVector{Z,SVector{D,Float64}} 
-    ZCinputVars::SVector{Z,Float64} 
+    ZCinputVars::SVector{Z,Float64}   # in case input signal are function of t...use SVector{Z,Function} and create a different struct 
     eventHandlers::SVector{Y,EventHandlerStruct}
 end
 
@@ -183,90 +177,23 @@ end
               end
 
 
-       structposEvent=smallqss.EventHandlerStruct(indexPosEv,posEv_conArr,posEv_disArr)
+       structposEvent=EventHandlerStruct(indexPosEv,posEv_conArr,posEv_disArr)
        push!(evsArr,structposEvent)
-       structnegEvent=smallqss.EventHandlerStruct(indexNegEv,negEv_conArr,negEv_disArr)
+       structnegEvent=EventHandlerStruct(indexNegEv,negEv_conArr,negEv_disArr)
        push!(evsArr,structnegEvent)
      
 
     end  # end for that parses all if-statments 
-     #------------------instantiate the struct
-     #eq=smallqss.Equ(contVars,discrVars,jac,jacDiscrete,inputVars)
+
      Y=2*Z
      eventHandlers=SVector{Y,EventHandlerStruct}(evsArr)  # 2*Z each zc yields 2 events
     #println(eventHandlers)
     ZCinputVars=SVector{Z,Float64}(ZC_inpuVarArr)
-    #ZC_data=smallqss.ZC_struct(ZC_jac,ZC_jacDiscrete,ZCinputVars)
 
-    myodeProblem=smallqss.ODEProblem(contVars,discrVars,jac,jacDiscrete,inputVars,ZC_jac,ZC_jacDiscrete,ZCinputVars, eventHandlers)
+    #based on the type of the problem after a different user input call the appropriate struct
+    myodeProblem=ODEProblem(contVars,discrVars,jac,jacDiscrete,inputVars,ZC_jac,ZC_jacDiscrete,ZCinputVars, eventHandlers)
 
     myodeProblem
     
     
  end
- 
-
-function solve(mypr::ODEProblem) 
-    jac=mypr.jacobian
-    u=mypr.initConditions
-    d=mypr.discreteVars
-    discJac=mypr.discreteJacobian
-    inpVar=mypr.inputVars
-    zc_jac=mypr.ZC_jacobian
-    ZC_discJac=mypr.ZC_jacDiscrete
-    ZC_input=mypr.ZCinputVars
-    evHandlr=mypr.eventHandlers
-#=     println(ZC_discJac)
-    println(ZC_input)
-    println(evHandlr) =#
-    #for k=1:100
-        for index=1:length(u)
-      # index=3
-            computeDerivative(index,jac,u,d,discJac,inpVar)
-
-        end
-    #end
-end 
-function computeDerivative(index::Int,jacobian::SVector{T,SVector{T,Float64}},u ::SVector{T,Float64} , d::MVector{D,Float64},  discJac::SVector{T,SVector{D,Float64}} ,inputVars::SVector{T,Float64} ) where {T,D} 
-       der= 0.0
-       for j = 1:T
-         der += jacobian[index][j] * u[j] 
-       end
-       for j = 1:D
-         der += discJac[index][j]*d[j]
-       end
-       der+=  inputVars[index]
-       display(der);println()
-end 
-
-end #end module
-#--------------------------user space--------------------
-using StaticArrays
-using BenchmarkTools
-
- myProb=smallqss.@odeProblem(begin
-    u=[1.0,2.0,0.5] 
-    d=[1.0,0.5]
-    du1=u2+2.0     # du1....2 are expected to be in order....later can fix this
-    du2=-u1-u2
-    du3=u3+u2+d1
-    if u1+0.7 >0 
-        d1=0.1
-    else
-        d1=1.0
-    end
-    if u2+d1 >0 
-        d2=0.33
-        u3=2.2
-    else
-        d2=1.0
-    end
-end) 
-
-
-display(myProb);println() 
-
-#= display((myEqua));println() 
-smallqss.solve(myEqua) =#
-
- #smallqss.solve(myProb)

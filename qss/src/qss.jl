@@ -1,17 +1,18 @@
 module qss
 
-
+    using SymEngine
     using StaticArrays 
     #using TimerOutputs
     # list of public (API) to the user, not between files as those are linked as if in one file
     export ProblemSettings,QSS_Problem,QSS_Solve ,  qss1,qss2,qss3,liqss,liqss2,saveat
-    export @equations
+    export @odeProblem
     #Utils
     include("Utils/SimUtils.jl")
     
     
     #QSSFamily/common/
     include("QSSFamily/Common/ProblemSettings.jl")
+    include("QSSFamily/Common/QSSProblem.jl")
     include("QSSFamily/Common/QSS_Problem.jl")
     include("QSSFamily/Common/QSS_data.jl")
     include("QSSFamily/Common/Scheduler.jl")
@@ -25,7 +26,7 @@ module qss
     
    
 
-
+#= 
     #QSSFamily/FullQSS/
   
     include("QSSFamily/FullQSS/QSS1_integrator.jl")
@@ -41,7 +42,7 @@ module qss
       #QSSFamily/MediumQSS/ No jacobian
       
       include("QSSFamily/MediumQSS-NoJac/NoJac-Medium_QSS1_integrator.jl")
-      include("QSSFamily/MediumQSS-NoJac/NoJac-Medium_QSS1.jl")
+      include("QSSFamily/MediumQSS-NoJac/NoJac-Medium_QSS1.jl") =#
     
       #QSSFamily/NormalQSS/ jacobian not provided
 

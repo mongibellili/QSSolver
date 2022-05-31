@@ -29,7 +29,10 @@ push!(r[1],0)
 @show typeof(t);println()
 #display(s)
 =# =#
-
+#= n1=rand(5)
+display(n1)
+n1[1]=0
+display(n1) =#
 
 ########################################Svectors##########################################
 #= v1 = SVector(0)
@@ -125,6 +128,16 @@ v6 = @MVector rand(Float64, 40)
 display(typeof(v1));println()
 v1[1]=2.0
 display(v1);println() =#
+v = @SVector[1,2,3]
+println(isbits(v))
+#= println(typeof(v))
+w=Array(v)
+println(typeof(w))
+display(w)
+v[1]=12
+display(w) =#
+#= u=reinterpret(Float32, w')
+println(typeof(u)) =#
 
 ########################################SMatrix#########################################
 #2×2 SMatrix{2, 2, Int64, 4} 
@@ -152,10 +165,10 @@ display(quantum)  =#
 v3[1]-=1
 display(v3) =#
 
-m1 = MMatrix{2,2}(zeros(4))
+#= m1 = MMatrix{2,2}(zeros(4))
 
 m1[1,1]=-1.0
 m1[1,2]=2.12
 m1[2,1]=1.0
 m1[2,2]=23.2312
-display(m1)
+display(m1) =#

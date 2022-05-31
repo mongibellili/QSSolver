@@ -73,24 +73,5 @@ function QSS_Problem(initConditions ::SVector{T,Float64}  ,jacobian::SMatrix{T,T
 end
 
 
-macro equations(schema)
-    Base.remove_linenums!(schema)
-    #rhs=:($schema).args[1].args[2]
-    v=[]
-    #j=0
-    for i=1:length(schema.args) 
-        code2=(quote  
-                        j=($i)
-                        #@inline 
-                        #scope=@__MODULE__ #__module__
-                        function f(::Val{j},u::MVector{R,Float64}) where {R}
-                         $(:($schema).args[:($i)].args[2])
-                         # esc(:($schema).args[:($i)].args[2])
-                       end
-               end)
-        push!(v,code2)      
-    end
-       esc(Expr(:block,v...))   
-end
 
 
