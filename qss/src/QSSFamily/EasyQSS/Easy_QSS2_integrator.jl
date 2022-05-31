@@ -20,13 +20,13 @@ function QSS_integrate(::Val{2}, s::EasyQSS_data, settings::ProblemSetting,prob:
   savetime = savetimeincrement
   #dep = createDependencyMatrix(jacobian)
   #jacobian=modifyJacobian(jacobian) #either modify to transpose or create svector of svectors...to be used inside compute derivatives
-  jacobian = modifyJacobian(jacobian)
+  #jacobian = modifyJacobian(jacobian)
   #display(jacobian);println()
   #jacobian= SMatrix{2,2,Float64}(transpose(jacobian)) #change workshop when removed. the test showed bad performance but it might be worth it for large jacobians
-  dep = createDependencyMatrix(jacobian)
+  #dep = createDependencyMatrix(jacobian)
   #dep=((2),(1, 2))
   #dep=[[2],[1, 2]]
-  #dep= @SVector[[0,2],[1,2]]
+  dep= @SVector[[0,2],[1,2]]
   #=   display(dep);println()
     display(typeof(dep));println() =#
   arr = []

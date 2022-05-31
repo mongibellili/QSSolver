@@ -1,41 +1,62 @@
  using BenchmarkTools
 using StaticArrays
+using SymEngine
 using qss
 
-function MediumqssApproachInitialInside() 
-    initConditions=@SVector[1.0,2.0]
-   SD=@SMatrix[2 0;1 2] 
+#= function normalQSS() 
+
    psettings = ProblemSettings(5.0,saveat(0.1),qss1())
-   prob = QSS_Problem(initConditions,SD)  
-   sol=QSS_Solve(psettings,prob)   
+   myProb=@odeProblem(begin
+        u=[1.0,2.0,0.5] 
+        d=[1.0,0.5]
+        du1=u2+2.0     # du1...2...N are expected to be in order....later can fix this
+        du2=-u1-u2
+        du3=u3+u2+d1
+        if u1+0.7 >0 
+            d1=0.1
+        else
+            d1=1.0
+        end
+        if u2+d1 >0 
+            d2=0.33
+            u3=2.2
+        else
+            d2=1.0
+        end
+    end)  
+   sol=QSS_Solve(psettings,myProb)   
 end
-myExp=@equations begin 
-    du[1]=u[2] 
-    du[2]=-u[1]-u[2] 
-   # du[3]=u[3]+u[2]
-end 
-#= function funcX1(q::MVector{R,Float64} ,tq::MVector{T,Float64} ,order::Int)where{R,T}
-    q[2]
-  end
-  function funcX2(q::MVector{R,Float64} ,tq::MVector{T,Float64} ,order::Int)where{R,T} 
-   -q[1]-q[2]
-  end =#
-
-@btime MediumqssApproachInitialInside() 
-#MediumqssApproachInitialInside() 
 
 
+#@btime normalQSS() 
+normalQSS() 
+ =#
+ function normalQSS() 
 
-
-
-
-
-
-
-
-
-#A=[3 -2; 2 -2]; initcond=[1,1]
-#anal sol1=(2/3) *exp(2x)+(1/3) *exp(-x)
-#analy sol2=(1/3) *exp(2x)+(2/3) *exp(-x)
-#= f(x) = (1/3) *exp(2x)+(2/3) *exp(-x)
-display(plot!(f, 0, 3))=#
+    psettings = ProblemSettings(5.0,saveat(0.1),qss1())
+    myProb=@odeProblem(begin
+         u=[1.0,2.0,0.5] 
+         d=[1.0,0.5]
+         du1=u3-u2+2.0     # du1...2...N are expected to be in order....later can fix this
+         du2=-u1-3u2-d1+t
+         du3=u3+u2+d1+d2
+         if u1+0.7+d2 >0   #still have not added 'usercode checking'....throw error msg
+             d1=0.1
+         else
+             d1=1.0
+             u2=4.5
+         end
+         if u2+d1 >0 
+             d2=0.33
+             u3=2.2
+         else
+             d2=1.0
+         end
+     end)  
+    sol=QSS_Solve(psettings,myProb)   
+ end
+ 
+ 
+ #@btime normalQSS() 
+ normalQSS() 
+ 
