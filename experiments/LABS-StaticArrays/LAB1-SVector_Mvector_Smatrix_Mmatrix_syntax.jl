@@ -1,5 +1,11 @@
 
 using StaticArrays
+
+#= display(x->!iszero(x))
+
+A = [1, 2, 5, 6]
+println(findfirst(iseven, A))
+println(findfirst(x->!iszero(x), A)) =#
 ########################################Normal vectors##########################################
 #= l=Array[] #Vector{Array}
 m=Float64[]# Vector{Float64}
@@ -33,13 +39,22 @@ push!(r[1],0)
 display(n1)
 n1[1]=0
 display(n1) =#
-
+#= o= Array{Float64}(NaN,1)# Vector{Float64}
+@show (o);println()
+@show typeof(o);println() =#
 ########################################Svectors##########################################
+#= vect=[1,2,3]
+v4=SVector{3,Int}(vect)
+#display(v4);println()
+vect[1]=55
+display(v4[0]);println()
+#display(vect)
+display(isbits(v4)) =#
 #= v1 = SVector(0)
 display(typeof(v1));println()
 display(v1[1]);println() =#
-#= v1=SVector{0,Int}()
-display(typeof(v1));println() =#
+#v1=SVector{1,Int}()  #cannot `convert` an object of type Tuple{} to an object of type Int64
+#display(typeof(v1));println()
 
 #display(v1[1]);println()
 #= 
@@ -109,27 +124,32 @@ w(t)=2-t
 v4=SVector{3,Function}(u,v,w)
 display(v4[1](3)) =#
 ######################################## MVector #########################################
-#= v1 = MVector(1,2,3)
-#display(v1);println()
-display(typeof(v1));println()
+vect=(1,2,3) #or [1,2,3]
+vect1=[1.0,2.0,3.0]
+vect2=[1,2,5]
+############v1 = MVector(1,2,3)
+v1 = MVector(vect1)  #LoadError: The size of type `MVector` is not known
+display(v1);println()
+#display(typeof(v1));println()
 v2 = @MVector [1,2,3]
 #display(v2);println()
 v3=MVector{3,Int}(1,2,3)
 #display(v3);println()
-vect=(1,2,3) #or [1,2,3]
 v4=MVector{3,Int}(vect)
 #display(v4);println()
 v5 = @MVector zeros(3) #Float64
 #display(v5);println()
-v6 = @MVector rand(Float64, 40)
+#v6 = @MVector rand(Float64, 3)
+
+
 #display(typeof(v6));println()
-#display(v6) =#
+#display(v6) 
 #= v1 = MVector{2,Float64}(undef)
 display(typeof(v1));println()
 v1[1]=2.0
-display(v1);println() =#
-v = @SVector[1,2,3]
-println(isbits(v))
+display(v1);println()
+#= v = @SVector[1,2,3]
+println(isbits(v)) =#
 #= println(typeof(v))
 w=Array(v)
 println(typeof(w))
@@ -172,3 +192,4 @@ m1[1,2]=2.12
 m1[2,1]=1.0
 m1[2,2]=23.2312
 display(m1) =#
+

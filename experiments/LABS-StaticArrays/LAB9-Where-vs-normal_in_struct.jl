@@ -4,8 +4,8 @@ using BenchmarkTools
 
 
 #TP9: compare stack-fetch vs heap-fetch via vectors and svectors in immutable structs
-struct unknownDataM
-  x::MVector{N,Float64} where {N}  
+struct unknownDataM{N}
+  x::MVector{N,Float64} #where {N}  
   y::Int
 end
 
@@ -51,13 +51,13 @@ n=5
 v1=rand(n)
 v2 =  @MVector rand(n)
 #@btime DataNormal(v1, 5)
-#@btime DataM(v1, 5)
+@btime DataM(v1, 5)
 #@btime unknownDataM(v2, 5)
 
 #@btime testknownM(v1)
 #@btime testknownM(v2)
-@btime testNormal(v1)
-@btime testUnknownDataM(v2)
+#@btime testNormal(v1)
+#@btime testUnknownDataM(v2)
 
 
 

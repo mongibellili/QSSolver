@@ -1,13 +1,4 @@
-function permutations(array,n)
-    exp = quote
-        l = []
-        @nloops $n i _ -> 1:length($array) begin
-            idx =[@ntuple($n,i)...]
-            push!(l,$array[idx])
-        end
-        l
-    end
-    eval(exp)
-end
-
-permutations("ACTG",2)
+integratorCache=zcf[i](q,d,initTime + t,taylorOpsCache) #test this evaluation
+oldsignValue[i,2]=integratorCache.coeffs[1] #value
+oldsignValue[i,1]=sign(integratorCache.coeffs[1]) #sign modify 
+computeNextEventTime(i,integratorCache,oldsignValue,initTime,  nextEventTime, quantum)
