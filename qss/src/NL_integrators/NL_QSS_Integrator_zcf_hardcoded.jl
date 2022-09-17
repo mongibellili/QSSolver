@@ -1,33 +1,25 @@
 #using TimerOutputs
 function QSS_integrate(::Val{O}, s::QSS_data, odep::NLODEProblem,f::Function) where {O}
-  # reset_timer!()
 #*********************************settings*****************************************
 printCounter=[0,0]#vector{Int}
 ft = s.finalTime
 initTime = s.initialTime
 relQ = s.dQrel
 absQ = s.dQmin
-#solver = s.solver
 savetimeincrement=s.savetimeincrement
 #*********************************qss method data*****************************************
 quantum = s.quantum
-#order=s.order
 nextStateTime = s.nextStateTime
 nextEventTime = s.nextEventTime
 nextInputTime = s.nextInputTime
 tx = s.tx
 tq = s.tq
 x = s.x
-#derx=s.derx
 q = s.q
-
 t=s.t
 integratorCache=s.integratorCache
 taylorOpsCache=s.taylorOpsCache
 cacheSize=odep.cacheSize
-#=    x=Taylor0{Float64}[]
-q=Taylor0{Float64}[] =#
-#println("no more resize")
 #*********************************problem info*****************************************
 initConditions = odep.initConditions
 d = odep.discreteVars
@@ -39,7 +31,6 @@ zc_jac = odep.ZC_jacobian
 ZC_discJac = odep.ZC_jacDiscrete
 #-----------to execute event Dependencys
 evDep = odep.eventDependencies
-
 #********************************helper values*******************************
 numDiscr = length(d)
 states = length(initConditions)
@@ -47,10 +38,8 @@ numberZC=size(zc_jac, 1)
 numEvents=numberZC*2   #each zero crossing has 1 posEv and 1 negEv
 savetime = savetimeincrement
 oldsignValue = MMatrix{numberZC,2}(zeros(numberZC*2))  #usedto track if zc changed sign; each zc has a value and a sign 
-
 #*******************************create dependencies**************************$$
 SD = createDependencyMatrix(jacobian)
-#SD=odep.SD
 dD =createDependencyMatrix(discJac) # temp dependency to be used to determine HD1 and HZ1 HD=Hd-dD Union Hs-sD
 SZ =createDependencyMatrix(zc_jac) 
 dZ =createDependencyMatrix(ZC_discJac) # temp dependency to be used to determine HD2 and HZ2
@@ -59,38 +48,22 @@ HZ2HD2=createDependencyToEventsCont(SD,SZ,evDep)
 HZ=unionDependency(HZ1HD1[1],HZ2HD2[1])
 HD=unionDependency(HZ1HD1[2],HZ2HD2[2])
 
-#= HD=odep.HD
-SZ=odep.SZ
-HZ=odep.HZ =#
-
-
 #=   println("SD= ",SD)
 println("SZ= ",SZ)
 println("HZ= ",HZ)
 println("HD= ",HD) =#
-
-
-#@show odep.eqs
-#f=@RuntimeGeneratedFunction(odep.eqs)
-
-
-#@show f
+#= 
 zcf = Vector{Function}()
 for i = 1:length(odep.zceqs)# later change to numberZC
   push!(zcf, @RuntimeGeneratedFunction(odep.zceqs[i].args[2])) #args[2] cuz there is extra stuff
 end
-#@show zcf
+@show zcf =#
 eventf = Vector{Function}()
 for i = 1:length(odep.eventEqus)# later change to numEvents
   push!(eventf, @RuntimeGeneratedFunction(odep.eventEqus[i].args[2])) 
 end
 #@show eventf
 #*********************************  initialize          *****************************************
-#= t = Taylor0(order)
-integratorCache=Taylor0(zeros(order),order) #for integratestate only =#
-
-
-
 savedVars=s.savedVars
 savedTimes=s.savedTimes
   #*************************************initialize************************************
@@ -154,7 +127,8 @@ end
 #println("before zc who is resizing?")
 for i=1:numberZC
   clearCache(taylorOpsCache,cacheSize)
-  output=zcf[i](x,d,t,taylorOpsCache).coeffs[1] #test this evaluation
+  zcf(i,x,d,t,taylorOpsCache)
+  output=taylorOpsCache[1].coeffs[1] #test this evaluation
   oldsignValue[i,2]=output #value
   oldsignValue[i,1]=sign(output) #sign modify 
   computeNextEventTime(i,output,oldsignValue,initTime,  nextEventTime, quantum,printCounter)
@@ -252,7 +226,8 @@ while simt < ft #&& printcount < 3
         clearCache(taylorOpsCache,cacheSize)
       #  println("zcf[j](x,d,t,taylorOpsCache)= ",zcf[j](x,d,t,taylorOpsCache))
        # computeNextEventTime(j,zcf[j](x,d,t,taylorOpsCache),oldsignValue,simt,  nextEventTime, quantum,printCounter)
-        computeNextEventTime(j,zcf[j](x,d,t,taylorOpsCache),oldsignValue,simt,  nextEventTime, quantum,printCounter)
+       zcf(j,x,d,t,taylorOpsCache)
+        computeNextEventTime(j,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum,printCounter)
      #   println("state: nexteventtime= ",nextEventTime)
       end  #end if j!=0
     end#end for SZ
@@ -295,8 +270,8 @@ while simt < ft #&& printcount < 3
       if j != 0             
         #normally and later i should update q (integrate q=q+e derQ  for higher orders)
         clearCache(taylorOpsCache,cacheSize)
-        
-        computeNextEventTime(j,zcf[j](q,d,t,taylorOpsCache),oldsignValue,simt,  nextEventTime, quantum,printCounter) 
+        zcf(j,q,d,t,taylorOpsCache)
+        computeNextEventTime(j,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum,printCounter) 
       end  
      # println("end input:who is resizing?")
     end
@@ -312,7 +287,8 @@ while simt < ft #&& printcount < 3
     println("d= ",d)
     println("index= ",index)
    end =#
-    if (zcf[index](x,d,t,taylorOpsCache).coeffs[1])>0       # sign is not needed here
+   zcf(index,x,d,t,taylorOpsCache)
+    if (taylorOpsCache[1].coeffs[1])>0       # sign is not needed here
       modifiedIndex=2*index-1   # the  event that just occured is at  this index
     else
       modifiedIndex=2*index
@@ -396,8 +372,8 @@ while simt < ft #&& printcount < 3
             if j != 0             
             #normally and later i should update q (integrate q=q+e derQ  for higher orders)
             clearCache(taylorOpsCache,cacheSize)
-            
-            computeNextEventTime(j,zcf[j](x,d,t,taylorOpsCache),oldsignValue,simt,  nextEventTime, quantum,printCounter)
+            zcf(j,x,d,t,taylorOpsCache)
+            computeNextEventTime(j,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum,printCounter)
           end        
     end
    
@@ -441,20 +417,20 @@ for i=1:states# throw away empty points
   resize!(savedVars[i],count)
 end
 resize!(savedTimes,count)
-(savedTimes, savedVars)
+Sol(savedTimes, savedVars)
 end#end integrate
 
 
 
 
-#= function f(j::Int,q::Vector{Taylor0{Float64}},d::Vector{Float64}, t::Taylor0{Float64},cache::Vector{Taylor0{Float64}})
+function zcf(j::Int,q::Vector{Taylor0{Float64}},d::Vector{Float64}, t::Taylor0{Float64},cache::Vector{Taylor0{Float64}})
   if j == 1
-   createT(q[2],cache[1])
+   createT(q[1],cache[1])
   return nothing
 else
-    (subT(negateT(q[1], cache[2]), q[2], cache[1]))#.coeffs
+  createT(q[1], cache[1])
    return nothing
 end
-end =#
+end
 
 #struct Solution

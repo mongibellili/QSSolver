@@ -405,6 +405,7 @@ end
 
 function divT(a::Taylor0{T}, b::T,cache1::Taylor0{T}) where {T<:Number}
   fill!(cache1.coeffs, b)
+  println("division")
   #= @inbounds aux = a.coeffs[1] / b
   v = Array{typeof(aux)}(undef, length(a.coeffs)) =#
   @__dot__ cache1.coeffs = a.coeffs / cache1.coeffs

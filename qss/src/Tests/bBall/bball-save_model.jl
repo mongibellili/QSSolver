@@ -15,6 +15,6 @@ function test()
             discrete[1]=1.0                                    
         end
     end
-    save_prob_to_model(odeprob,"/home/unknown/outsideTestfor_qss/BBall.jl")        
+    save_prob_to_model(odeprob,"/home/unknown/QS_Solver/qss/src/models/BBall.jl")        
 end
 test()

@@ -1,53 +1,23 @@
-
-
-#= function getcoeffs(expr::Expr)
-  smbl=Symbol(expr,:[k])
-  str=String(smbl)
-  myexpr=Meta.parse(str)
-  return myexpr
-end
-macro tayArth2(expr)
-  lhsrhs=postwalk(x -> x isa Expr && x.head == :ref && x.args[1] != :d ? getcoeffs(x) : x, expr)
-  computedExpr=quote
-                  for k=0:2
-                           $lhsrhs
-                          # println($lhsrhs)
-                   end
-              end
-  esc(computedExpr)
-end =#
-
-
-@inline function integrateState(::Val{2}, x::Taylor0{Float64},cacheT::Taylor0{Float64},elapsed::Float64)
+@inline function integrateState(::Val{2}, x::Taylor0{Float64},cacheT::Taylor0{Float64},elapsed::Float64) #@inline increased performance
   x.coeffs[1] = x(elapsed)
   differentiate!(cacheT,x)
   x.coeffs[2] = cacheT(elapsed)
-  cacheT.coeffs.=0.0 #clear cache
+  #cacheT.coeffs.=0.0 #clear cache
 end
-# later improve cases where no compatible
-#@inline #did not increase performance unlike integratestate because it contains a function (p=f(q,t)) 
-#= function integrate!(p::Taylor0{T}, a::Taylor0{T}, x::T) where {T<:Number}
-  #p.coeffs[1]=x
-  p[0]=x
-  @inbounds for i = 1:a.order# improves time: with 373ns without 545ns
-      p[i] = a[i-1] / i
-  end
-  #return nothing
-end =#   #this method is needed but when using taylor0 it exist and can be seen unlike taylo1
+
 
 function computeDerivative1( ::Val{2} ,j::Int,tq::MVector{T,Float64} ,x::Vector{Taylor0{Float64}},q::Vector{Taylor0{Float64}},d::Vector{Float64}, t::Taylor0{Float64},f::Function ,cacheT::Taylor0{Float64},simt::Float64 )where{T}
- #cacheT=f[j](q,d,t)
   cacheT=f(q,d,t)
   x[j].coeffs[2] =cacheT.coeffs[1]
   x[j].coeffs[3]=cacheT.coeffs[2]/2
    return nothing
  end
 
- function computeDerivative2( ::Val{2} ,j::Int ,x::Vector{Taylor0{Float64}},f::Taylor0{Float64}  )
+ function computeDerivative2( ::Val{2}  ,x::Taylor0{Float64},f::Taylor0{Float64}  )
   #cacheT=f[j](q,d,t)
    
-   x[j].coeffs[2] =f.coeffs[1]
-   x[j].coeffs[3]=f.coeffs[2]/2
+   x.coeffs[2] =f.coeffs[1]
+   x.coeffs[3]=f.coeffs[2]/2
     return nothing
   end
 #=  function computeDerivative2( ::Val{2} ,j::Int ,x::Vector{Taylor0{Float64}} , tt::Taylor0{Float64} ,cacheT::Taylor0{Float64},simt::Float64 )
@@ -84,15 +54,7 @@ function computeDerivative1( ::Val{2} ,j::Int,tq::MVector{T,Float64} ,x::Vector{
   #println("x$j after computeDerDER=",x)
   return nothing
 end
-function differentiate!(cache::Taylor0{Float64}, a::Taylor0{Float64})
-  for k in eachindex(cache)
-     # differentiate!(res, a, ord)
-      if k < a.order
-        @inbounds cache[k] = (k+1)*a[k+1]
-    end
-  end
-  nothing
-end
+
 
 #= function integrate!( a::Taylor0{T}, x::S) where {T<:Number,S<:Number}
     
@@ -129,7 +91,8 @@ function computeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTime::MVect
     function computeNextInputTime(::Val{2}, i::Int, currentTime::Float64,elapsed::Float64, tt::Taylor0{Float64} ,nextInputTime::Vector{Float64}, x::Vector{Taylor0{Float64}}, quantum::Vector{Float64})where{T<:Int64}
     df=0.0
     oldDerDerX=((x[i].coeffs[3])*2.0)
-    newDerDerX=(differentiate(tt).coeffs[1] )# do not put /factorial(2) cuz here we actually need derder not store the coeff
+    #newDerDerX=(differentiate(tt).coeffs[1] )# do not put /factorial(2) cuz here we actually need derder not store the coeff
+    newDerDerX=(tt.coeffs[2])
    # println("-------------------------------------------",f(q,t))
       if elapsed > 0.0
        # println("elapsed= ",elapsed) 
@@ -172,51 +135,102 @@ function computeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTime::MVect
       return nothing
   end =#
 
-  function reComputeNextTime(::Val{2}, index::Int, currentTime::Float64, nextTime::MVector{T,Float64}, x::Vector{Taylor0{Float64}},q::Vector{Taylor0{Float64}}, quantum::Vector{Float64})where{T}
-      coef=@SVector [q[index].coeffs[1] - (x[index].coeffs[1]) - quantum[index], q[index].coeffs[2]-x[index].coeffs[2],-(x[index].coeffs[3])*2]
+#=   function reComputeNextTime(::Val{2}, index::Int, currentTime::Float64, nextTime::MVector{T,Float64}, x::Vector{Taylor0{Float64}},q::Vector{Taylor0{Float64}}, quantum::Vector{Float64})where{T}
+      #coef=@SVector [q[index].coeffs[1] - (x[index].coeffs[1]) - quantum[index], q[index].coeffs[2]-x[index].coeffs[2],-(x[index].coeffs[3])*2]
      #=  println("coef[1]= ",coef[1])
       println("coef[2]= ",coef[2])
       println("coef[3]= ",coef[3]) =#
+      if  1.4387457897838291<=currentTime < 1.43874578978382928
+      @show x
+      @show q
+      @show quantum
+      end
+      coef=NTuple{3,Float64}((-(x[index].coeffs[3])*2,q[index].coeffs[2]-x[index].coeffs[2],q[index].coeffs[1] - (x[index].coeffs[1]) - quantum[index]))
       time1 = currentTime + minPosRoot(coef, Val(2))
-     # println("time1= ",time1)
-      coef=setindex(coef,q[index].coeffs[1] - (x[index].coeffs[1]) + quantum[index],1)
+      if  1.4387457897838291<=currentTime < 1.43874578978382928
+        println("currenttime= ",currentTime)
+        println("minPosRoot(coef, Val(2))= ",minPosRoot(coef, Val(2)))
+       end
+      coef=setindex(coef,q[index].coeffs[1] - (x[index].coeffs[1]) + quantum[index],3)
      # println("coef[1]= ",coef[1])
       time2 = currentTime + minPosRoot(coef, Val(2))
     #  println("time2= ",time2)
+    if  1.4387457897838291<=currentTime < 1.43874578978382928
+      println("2nd inPosRoot= ",minPosRoot(coef, Val(2)))
+     end
       nextTime[index] = time1 < time2 ? time1 : time2
+      if  1.4387457897838291<=currentTime < 1.43874578978382928
+        println("nextTime[$index]= ",nextTime[index])
+       end
       return nothing
-  end
+  end =#
  
+  function reComputeNextTime(::Val{2}, index::Int, currentTime::Float64, nextTime::MVector{T,Float64}, x::Vector{Taylor0{Float64}},q::Vector{Taylor0{Float64}}, quantum::Vector{Float64})where{T}
+    coef=@SVector [q[index].coeffs[1] - (x[index].coeffs[1]) - quantum[index], q[index].coeffs[2]-x[index].coeffs[2],-(x[index].coeffs[3])*2]
+   #=  println("coef[1]= ",coef[1])
+    println("coef[2]= ",coef[2])
+    println("coef[3]= ",coef[3]) =#
+    #= if  1.4387457897838291<=currentTime < 1.43874578978382928
+      @show x
+      @show q
+      @show quantum
+      end =#
+    time1 = currentTime + minPosRoot(coef, Val(2))
+#=     if  1.4387457897838291<=currentTime < 1.43874578978382928
+      println("currenttime= ",currentTime)
+      println("minPosRoot(coef, Val(2))= ",minPosRoot(coef, Val(2)))
+     end =#
+   # println("time1= ",time1)
+    coef=setindex(coef,q[index].coeffs[1] - (x[index].coeffs[1]) + quantum[index],1)
+   # println("coef[1]= ",coef[1])
+    time2 = currentTime + minPosRoot(coef, Val(2))
+  #  println("time2= ",time2)
+#=   if  1.4387457897838291<=currentTime < 1.43874578978382928
+    println("2nd inPosRoot= ",minPosRoot(coef, Val(2)))
+   end =#
+    nextTime[index] = time1 < time2 ? time1 : time2
+ #=    if  1.4387457897838291<=currentTime < 1.43874578978382928
+      println("nextTime[$index]= ",nextTime[index])
+     end =#
+    return nothing
+end
 
- function computeNextEventTime(j,ZCFun::Taylor0{Float64},oldsignValue,currentTime,  nextEventTime,  quantum) #later specify args
+
+
+
+
+ function computeNextEventTime(j::Int,ZCFunRes::Float64,oldsignValue,currentTime,  nextEventTime, quantum::Vector{Float64},printCounter::Vector{Int}) #later specify args
 
   #ZCFun=zcFunctions[j](q,d,tq,1) # 1 for order 1
   
   #ZCFun=ZCFun0(currentTime)
-  if oldsignValue[j,1] != sign(ZCFun.coeffs[1])
+  if oldsignValue[j,1] != sign(ZCFunRes)
     nextEventTime[j]=currentTime 
     
      #=  println("old sign of",j,"  =  ",oldsignValue[j,1])
       println("new sign of",j,"  =  ",sign(ZCFun.coeffs[1])) =#
- #=      println("from computeNextEventTime:")
+      #println("from computeNextEventTime:")
+      if printCounter[1]>0 
       println("old value of",j,"  =  ",oldsignValue[j,2])
       println("new value of",j,"  =  ",(ZCFun.coeffs[1]))
-      println("schedule event now at= ",nextEventTime[j]) =#
-      printFew[]=5
+      println("schedule event now at= ",nextEventTime[j])
+      
+      end
+      
     
   else
-    nextEventTime[j] =currentTime + minPosRoot(ZCFun.coeffs, Val(2)) #Inf  # we can estimate the time. this is important when zc depends only on time
-   # nextEventTime[j]=Inf
+   # nextEventTime[j] =currentTime + minPosRoot(ZCFun.coeffs, Val(2)) #Inf  # we can estimate the time. this is important when zc depends only on time
+    nextEventTime[j]=Inf
     
   #=   println("debug")
     println("oldsignValue= ",oldsignValue )
     println("ZCFun= ", ZCFun) =#
-#=     if printfewLocal>0
-      println("from computeNextEventTime:")
+   #=  if printCounter[1]>0 && printCounter[2] <20
+      #println("from computeNextEventTime:")
       println("nextEventTime= ",nextEventTime)
       println("ZCFun2= ",ZCFun)
      
-      global printFew[]-=1
+      printCounter[1]-=1
     end =#
   
   
@@ -224,9 +238,19 @@ function computeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTime::MVect
     
       
   end
+  oldsignValue[j,1]=sign(ZCFunRes)#update the values
+  oldsignValue[j,2]=ZCFunRes
+  
+end
+function computeNextEventTime(j::Int,ZCFun::Taylor0{Float64},oldsignValue,currentTime,  nextEventTime, quantum::Vector{Float64},printCounter::Vector{Int}) #later specify args
+  if oldsignValue[j,1] != sign(ZCFun.coeffs[1])
+    nextEventTime[j]=currentTime 
+  else
+    #nextEventTime[j] =currentTime + minPosRoot(ZCFun.coeffs, Val(2)) #Inf  # we can estimate the time. this is important when zc depends only on time   
+    nextEventTime[j]=Inf
+  end
   oldsignValue[j,1]=sign(ZCFun.coeffs[1])#update the values
   oldsignValue[j,2]=ZCFun.coeffs[1]
-  
 end
 
 

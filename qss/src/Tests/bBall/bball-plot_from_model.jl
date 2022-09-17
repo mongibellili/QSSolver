@@ -1,32 +1,28 @@
 
 
-using qss
+using qssv
 using Plots;
-gr();
-include("/home/unknown/outsideTestfor_qss/BBall.jl")# the location where you saved
+include("/home/unknown/QS_Solver/qss/src/models/BBall.jl")# the location where you saved
 function test()
     odeprob = @NLodeProblem begin
-        cacheT=10
+        k=1e+5
+        g=9.8
+        b=30.0
         u = [10.0,0.0]
         discrete = [0.0]
         du[1] =u[2]
-        du[2] =-9.8-(discrete[1])*(1e+5*u[1]+30.0*u[2])
-        if u[1]>0   #5*discrte gave error
+        du[2] =-g-(discrete[1])*(k*u[1]+b*u[2])
+        if u[1]>0   
             discrete[1]=0.0               
         else
             discrete[1]=1.0                                    
         end
     end
-    sol=QSS_Solve_from_model(f,odeprob,5.0,qss2())
-        temp1 = []
-        temp2 = []
-        for i = 1:length(sol[2][1])
-            push!(temp1, sol[2][1][i].coeffs[1])
-            push!(temp2, sol[2][2][i].coeffs[1])
-        end
-        display(plot!(sol[1], temp1))
-        display(plot!(sol[1], temp2))
-        println("done")
-        readline()
+    sol=QSS_Solve_from_model(f,odeprob,8.0,qss2())
+    x=evaluateSol(sol,1,1.0)
+    pointt=[1.0]
+    pointx=[x]
+    display(scatter(pointt, pointx,label="x1",line=(:dot, 6),color=:black))
+    plotSol(sol)
 end
 test()
