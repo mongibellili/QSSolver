@@ -44,15 +44,6 @@ unchanged).
     end
     nothing
 end =#
-function differentiate!(cache::Taylor0{Float64}, a::Taylor0{Float64})
-    for k=0:a.order-1
-       # differentiate!(res, a, ord)
-       # if k < a.order
-          @inbounds cache[k] = (k+1)*a[k+1]
-      #end
-    end
-    nothing
-  end
 
 function differentiate!(p::Taylor0, a::Taylor0, k::Int)
     if k < a.order
@@ -60,14 +51,16 @@ function differentiate!(p::Taylor0, a::Taylor0, k::Int)
     end
     return nothing
 end
-
-#= 
-"""
-    differentiate(a, n)
-
-Compute recursively the `Taylor0` polynomial of the n-th derivative of
-`a::Taylor0`. The order of the result is `a.order-n`.
-""" =#
+function differentiate!(cache::Taylor0{Float64}, a::Taylor0{Float64})
+    for k=0:a.order-1
+       # differentiate!(res, a, ord)
+       # if k < a.order
+          @inbounds cache[k] = (k+1)*a[k+1]
+      #end
+    end
+    cache[a.order]=0.0
+    nothing
+end
 function differentiate(a::Taylor0{T}, n::Int) where {T <: Number}
     if n > a.order
         return Taylor0(T, 0)
@@ -81,6 +74,21 @@ function differentiate(a::Taylor0{T}, n::Int) where {T <: Number}
         return Taylor0(view(res.coeffs, 1:a.order-n+1))
     end
 end
+function ndifferentiate!(cache::Taylor0{Float64},a::Taylor0{T}, n::Int) where {T <: Number}
+    if n > a.order
+        cache.coeffs.=0.0
+    elseif n==0
+        cache.coeffs.=a.coeffs
+    else
+        differentiate!(cache,a)
+        for i = 2:n
+            differentiate!(cache, cache)
+        end
+        #return Taylor0(view(res.coeffs, 1:a.order-n+1))
+    end
+end
+
+
 
 #= """
     differentiate(n, a)

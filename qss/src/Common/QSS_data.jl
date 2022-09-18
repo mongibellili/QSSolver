@@ -55,16 +55,16 @@ function save_prob_to_model(prob::NLODEProblem{T,D,Z,Y},path::String,modelName::
      end
 end
 
-function QSS_Solve_from_model(f::Function,prob::NLODEProblem{T,D,Z,Y},finalTime::Float64,::Val{V},initialTime::Float64,dQmin::Float64,dQrel::Float64,savetimeincrement::Float64) where {T,D,Z,Y,V}
-    QSS_Unique_Solve(f,prob,finalTime,Val(V),initialTime,dQmin,dQrel,savetimeincrement)
+function QSS_Solve_from_model(f::Function,prob::NLODEProblem{T,D,Z,Y},finalTime::Float64,::Val{V},savetimeincrement::Float64,initialTime::Float64,dQmin::Float64,dQrel::Float64) where {T,D,Z,Y,V}
+    QSS_Unique_Solve(f,prob,finalTime,Val(V),savetimeincrement,initialTime,dQmin,dQrel)
 end
 
-function QSS_Solve(prob::NLODEProblem{T,D,Z,Y},finalTime::Float64,::Val{V},initialTime::Float64,dQmin::Float64,dQrel::Float64,savetimeincrement::Float64) where {T,D,Z,Y,V}
+function QSS_Solve(prob::NLODEProblem{T,D,Z,Y},finalTime::Float64,::Val{V},savetimeincrement::Float64,initialTime::Float64,dQmin::Float64,dQrel::Float64) where {T,D,Z,Y,V}
      f=@RuntimeGeneratedFunction(prob.eqs)
-     QSS_Unique_Solve(f,prob,finalTime,Val(V),initialTime,dQmin,dQrel,savetimeincrement)
+     QSS_Unique_Solve(f,prob,finalTime,Val(V),savetimeincrement,initialTime,dQmin,dQrel)
  end
  
-function QSS_Unique_Solve(f::Function,prob::NLODEProblem{T,D,Z,Y},finalTime::Float64,::Val{V},initialTime::Float64,dQmin::Float64,dQrel::Float64,savetimeincrement::Float64) where {T,D,Z,Y,V}    
+function QSS_Unique_Solve(f::Function,prob::NLODEProblem{T,D,Z,Y},finalTime::Float64,::Val{V},savetimeincrement::Float64,initialTime::Float64,dQmin::Float64,dQrel::Float64) where {T,D,Z,Y,V}    
      order=getOrderfromSolverMethod(Val(V))# this is to make a difference b/w qss1 and liqss1 but if performance then have qss_solve for liqss?
      quantum =  zeros(T)
      x = Vector{Taylor0{Float64}}(undef, T)
@@ -76,6 +76,7 @@ function QSS_Unique_Solve(f::Function,prob::NLODEProblem{T,D,Z,Y},finalTime::Flo
      nextEventTime=@MVector zeros(Z)
      t = Taylor0(zeros(order + 1), order)
      t[1]=1.0
+     t[0]=initialTime
      integratorCache=Taylor0(zeros(order+1),order) #for integratestate only
      sizehint=floor(Int64, 1.0+(finalTime/savetimeincrement)) ## this number can be found from ft and saveat (ft/saveat=5/0.1=50)+1 and maybe *2/3 factor (time can jump past a saving time) of user or default saveat if not provided
      savedVars = Vector{Array{Taylor0{Float64}}}(undef, T)# has to be vector (not SA) cuz to be resized in integrator
@@ -114,30 +115,40 @@ function QSS_Unique_Solve(f::Function,prob::NLODEProblem{T,D,Z,Y},finalTime::Flo
      #return nothing be careful to add this
  end
  
+ function QSS_Solve(prob::NLODEProblem{T,D,Z,Y},finalTime::Float64,::Val{V},savetimeincrement::Float64) where {T,D,Z,Y,V}
+    initialTime=0.0;dQmin=1e-6;dQrel=1e-3
+    QSS_Solve(prob,finalTime,Val(V),savetimeincrement,initialTime,dQmin,dQrel)
+end
+
 function QSS_Solve(prob::NLODEProblem{T,D,Z,Y},finalTime::Float64,::Val{V}) where {T,D,Z,Y,V}
     initialTime=0.0;dQmin=1e-6;dQrel=1e-3;savetimeincrement=0.1
-    QSS_Solve(prob,finalTime,Val(V),initialTime,dQmin,dQrel,savetimeincrement)
+    QSS_Solve(prob,finalTime,Val(V),savetimeincrement,initialTime,dQmin,dQrel)
 end
 function QSS_Solve(prob::NLODEProblem{T,D,Z,Y},finalTime::Float64) where {T,D,Z,Y}
     initialTime=0.0;dQmin=1e-6;dQrel=1e-3;savetimeincrement=0.1
-    QSS_Solve(prob,finalTime,Val(1),initialTime,dQmin,dQrel,savetimeincrement)
+    QSS_Solve(prob,finalTime,Val(1),savetimeincrement,initialTime,dQmin,dQrel)
 end
 function QSS_Solve(prob::NLODEProblem{T,D,Z,Y}) where {T,D,Z,Y}
     initialTime=0.0;dQmin=1e-6;dQrel=1e-3;savetimeincrement=0.1;finalTime=5.0
-    QSS_Solve(prob,finalTime,Val(1),initialTime,dQmin,dQrel,savetimeincrement)
+    QSS_Solve(prob,finalTime,Val(1),savetimeincrement,initialTime,dQmin,dQrel)
 end
+
+function QSS_Solve_from_model(f::Function,m::NLODEProblem{T,D,Z,Y},finalTime::Float64,::Val{V},savetimeincrement::Float64) where {T,D,Z,Y,V}
+    initialTime=0.0;dQmin=1e-6;dQrel=1e-3
+    QSS_Solve_from_model(f,m,finalTime,Val(V),savetimeincrement,initialTime,dQmin,dQrel)
+    end
 
 function QSS_Solve_from_model(f::Function,m::NLODEProblem{T,D,Z,Y},finalTime::Float64,::Val{V}) where {T,D,Z,Y,V}
 initialTime=0.0;dQmin=1e-6;dQrel=1e-3;savetimeincrement=0.1
-QSS_Solve_from_model(f,m,finalTime,Val(V),initialTime,dQmin,dQrel,savetimeincrement)
+QSS_Solve_from_model(f,m,finalTime,Val(V),savetimeincrement,initialTime,dQmin,dQrel)
 end
 function QSS_Solve_from_model(f::Function,m::NLODEProblem{T,D,Z,Y},finalTime::Float64) where {T,D,Z,Y}
 initialTime=0.0;dQmin=1e-6;dQrel=1e-3;savetimeincrement=0.1
-QSS_Solve_from_model(f,m,finalTime,Val(1),initialTime,dQmin,dQrel,savetimeincrement)
+QSS_Solve_from_model(f,m,finalTime,Val(1),savetimeincrement,initialTime,dQmin,dQrel)
 end
 function QSS_Solve_from_model(f::Function,m::NLODEProblem{T,D,Z,Y}) where {T,D,Z,Y}
 initialTime=0.0;dQmin=1e-6;dQrel=1e-3;savetimeincrement=0.1;finalTime=5.0
-QSS_Solve_from_model(f,m,finalTime,Val(1),initialTime,dQmin,dQrel,savetimeincrement)
+QSS_Solve_from_model(f,m,finalTime,Val(1),savetimeincrement,initialTime,dQmin,dQrel)
 end
 
 

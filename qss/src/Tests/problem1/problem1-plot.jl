@@ -7,14 +7,15 @@ function test()
         du[1] = u[2]
         du[2] =-u[1]-u[2]
     end
-   sol = QSS_Solve(odeprob,2.0,qss2())
-#=   x=evaluateSol(sol,1,1.0)
+   sol = QSS_Solve(odeprob,2.0,liqss1())
+  x=evaluateSol(sol,1,1.0)
   pointt=[1.0]
   pointx=[x]
   display(scatter(pointt, pointx,label="x1",line=(:dot, 6),color=:black))
-   plotSol(sol) =#
+   plotSol(sol)
 
 
    
 end
+
 test()

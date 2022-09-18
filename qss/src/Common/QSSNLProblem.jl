@@ -116,7 +116,7 @@ macro NLodeProblem(odeExprs)
                 end 
                 ifexpr=quote
                     function  $(Symbol(:g_, 2))(q::Vector{Taylor0{Float64}},d::Vector{Float64}, t::Taylor0{Float64},cache::Vector{Taylor0{Float64}})
-                        $(x.args[1].args[2])
+                        $(x.args[1].args[2]) # no need to do twoInone again rhs is already changed inside
                     end 
                 end    
                 push!(zcequs,ifexpr)      
@@ -206,12 +206,12 @@ macro NLodeProblem(odeExprs)
     if size(jac,1)==T && length(jac[1])==T
          staticJac = SVector{T,SVector{T,Basic}}(tuple(jac...))
     else
-        error("dimension mismatch jac= ",jac," please file report the bug")
+        error("dimension mismatch jac= ",jac," please report the bug")
     end
     if size(jacDiscrete,1)==T && length(jacDiscrete[1])==D
         staticjacDiscrete=SVector{T,SVector{D,Basic}}(tuple(jacDiscrete...))
     else
-        println("dimension mismatch jacDiscrete= ",jacDiscrete," please file report the bug")
+        error("dimension mismatch jacDiscrete= ",jacDiscrete," please report the bug")
     end
     staticZC_jacobian=SVector{Z,SVector{T,Basic}}(tuple(ZCjac...))
     staticZC_jacDiscrete=SVector{Z,SVector{D,Basic}}(tuple(ZCjacDiscrete...))
