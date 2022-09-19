@@ -240,14 +240,14 @@ function mulT(a::T, b::T,cache1::Taylor0{T}) where {T<:Number}
    return cache1
 end
 #########################mul uses two caches when the op has many terms###########################
-function mulT(a::Taylor0{T}, b::T,cache1::Taylor0{T},cache2::Taylor0{T}) where {T<:Number}
+function mulTT(a::Taylor0{T}, b::T,cache1::Taylor0{T},cache2::Taylor0{T}) where {T<:Number}#in middle ops: a is the returned cache1 so do not fudge a or cache1 before the end
   fill!(cache2.coeffs, b)
   @__dot__ cache1.coeffs = a.coeffs * cache2.coeffs  ##fixed broadcast dimension mismatch
   return cache1
 end
-mulT(a::T,b::Taylor0{T}, cache1::Taylor0{T},cache2::Taylor0{T}) where {T<:Number} = mulT(b , a,cache1,cache2)
+mulTT(a::T,b::Taylor0{T}, cache1::Taylor0{T},cache2::Taylor0{T}) where {T<:Number} = mulT(b , a,cache1,cache2)
 
-function mulT(a::Taylor0{T}, b::Taylor0{T},cache1::Taylor0{T},cache2::Taylor0{T}) where {T<:Number}
+function mulTT(a::Taylor0{T}, b::Taylor0{T},cache1::Taylor0{T},cache2::Taylor0{T}) where {T<:Number}#in middle ops: a is the returned cache1 so do not fudge a or cache1 before the end
  for k in eachindex(a)
       @inbounds cache2[k] = a[0] * b[k]
       @inbounds for i = 1:k
@@ -257,7 +257,7 @@ function mulT(a::Taylor0{T}, b::Taylor0{T},cache1::Taylor0{T},cache2::Taylor0{T}
   @__dot__ cache1.coeffs = cache2.coeffs
   return cache1
 end
-function mulT(a::T, b::T,cache1::Taylor0{T},cache2::Taylor0{T}) where {T<:Number}
+function mulTT(a::T, b::T,cache1::Taylor0{T},cache2::Taylor0{T}) where {T<:Number}
   #cache1 needs to be clean: a clear here will alloc...this is the only "mul" that wants a clean cache
   #sometimes the cache can be dirty at only first position: it will not throw an assert error!!!
  # cache[1].coeffs.=0.0 #it causes two allocs for mul(cst,cst,a,b)
@@ -266,7 +266,7 @@ function mulT(a::T, b::T,cache1::Taylor0{T},cache2::Taylor0{T}) where {T<:Number
 end
 
 #########################################muladdT and subadd not test  : added T to muladd cuz there did not want to import muladd to extend...maybe later
-function muladdT(a::Taylor0{T}, b::Taylor0{T}, c::Taylor0{T},cache1::Taylor0{T}) where {T<:Number}
+#= function muladdT(a::Taylor0{T}, b::Taylor0{T}, c::Taylor0{T},cache1::Taylor0{T}) where {T<:Number}
   for k in eachindex(a)
        cache1[k] = a[0] * b[k] + c[k]
        @inbounds for i = 1:k
@@ -275,7 +275,7 @@ function muladdT(a::Taylor0{T}, b::Taylor0{T}, c::Taylor0{T},cache1::Taylor0{T})
    end
   @__dot__ cache1.coeffs = cache2.coeffs
    return cache1
-end
+end =#
 
 function muladdT(a::P,b::Q,c::R,cache1::Taylor0{T}) where {P,Q,R <:Union{Taylor0,Number},T<:Number}
       addT(mulT(a, b,cache1),c,cache1) # improvement of added performance not tested: there is one extra step of 

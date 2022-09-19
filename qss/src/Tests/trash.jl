@@ -1,11 +1,12 @@
-#= struct Sol
-    savedTimes::Vector{Float64} 
-    savedVar::Vector{Float64}
-  end
 
-  s=Sol([1.0,1.0], [2.0,2.0])
-  @show s
-  @show s[1] =#
+using BenchmarkTools
+function test(t::Float64)
+iszero(t)
+end
+function test2(t::Float64)
+  t==0.0
+end
+t=2.33
 
-  s=5+6
-  @show s
+@btime test2(t)
+@btime test(t)

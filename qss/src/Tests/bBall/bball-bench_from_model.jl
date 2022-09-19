@@ -1,7 +1,7 @@
 
 
 using qss
-using Plots;
+using BenchmarkTools
 include("/home/unknown/QS_Solver/qss/src/models/BBall.jl")# the location where you saved
 function test()
     odeprob = @NLodeProblem begin
@@ -18,11 +18,6 @@ function test()
             discrete[1]=1.0                                    
         end
     end
-    sol=QSS_Solve_from_model(f,odeprob,8.0,qss2())
-    x=evaluateSol(sol,1,1.0)
-    pointt=[1.0]
-    pointx=[x]
-    display(scatter(pointt, pointx,label="x1",line=(:dot, 6),color=:black))
-    plotSol(sol)
+    sol=QSS_Solve_from_model(f,odeprob,5.0,qss2())
 end
-test()
+@btime test()

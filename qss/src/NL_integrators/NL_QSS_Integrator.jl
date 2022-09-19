@@ -94,7 +94,7 @@ for i=1:Z
   output=zcf[i](x,d,t,taylorOpsCache).coeffs[1] #test this evaluation
   oldsignValue[i,2]=output #value
   oldsignValue[i,1]=sign(output) #sign modify 
-  computeNextEventTime(i,output,oldsignValue,initTime,  nextEventTime, quantum,printCounter)
+  computeNextEventTime(i,output,oldsignValue,initTime,  nextEventTime, quantum)#,printCounter)
 end
 
 ###################################################################################################################################################################
@@ -148,12 +148,12 @@ while simt < ft #&& printcount < 10
       if j != 0             
         #normally and later i should update q (integrate q=q+e derQ  for higher orders)
         clearCache(taylorOpsCache,cacheSize)
-        computeNextEventTime(j,zcf[j](x,d,t,taylorOpsCache),oldsignValue,simt,  nextEventTime, quantum,printCounter)
+        computeNextEventTime(j,zcf[j](x,d,t,taylorOpsCache)[0],oldsignValue,simt,  nextEventTime, quantum)#,printCounter)
       end  #end if j!=0
     end#end for SZ
     ##################################input########################################
   elseif sch[3] == :ST_INPUT  # time of change has come to a state var that does not depend on anything...no one will give you a chance to change but yourself  
-    println("input")
+
     elapsed = simt - tx[index]    
     clearCache(taylorOpsCache,cacheSize)   
     f(index,q,d,t,taylorOpsCache)
@@ -184,14 +184,14 @@ while simt < ft #&& printcount < 10
         #normally and later i should update q (integrate q=q+e derQ  for higher orders)
         clearCache(taylorOpsCache,cacheSize)
         
-        computeNextEventTime(j,zcf[j](q,d,t,taylorOpsCache),oldsignValue,simt,  nextEventTime, quantum,printCounter) 
+        computeNextEventTime(j,zcf[j](q,d,t,taylorOpsCache)[0],oldsignValue,simt,  nextEventTime, quantum)#,printCounter) 
       end  
      # println("end input:who is resizing?")
     end
   #################################################################event########################################
   else
     #first we have a zc happened which corresponds to nexteventtime and index (one of zc) but we want also the sign in O to know ev+ or ev- 
-    println("ebent")
+
     modifiedIndex=0
     if (zcf[index](x,d,t,taylorOpsCache).coeffs[1])>0       # sign is not needed here
       modifiedIndex=2*index-1   # the  event that just occured is at  this index
@@ -224,7 +224,7 @@ while simt < ft #&& printcount < 10
             if j != 0             
             #normally and later i should update q (integrate q=q+e derQ  for higher orders)
             clearCache(taylorOpsCache,cacheSize)           
-            computeNextEventTime(j,zcf[j](x,d,t,taylorOpsCache),oldsignValue,simt,  nextEventTime, quantum,printCounter)
+            computeNextEventTime(j,zcf[j](x,d,t,taylorOpsCache)[0],oldsignValue,simt,  nextEventTime, quantum)#,printCounter)
           end        
     end
   end#end state/input/event

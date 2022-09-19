@@ -12,4 +12,4 @@ function test()
       end
      sol=QSS_Solve_from_model(f,odeprob,5.0,qss2())
 end
-@btime test()
+@time test()

@@ -16,8 +16,7 @@ function test()
         end     
     end
     sol = QSS_Solve(odeprob,5.0,qss2())
-    #save_prob_to_model(odeprob) #this requires macro prob
-    #sol= QSS_Solve_from_model(5.0,qss2()) # turn off macro prob
+
 end
 @btime test()
 

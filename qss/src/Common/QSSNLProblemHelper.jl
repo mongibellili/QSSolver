@@ -236,7 +236,7 @@ function twoInOne(ex)# name to be changed later....i call this funciton in the d
       #end
     elseif x isa Expr && x.head == :call && (x.args[1] == :*) && (4 <= length(x.args) <= 7)# i stopped at 7 cuz by testing it was allocating anyway after 7
          # if i < ex.args[2]
-            x.args[1] = :mulT
+            x.args[1] = :mulTT
             push!(cachexpr_lengthtracker.args,:b)
               cachexpr1 = Expr(:ref, :cache)
               push!(cachexpr1.args,length(cachexpr_lengthtracker.args))

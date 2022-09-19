@@ -171,14 +171,14 @@ function computeNextInputTime(::Val{3}, i::Int, currentTime::Float64,elapsed::Fl
 end
 
 ###########################################################################################################################################################""
-function computeNextEventTime(j::Int,ZCFun::Taylor0{Float64},oldsignValue,currentTime,  nextEventTime, quantum::Vector{Float64},printCounter::Vector{Int}) #later specify args
-  if oldsignValue[j,1] != sign(ZCFun.coeffs[1])
+function computeNextEventTime(j::Int,ZCFun::Float64,oldsignValue,currentTime,  nextEventTime, quantum::Vector{Float64})#,printCounter::Vector{Int}) #later specify args
+  if oldsignValue[j,1] != sign(ZCFun)
     nextEventTime[j]=currentTime 
   else
     #nextEventTime[j] =currentTime + minPosRoot(ZCFun.coeffs, Val(2)) #Inf  # we can estimate the time. this is important when zc depends only on time   
     nextEventTime[j]=Inf
   end
-  oldsignValue[j,1]=sign(ZCFun.coeffs[1])#update the values
-  oldsignValue[j,2]=ZCFun.coeffs[1]
+  oldsignValue[j,1]=sign(ZCFun)#update the values
+  oldsignValue[j,2]=ZCFun
 end
 
