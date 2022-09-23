@@ -250,7 +250,7 @@ function twoInOne(ex)# name to be changed later....i call this funciton in the d
               push!(x.args, cachexpr2)
            #   i=i+1
           #end
-    elseif x isa Expr && x.head == :call && (x.args[1] == :\)
+    elseif x isa Expr && x.head == :call && (x.args[1] == :/)
            # if i <= ex.args[2]
               x.args[1] = :divT  # symbol changed cuz avoid type taylor piracy    
               push!(cachexpr_lengthtracker.args,:b)

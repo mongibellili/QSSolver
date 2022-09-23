@@ -124,7 +124,7 @@ while simt < ft #&& printcount < 10
     for k = 1:O
       q[index].coeffs[k] = x[index].coeffs[k] #updateQ
     end
-    tq[index] = simt #tq needed for higher orders
+    tq[index] = simt #tq needed for higher orders down before computing f(q,d,t)
     computeNextTime(Val(O), index, simt, nextStateTime, x, quantum) #
     for i = 1:length(SD[index])
       j = SD[index][i] 

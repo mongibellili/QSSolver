@@ -36,7 +36,7 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
 
     export  @NLodeProblem,save_prob_to_model,QSS_Solve_from_model
 
-    export Taylor0,mulT,createT,addsub,negateT,subsub,subadd,subT,addT,muladdT,mulsub,divT
+    export Taylor0,mulT,mulTT,createT,addsub,negateT,subsub,subadd,subT,addT,muladdT,mulsub,divT
 
 
     #include section of ts subcomponent
