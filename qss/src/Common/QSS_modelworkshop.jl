@@ -1,33 +1,12 @@
 
 
-     function createDependencyMatrix(jacobian::SVector{N,SVector{M,Basic}}) where{N,M}   # M effetcs N
-      dep = zeros(SVector{M,SVector{N,Int}})
-      for j=1:M
-           arr=[]
-           for i=1:N
-           
-             if jacobian[i][j]!=0#if jac[i,j] < -epselon ||  jac[i,j] > epselon # different than zero
-                   push!(arr,i)
-             else
-               push!(arr,0) # for some reason inner vectors want to have equal sizes... same when used tuples of tuples!!!
-             end
-           end
-           dep=setindex(dep,arr,j)
-       end  
-       return dep  #dep=(tuple(arr...))  could use tuples; they also want equal size innner tuples!!!!!
-   end
-
-
-#= function creatediscreVarsDependencyToEvents(numDiscr::Int,eventDep::SVector{Y,EventDependencyStruct}) where{Y}
-   #we want Hd:  H (Y) effects d (numDiscr)
-   #evDisc::SVector{D,Float64}
-
-   dep = zeros(SVector{Y,SVector{numDiscr,Int}})
-  for j=1:Y
-      evDiscr=eventDep[j].evDisc
+function createDependencyMatrix(jacobian::SVector{N,SVector{M,Basic}}) where{N,M}   # M effetcs N
+  dep = zeros(SVector{M,SVector{N,Int}})
+  for j=1:M
       arr=[]
-      for i=1:numDiscr
-        if evDiscr[i]!=0#
+      for i=1:N
+      
+        if jacobian[i][j]!=0#if jac[i,j] < -epselon ||  jac[i,j] > epselon # different than zero
               push!(arr,i)
         else
           push!(arr,0) # for some reason inner vectors want to have equal sizes... same when used tuples of tuples!!!
@@ -35,61 +14,10 @@
       end
       dep=setindex(dep,arr,j)
   end  
-  return dep
-    
+  return dep  #dep=(tuple(arr...))  could use tuples; they also want equal size innner tuples!!!!!
 end
 
-function createContVarsDependencyToEvents(numCont::Int,eventDep::SVector{Y,EventDependencyStruct}) where{Y}
-  #we want H (Y) effects d (numCont)
-  
 
-  dep = zeros(SVector{Y,SVector{numCont,Int}})
- for j=1:Y
-  evCont=eventDep[j].evCont
-     arr=[]
-     for i=1:numCont
-       if evCont[i]!=0#
-             push!(arr,i)
-       else
-         push!(arr,0) # for some reason inner vectors want to have equal sizes... same when used tuples of tuples!!!
-       end
-     end
-     dep=setindex(dep,arr,j)
- end  
-#=  for j=1:Y
-  #evCont=eventDep[j].evCont
-     #arr=[]
-     for i=1:numCont
-       if eventDep[j].evCont[i]!=0#
-           eventDep[j].evCont=setindex(eventDep[j].evCont,i,i)
-            #=  push!(arr,i)
-       else
-         push!(arr,0)  =#   #for some reason inner vectors want to have equal sizes... same when used tuples of tuples!!!
-       end
-     end
-     dep=setindex(dep,eventDep[j].evCont,j)
- end  =#
- return dep 
-   
-end =#
-#= function modifyJacobian(jacobian :: SMatrix{N,N,Float64})where{N} #well test removing smatrix from begining .....test done
-  pos = zeros(SVector{N,SVector{N,Float64}})
-  for i=1:N
-    pos=setindex(pos,jacobian[i, :],i)
-  end
-  pos
-end
-function modifyJacobian2(jacobian :: SMatrix{N,N,Int})where{N} #well test removing smatrix from begining 
-  pos = zeros(SVector{N,SVector{N,Int}})
-  for i=1:N
-    pos=setindex(pos,jacobian[i, :],i)  #@view
-  end
-  pos
-end =#
-#jacobian::SVector{T,SVector{T,Float64}} #  S-->D
-# discreteJacobian::SVector{T,SVector{D,Float64}} #  d-->D
-#ZC_jacobian::SVector{Z,SVector{T,Float64}}  #  S-->Z
-#ZC_jacDiscrete::SVector{Z,SVector{D,Float64}} #  d-->Z
 function createDependencyMatrix(jacobian::SVector{N,SVector{M,Float64}}) where{N,M}   # M effetcs N
    dep = zeros(SVector{M,SVector{N,Int}})
    for j=1:M
@@ -249,18 +177,4 @@ end
 
 
 
-function computeStates(initcond::SVector{N,Float64} ) where{N}
-   return N#return length(initcond)   
-end
-function computeStates(initcond::MVector{N,Float64} ) where{N}
-  return N  
-end
-function derivateJacobian(jacobian :: SMatrix{N,N,Float64})where{N}
-return jacobian*jacobian #this is for  time-independent jacobians# run once: not needed cuz i used derQ instead
-end
 
-getOrderfromSolverMethod(::Val{1})=1
-getOrderfromSolverMethod(::Val{2})=2
-getOrderfromSolverMethod(::Val{3})=3
-#getOrderfromSolverMethod(::Val{4})=1 #liqss1 #having more than 3 methods is causing an error 
-#getOrderfromSolverMethod(::Val{5})=2  #liqss2

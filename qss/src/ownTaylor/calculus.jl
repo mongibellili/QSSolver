@@ -37,41 +37,30 @@ In-place version of `differentiate`. Compute the `Taylor0` polynomial of the
 differential of `a::Taylor0` and return it as `res` (order of `res` remains
 unchanged).
 """ =#
-function differentiate!(p::Taylor0, a::Taylor0)
+#= function differentiate!(p::Taylor0, a::Taylor0)
     for k in eachindex(a)
         #differentiate!(res, a, ord)
         @inbounds p[k] = (k+1)*a[k+1]
     end
     nothing
-end
+end =#
 
-#= """
-    differentiate!(p, a, k) --> nothing
-
-Update in-place the `k-th` expansion coefficient `p[k]` of `p = differentiate(a)`
-for both `p` and `a` `Taylor0`.
-
-The coefficients are given by
-
-```math
-p_k = (k+1) a_{k+1}.
-```
-
-""" =#
 function differentiate!(p::Taylor0, a::Taylor0, k::Int)
     if k < a.order
         @inbounds p[k] = (k+1)*a[k+1]
     end
     return nothing
 end
-
-#= 
-"""
-    differentiate(a, n)
-
-Compute recursively the `Taylor0` polynomial of the n-th derivative of
-`a::Taylor0`. The order of the result is `a.order-n`.
-""" =#
+function differentiate!(cache::Taylor0{Float64}, a::Taylor0{Float64})
+    for k=0:a.order-1
+       # differentiate!(res, a, ord)
+       # if k < a.order
+          @inbounds cache[k] = (k+1)*a[k+1]
+      #end
+    end
+    cache[a.order]=0.0
+    nothing
+end
 function differentiate(a::Taylor0{T}, n::Int) where {T <: Number}
     if n > a.order
         return Taylor0(T, 0)
@@ -85,6 +74,21 @@ function differentiate(a::Taylor0{T}, n::Int) where {T <: Number}
         return Taylor0(view(res.coeffs, 1:a.order-n+1))
     end
 end
+function ndifferentiate!(cache::Taylor0{Float64},a::Taylor0{T}, n::Int) where {T <: Number}
+    if n > a.order
+        cache.coeffs.=0.0
+    elseif n==0
+        cache.coeffs.=a.coeffs
+    else
+        differentiate!(cache,a)
+        for i = 2:n
+            differentiate!(cache, cache)
+        end
+        #return Taylor0(view(res.coeffs, 1:a.order-n+1))
+    end
+end
+
+
 
 #= """
     differentiate(n, a)

@@ -38,7 +38,7 @@ struct Taylor0{T<:Number} <: AbstractSeries{T}
 
     ## Inner constructor ##
     function Taylor0{T}(coeffs::Array{T,1}, order::Int) where T<:Number
-        resize_coeffs1!(coeffs, order)
+        #resize_coeffs1!(coeffs, order)
         return new{T}(coeffs, order)
     end
 end
