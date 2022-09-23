@@ -1,4 +1,4 @@
-function updateQ(::Val{1},i::Int, x::Vector{Taylor0{Float64}},q::Vector{Taylor0{Float64}}, quantum::Vector{Float64},a::MVector{T,MVector{T,Float64}},u::MVector{T,MVector{O,Float64}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tq::MVector{T,Float64},tu::MVector{T,Float64},simt::Float64)where{T,O}
+function updateQ(::Val{1},i::Int, x::Vector{Taylor0{Float64}},q::Vector{Taylor0{Float64}}, quantum::Vector{Float64},a::MVector{T,MVector{T,Float64}},u::MVector{T,MVector{O,Float64}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tq::MVector{T,Float64},tu::MVector{T,Float64},simt::Float64,ft::Float64)where{T,O}
     qaux[i][1]=q[i][0]# index shift....sorry but be careful: taylor 1st elemtn is at 0, a vect 1st elemnt is at 1
     olddx[i][1]=x[i][1]
     q[i][0]=x[i][0]
@@ -21,16 +21,16 @@ function updateQ(::Val{1},i::Int, x::Vector{Taylor0{Float64}},q::Vector{Taylor0{
         end
     end
     if dq>2*quantum[i]
-        dq=2*quantum[i]
+        dq=2*quantum[i]# why not just quantum?
     end
     if dq<-2*quantum[i]
         dq=-2*quantum[i]
     end
-    q[i][0]=q_+dq# hy not dq/2?
+    q[i][0]=q_+dq
     return nothing
 end
-
 function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},av::MVector{T,MVector{T,Float64}},uv::MVector{T,MVector{O,Float64}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tq::MVector{T,Float64},tu::MVector{T,Float64},simt::Float64,ft::Float64)where{T,O}
+   
     q=qv[i][0]
     q1=qv[i][1]
     x=xv[i][0]
@@ -51,11 +51,11 @@ function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
     olddx[i][2]=2*xv[i][2]# 
     ddx=olddx[i][2]
     a=av[i][i]
-    if a!=0.0
+     if a!=0.0
         if ddx ==0.0
             ddx=a*a*q+a*u +u1
             if ddx==0.0
-                ddx=1e-6# changing -40 to -6 nothing changed
+                ddx=1e-26# changing -40 to -6 nothing changed
             end
         end
         h=ft-simt
@@ -68,12 +68,28 @@ function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
             #q=((x+h*u+h*h*u1/2)*(1-h*a)+(h*h*a/2)*(u+h*u1))/(1-2*h*a+h*h*a*a/2)
             q=(x+h*u+h*h*(a*u+u1)/2)/(1-h*a-h*h*a*a/2)
         end
-        while abs(q-x)>2*quantum[i]
+#=         @timeit "updatQ-while" while abs(q-x)>2*quantum[i]
             h=h*sqrt(abs(2*quantum[i]/(q-x)))
             #q=((x+h*u+h*h*u1/2)*(1-h*a)+(h*h*a/2-h)*(u+h*u1))/(1-h*a+h*h*a*a/2)
             #q=((x+h*u+h*h*u1/2)*(1-h*a)+(h*h*a/2)*(u+h*u1))/(1-2*h*a+h*h*a*a/2)
             q=(x+h*u+h*h*(a*u+u1)/2)/(1-h*a-h*h*a*a/2)
+        end =#
+        coef=@SVector [ -2* quantum[i], x*a+2*quantum[i]+u,(a*u+u1+x*a*a+2*quantum[i]*a*a)/2]#*2
+        h =  minPosRoot(coef, Val(2))
+        if h==Inf
+             coef=@SVector [ 2* quantum[i], x*a-2*quantum[i]+u,(a*u+u1+x*a*a-2*quantum[i]*a*a)/2]#*2
+             h =  minPosRoot(coef, Val(2))
         end
+        if h==Inf  #probably not needed
+            while abs(q-x)>2*quantum[i]
+                h=h*sqrt(abs(2*quantum[i]/(q-x)))
+                #q=((x+h*u+h*h*u1/2)*(1-h*a)+(h*h*a/2-h)*(u+h*u1))/(1-h*a+h*h*a*a/2)
+                #q=((x+h*u+h*h*u1/2)*(1-h*a)+(h*h*a/2)*(u+h*u1))/(1-2*h*a+h*h*a*a/2)
+                q=(x+h*u+h*h*(a*u+u1)/2)/(1-h*a-h*h*a*a/2)
+            end
+        end
+
+        q=(x+h*u+h*h*(a*u+u1)/2)/(1-h*a-h*h*a*a/2)
         q1=(a*q+u+h*u1)/(1-h*a)
  #=        if x2*ddx<0.0  #not necessary :)#uncommenting did nothing
             q1=-u1/a
@@ -86,9 +102,9 @@ function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
                 end
             end
         end =#
-    else
-        println("a=0")
-        println("simt= ",simt)
+         else
+      #  println("a=0")
+       # println("simt= ",simt)
         ddx=u1
         if ddx>0.0
             q=x-quantum[i]
@@ -100,7 +116,7 @@ function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
             q1=u+h*u1
         else
             q1=u
-            println("ddx=0")
+           # println("ddx=0")
         end
     end
     if abs(q-x)>2*quantum[i]#uncommenting this did nothing
@@ -160,7 +176,7 @@ function Liqss_reComputeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTim
     end  =#   
 end
 #######################################################################################################################################################
-function updateLinearApprox(::Val{1},i::Int,x::Vector{Taylor0{Float64}},q::Vector{Taylor0{Float64}},a::MVector{T,MVector{T,Float64}},u::MVector{T,MVector{O,Float64}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}})where{T,O}
+function updateLinearApprox(::Val{1},i::Int,x::Vector{Taylor0{Float64}},q::Vector{Taylor0{Float64}},a::MVector{T,MVector{T,Float64}},u::MVector{T,MVector{O,Float64}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tu::MVector{T,Float64},simt::Float64)where{T,O}
     diffQ=q[i][0]-qaux[i][1]
     if diffQ != 0.0
         a[i][i]=(x[i][1]-olddx[i][1])/diffQ
@@ -170,6 +186,7 @@ function updateLinearApprox(::Val{1},i::Int,x::Vector{Taylor0{Float64}},q::Vecto
     u[i][1]=x[i][1]-a[i][i]*q[i][0]
     return nothing
 end
+
 function updateLinearApprox(::Val{2},i::Int,x::Vector{Taylor0{Float64}},q::Vector{Taylor0{Float64}},a::MVector{T,MVector{T,Float64}},u::MVector{T,MVector{O,Float64}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tu::MVector{T,Float64},simt::Float64)where{T,O}
     diffQ=q[i][0]-qaux[i][1]
     if diffQ != 0.0

@@ -134,8 +134,8 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
         end
        # qOld=q[index][0]
        # derxOld=x[index][1] # along with ddx should be moved inside update
-        #@timeit "state-updateQ" 
-        updateQ(Val(O),index,x,q,quantum,a,u,qaux,olddx,tq,tu,simt,ft) ########||||||||||||||||||||||||||||||||||||liqss|||||||||||||||||||||||||||||||||||||||||
+      #  @timeit "state-updateQ"
+         updateQ(Val(O),index,x,q,quantum,a,u,qaux,olddx,tq,tu,simt,ft) ########||||||||||||||||||||||||||||||||||||liqss|||||||||||||||||||||||||||||||||||||||||
         computeNextTime(Val(O), index, simt, nextStateTime, x, quantum) #
         for i = 1:length(SD[index])
           j = SD[index][i] 
@@ -151,7 +151,7 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
             f(j,q,d,t,taylorOpsCache)
             computeDerivative(Val(O), x[j], taylorOpsCache[1],integratorCache,elapsed)
             #computeDerivative(Val(O), x[j], taylorOpsCache[1])
-            #@timeit "state-recompute" 
+          #  @timeit "state-recompute" 
             Liqss_reComputeNextTime(Val(O), j, simt, nextStateTime, x, q, quantum,a)
           end#end if j!=0
         end#end for SD
@@ -164,7 +164,7 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
           end  #end if j!=0
         end#end for SZ
 
-        #@timeit "updateLinearApprox" 
+       # @timeit "updateLinearApprox" 
         updateLinearApprox(Val(O),index,x,q,a,u,qaux,olddx,tu,simt)########||||||||||||||||||||||||||||||||||||liqss|||||||||||||||||||||||||||||||||||||||||
         ##################################input########################################
       elseif sch[3] == :ST_INPUT  # time of change has come to a state var that does not depend on anything...no one will give you a chance to change but yourself  
@@ -262,7 +262,7 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
     for i=1:T# throw away empty points
       resize!(savedVars[i],count)
     end
-    #print_timer()
+   # print_timer()
     resize!(savedTimes,count)
     Sol(savedTimes, savedVars)
     end#end integrate

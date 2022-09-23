@@ -165,8 +165,8 @@ function QSS_Unique_Solve(f::Function,prob::NLODEProblem{T,D,Z,Y},finalTime::Flo
         tu = @MVector zeros(T)
         qaux = zeros(MVector{T,MVector{order,Float64}})
         olddx = zeros(MVector{T,MVector{order,Float64}})
-        qssdata= LiQSS_data(initJac,u,tu,qaux,olddx,quantum,x,q,tx,tq,nextStateTime,nextInputTime ,nextEventTime , t, integratorCache,order,savedVars,savedTimes,taylorOpsCache,finalTime,savetimeincrement, initialTime,dQmin,dQrel)
-        LiQSS_integrate(Val(V-3),qssdata,prob,f)
+        liqssdata= LiQSS_data(initJac,u,tu,qaux,olddx,quantum,x,q,tx,tq,nextStateTime,nextInputTime ,nextEventTime , t, integratorCache,order,savedVars,savedTimes,taylorOpsCache,finalTime,savetimeincrement, initialTime,dQmin,dQrel)
+        LiQSS_integrate(Val(V-3),liqssdata,prob,f)
     end
      #return nothing be careful to add this
  end
