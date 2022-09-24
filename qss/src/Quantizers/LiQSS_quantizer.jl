@@ -4,15 +4,15 @@ function updateQ(::Val{1},i::Int, x::Vector{Taylor0{Float64}},q::Vector{Taylor0{
     q[i][0]=x[i][0]
     q_=q[i][0]
     u_=u[i][1]  # for order 2: u=u+tu*deru
-    dq=0.0
+    dq=0.0  # updating dq instead of q...updating q directly is also fine
     if x[i][1]>0
-        dx=u_+(q_+quantum[i])*a[i][i]
-        if dx>=0
+        dx=(q_+quantum[i])*a[i][i]+u_
+        if dx>=0  # later test stricly pos
             dq=quantum[i]
         else
-            dq=(-u_/a[i][i])-q_
+            dq=(-u_/a[i][i])-q_ #- q since later we want q=q+dq=q+(-u/a)-q=(-u/a)...dx=q*a+u=0->q=-u/a
         end
-    else
+    else   #opposite but same logic case
         dx=u_+(q_-quantum[i])*a[i][i]
         if dx<=0
             dq=-quantum[i]
@@ -29,8 +29,7 @@ function updateQ(::Val{1},i::Int, x::Vector{Taylor0{Float64}},q::Vector{Taylor0{
     q[i][0]=q_+dq
     return nothing
 end
-function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},av::MVector{T,MVector{T,Float64}},uv::MVector{T,MVector{O,Float64}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tq::MVector{T,Float64},tu::MVector{T,Float64},simt::Float64,ft::Float64)where{T,O}
-   
+function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},av::MVector{T,MVector{T,Float64}},uv::MVector{T,MVector{O,Float64}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tq::MVector{T,Float64},tu::MVector{T,Float64},simt::Float64,ft::Float64)where{T,O}  
     q=qv[i][0]
     q1=qv[i][1]
     x=xv[i][0]
@@ -48,63 +47,26 @@ function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
     uv[i][1]=u
     tu[i]=simt
     
-    olddx[i][2]=2*xv[i][2]# 
+    olddx[i][2]=2*x2# 
     ddx=olddx[i][2]
     a=av[i][i]
-     if a!=0.0
+    if a!=0.0
         if ddx ==0.0
             ddx=a*a*q+a*u +u1
             if ddx==0.0
-                ddx=1e-26# changing -40 to -6 nothing changed
+                ddx=1e-26# changing -40 to -6 nothing changed....guard against very rare case
             end
         end
-        h=ft-simt
-        #q=((x+h*u+h*h*u1/2)*(1-h*a)+(h*h*a/2-h)*(u+h*u1))/(1-h*a+h*h*a*a/2)
-        #q=((x+h*u+h*h*u1/2)*(1-h*a)+(h*h*a/2)*(u+h*u1))/(1-2*h*a+h*h*a*a/2)
-        q=(x+h*u+h*h*(a*u+u1)/2)/(1-h*a-h*h*a*a/2)
-        if abs(q-x)>2*quantum[i]
-            h=sqrt(abs(2*quantum[i]/ddx))
-            #q=((x+h*u+h*h*u1/2)*(1-h*a)+(h*h*a/2-h)*(u+h*u1))/(1-h*a+h*h*a*a/2)
-            #q=((x+h*u+h*h*u1/2)*(1-h*a)+(h*h*a/2)*(u+h*u1))/(1-2*h*a+h*h*a*a/2)
-            q=(x+h*u+h*h*(a*u+u1)/2)/(1-h*a-h*h*a*a/2)
-        end
-#=         @timeit "updatQ-while" while abs(q-x)>2*quantum[i]
-            h=h*sqrt(abs(2*quantum[i]/(q-x)))
-            #q=((x+h*u+h*h*u1/2)*(1-h*a)+(h*h*a/2-h)*(u+h*u1))/(1-h*a+h*h*a*a/2)
-            #q=((x+h*u+h*h*u1/2)*(1-h*a)+(h*h*a/2)*(u+h*u1))/(1-2*h*a+h*h*a*a/2)
-            q=(x+h*u+h*h*(a*u+u1)/2)/(1-h*a-h*h*a*a/2)
-        end =#
         coef=@SVector [ -2* quantum[i], x*a+2*quantum[i]+u,(a*u+u1+x*a*a+2*quantum[i]*a*a)/2]#*2
         h =  minPosRoot(coef, Val(2))
         if h==Inf
              coef=@SVector [ 2* quantum[i], x*a-2*quantum[i]+u,(a*u+u1+x*a*a-2*quantum[i]*a*a)/2]#*2
              h =  minPosRoot(coef, Val(2))
         end
-        if h==Inf  #probably not needed
-            while abs(q-x)>2*quantum[i]
-                h=h*sqrt(abs(2*quantum[i]/(q-x)))
-                #q=((x+h*u+h*h*u1/2)*(1-h*a)+(h*h*a/2-h)*(u+h*u1))/(1-h*a+h*h*a*a/2)
-                #q=((x+h*u+h*h*u1/2)*(1-h*a)+(h*h*a/2)*(u+h*u1))/(1-2*h*a+h*h*a*a/2)
-                q=(x+h*u+h*h*(a*u+u1)/2)/(1-h*a-h*h*a*a/2)
-            end
-        end
-
         q=(x+h*u+h*h*(a*u+u1)/2)/(1-h*a-h*h*a*a/2)
         q1=(a*q+u+h*u1)/(1-h*a)
- #=        if x2*ddx<0.0  #not necessary :)#uncommenting did nothing
-            q1=-u1/a
-            q=(q1-u)/a
-            if abs(q-x)>2*quantum[i]
-                if q>x
-                    q=x+quantum[i]
-                else
-                    q=x-quantum[i]
-                end
-            end
-        end =#
-         else
-      #  println("a=0")
-       # println("simt= ",simt)
+    else
+
         ddx=u1
         if ddx>0.0
             q=x-quantum[i]
@@ -120,10 +82,11 @@ function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
         end
     end
     if abs(q-x)>2*quantum[i]#uncommenting this did nothing
+        println("should be a dead branch since h solved for so that -2ΔQ <q-x<2ΔQ")
         q=x
     end
     olddx[i][2]=ddx
-     qv[i][0]=q
+    qv[i][0]=q
     qv[i][1]=q1  
     return nothing
 end

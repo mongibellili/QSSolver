@@ -54,6 +54,9 @@ function computeNextTime(::Val{1}, i::Int, currentTime::Float64, nextTime::MVect
     else
       nextTime[i] = Inf
     end
+ #=    if (nTime[var] > quantizer->state->finTime) {# c code about not going past FT
+      nTime[var] = quantizer->state->finTime;
+    } =#
     return nothing
 end
 
