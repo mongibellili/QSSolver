@@ -9,7 +9,7 @@ function test()
         du[2] =-u[1]-u[2]
     end
   
-    sol=QSS_Solve_from_model(f,odeprob,5.0,liqss2()) # 
+    sol=QSS_Solve_from_model(f,odeprob,5.0,qss2()) # 
     plotSol(sol)
 end
 test()

@@ -1,6 +1,6 @@
- using TimerOutputs
+ #using TimerOutputs
 function QSS_integrate(::Val{O}, s::QSS_data{T,Z}, odep::NLODEProblem{T,D,Z,Y},f::Function) where {O,T,D,Z,Y}
-  reset_timer!()
+ # reset_timer!()
 #*********************************settings*****************************************
 #printCounter=[0,0]#vector{Int} fort debugging to be deleted
 ft = s.finalTime
@@ -15,6 +15,7 @@ nextEventTime = s.nextEventTime
 nextInputTime = s.nextInputTime
 tx = s.tx
 tq = s.tq
+println("test")
 x = s.x
 q = s.q
 t=s.t
@@ -116,17 +117,20 @@ while simt < ft #&& printcount < 10
   ##########################################state########################################
   if sch[3] == :ST_STATE
     elapsed = simt - tx[index]
-    @timeit "state-integrateState" integrateState(Val(O),x[index],integratorCache,elapsed)
+   # @timeit "state-integrateState" 
+    integrateState(Val(O),x[index],integratorCache,elapsed)
     quantum[index] = relQ * abs(x[index].coeffs[1]) #derx=coef[2]*fac(1), derderx=coef[3]*fac(2)            
     if quantum[index] < absQ
       quantum[index] = absQ
     end
     tx[index] = simt
-    @timeit "updateQ" for k = 1:O
+   # @timeit "updateQ" 
+    for k = 1:O
       q[index].coeffs[k] = x[index].coeffs[k] #updateQ
     end
     tq[index] = simt #tq needed for higher orders down before computing f(q,d,t)
-    @timeit "state-computenext" computeNextTime(Val(O), index, simt, nextStateTime, x, quantum) #
+    #@timeit "state-computenext" 
+    computeNextTime(Val(O), index, simt, nextStateTime, x, quantum) #
     for i = 1:length(SD[index])
       j = SD[index][i] 
       if j != 0           
@@ -139,9 +143,11 @@ while simt < ft #&& printcount < 10
           tq[j] = simt
         end
         f(j,q,d,t,taylorOpsCache)
-        @timeit "state-compder"  computeDerivative(Val(O), x[j], taylorOpsCache[1],integratorCache,elapsed)
+        #@timeit "state-compder"  
+        computeDerivative(Val(O), x[j], taylorOpsCache[1],integratorCache,elapsed)
         #computeDerivative(Val(O), x[j], taylorOpsCache[1])
-        @timeit "state-recomputenext"  reComputeNextTime(Val(O), j, simt, nextStateTime, x, q, quantum)
+        #@timeit "state-recomputenext"  
+        reComputeNextTime(Val(O), j, simt, nextStateTime, x, q, quantum)
       end#end if j!=0
     end#end for SD
     for i = 1:length(SZ[index])
@@ -248,7 +254,7 @@ end#end while
 for i=1:T# throw away empty points
   resize!(savedVars[i],count)
 end
- print_timer()
+ #print_timer()
 resize!(savedTimes,count)
 Sol(savedTimes, savedVars)
 end#end integrate

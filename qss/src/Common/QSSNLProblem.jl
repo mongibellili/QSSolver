@@ -229,7 +229,7 @@ macro NLodeProblem(odeExprs)
     def[:name] = :f   
     def[:args] = [:(j::Int),:(q::Vector{Taylor0{Float64}}),:(d::Vector{Float64}), :(t::Taylor0{Float64}),:(cache::Vector{Taylor0{Float64}})]
     def[:body] = Meta.parse(s)
-    #def[:rtype]=:nothing# test if cache1 always holds sol  
+    #def[:rtype]=:nothing#  
     functioncode=combinedef(def)
     myodeProblem = NLODEProblem(num_cache_equs,contVars, discrVars, staticJac, functioncode,zcequs,eventequs, staticjacDiscrete, staticZC_jacobian, staticZC_jacDiscrete, eventDependencies)
  end
