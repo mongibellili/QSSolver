@@ -23,7 +23,7 @@ struct QSS_data{T,Z}
 end
 struct LiQSS_data{T,Z,O}
     initJac::MVector{T,MVector{T,Float64}}
-    u:: MVector{T,MVector{O,Float64}}
+    u:: MVector{T,MVector{T,MVector{O,Float64}}}
     tu::MVector{T,Float64}
     qaux::MVector{T,MVector{O,Float64}}#V=4,5...
     olddx::MVector{T,MVector{O,Float64}}#V=4,5...
@@ -57,12 +57,18 @@ qss2()=Val(2)
 qss3()=Val(3)
 liqss1()=Val(4)
 liqss2()=Val(5)
+liqss3()=Val(6)
+mliqss1()=Val(7)
+mliqss2()=Val(8)
+mliqss3()=Val(9)
 
 function getOrderfromSolverMethod(::Val{V}) where {V}  # @generated and inline did not enhance performance  
     if V==1 || V==2 || V==3
         return V
-    else
+    elseif V==4 || V==5 || V==6
         return V-3
+    else
+        return V-6
     end
 end
 
@@ -153,7 +159,7 @@ function QSS_Unique_Solve(f::Function,prob::NLODEProblem{T,D,Z,Y},finalTime::Flo
             for j=1:T  
                ex=jacobian[i][j]
                for k in eachindex(dsym)
-                   ex=subs(ex, dsym[k]=>d[k])
+                   ex=subs(ex, dsym[k]=>d[k])#getback d[0] d[1]...in order to get initial correct jacobian to get initial Aii
                end        
                 temparr[j]=ex
             end
@@ -161,18 +167,24 @@ function QSS_Unique_Solve(f::Function,prob::NLODEProblem{T,D,Z,Y},finalTime::Flo
          end
          initJac = MVector{T,MVector{T,Float64}}(tuple(tempJac...))
         #@show intiJac
-        u = zeros(MVector{T,MVector{order,Float64}})
+        u = zeros(MVector{T,MVector{T,MVector{order,Float64}}})
         tu = @MVector zeros(T)
         qaux = zeros(MVector{T,MVector{order,Float64}})
         olddx = zeros(MVector{T,MVector{order,Float64}})
         liqssdata= LiQSS_data(initJac,u,tu,qaux,olddx,quantum,x,q,tx,tq,nextStateTime,nextInputTime ,nextEventTime , t, integratorCache,order,savedVars,savedTimes,taylorOpsCache,finalTime,savetimeincrement, initialTime,dQmin,dQrel)
-        LiQSS_integrate(Val(V-3),liqssdata,prob,f)
+        if V==4 || V==5 || V==6
+            LiQSS_integrate(Val(V-3),liqssdata,prob,f)
+        else
+            mLiQSS_integrate(Val(V-6),liqssdata,prob,f)
+        end
     end
      #return nothing be careful to add this
  end
  
  function QSS_Solve(prob::NLODEProblem{T,D,Z,Y},finalTime::Float64,::Val{V},savetimeincrement::Float64) where {T,D,Z,Y,V}
+   # println("test")
     initialTime=0.0;dQmin=1e-6;dQrel=1e-3
+   # initialTime=0.0;dQmin=1e-3;dQrel=5e-2
     QSS_Solve(prob,finalTime,Val(V),savetimeincrement,initialTime,dQmin,dQrel)
 end
 
