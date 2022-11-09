@@ -125,7 +125,7 @@ function mLiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D
     len=length(savedTimes)
     printcount=0
     limitedPrint=1
-    while simt < ft #&& printcount < 50000000000
+    while simt < ft && printcount < 200000000
       printcount+=1
       sch = updateScheduler(nextStateTime,nextEventTime, nextInputTime)
       simt = sch[2]
@@ -142,6 +142,11 @@ function mLiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D
           quantum[index] = absQ
         end
        # @timeit "state-updateQ" 
+      #=  @show tq[index],simt
+       @show q[index][0],q[index][1]
+       
+       qaux[index][1]=q[index][0]+(simt-tq[index])*q[index][1]
+       @show qaux[index][1] =#
         updateQ(Val(O),index,x,q,quantum,a,u,qaux,olddx,tq,tu,simt,ft) ########||||||||||||||||||||||||||||||||||||liqss|||||||||||||||||||||||||||||||||||||||||
         computeNextTime(Val(O), index, simt, nextStateTime, x, quantum) #
        #----------------------------------------------------check dependecy cycles---------------------------------------------    
@@ -150,7 +155,8 @@ function mLiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D
         if j != 0 && j!=index && a[index][j]*a[j][index]!=0           
           elapsed = simt - tx[j]
           #xjaux = x[j](elapsed)# xAUX instead
-          if isCycle_and_simulUpdate(Val(O),index,j,x,q,quantum,a,u,qaux,olddx,tq,tu,simt,ft,elapsed)
+         # @timeit "if cycle" 
+           if isCycle_and_simulUpdate(Val(O),index,j,x,q,quantum,a,u,qaux,olddx,tx,tq,tu,simt,ft)
          
               Liqss_reComputeNextTime(Val(O), j, simt, nextStateTime, x, q, quantum,a)
               Liqss_reComputeNextTime(Val(O), index, simt, nextStateTime, x, q, quantum,a)
@@ -173,6 +179,7 @@ function mLiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D
                   #computeDerivative(Val(O), x[j], taylorOpsCache[1])
                  # @timeit "state-recompute" 
                    Liqss_reComputeNextTime(Val(O), k, simt, nextStateTime, x, q, quantum,a)
+                  # println("begining of updateother after cycle detected")
                    updateOtherApprox(Val(O),k,j,x,q,a,u,qaux,olddx,tu,simt)
                 end#end if k!=0
               end#end for k depend on j
@@ -185,7 +192,6 @@ function mLiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D
                 end  #end if j!=0
               end#end for SZ
               updateLinearApprox(Val(O),j,x,q,a,u,qaux,olddx,tu,simt)
-
             end#end ifcycle check
         end#end if j
       end#end FOR_cycle check
@@ -208,6 +214,7 @@ function mLiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D
             #computeDerivative(Val(O), x[j], taylorOpsCache[1])
            # @timeit "state-recompute" 
              Liqss_reComputeNextTime(Val(O), j, simt, nextStateTime, x, q, quantum,a)
+            # println("begining of updateother aji after normal dependency")
              updateOtherApprox(Val(O),j,index,x,q,a,u,qaux,olddx,tu,simt)
           end#end if j!=0
         end#end for SD

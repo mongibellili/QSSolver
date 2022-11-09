@@ -28,7 +28,7 @@ function test()
      
    # sol=QSS_Solve_from_model(twoVarSys13,odeprob,15.0,liqss2(),saveat(0.00001)) # 
   #  sol=QSS_Solve(odeprob,10.0,liqss2())
-    sol1=QSS_Solve(odeprob,50.0,mliqss1(),saveat(0.001)) 
+    sol1=QSS_Solve(odeprob,10.5,mliqss2(),saveat(0.001)) 
    # sol2=QSS_Solve(odeprob,50.0,mliqss1(),saveat(0.001)) 
 
    # sol=QSS_Solve(odeprob,5.0,liqss2())
