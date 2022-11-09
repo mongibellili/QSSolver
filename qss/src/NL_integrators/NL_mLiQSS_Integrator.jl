@@ -1,5 +1,5 @@
  #using TimerOutputs
-function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,Z,Y},f::Function) where {O,T,D,Z,Y}
+function mLiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,Z,Y},f::Function) where {O,T,D,Z,Y}
   #reset_timer!()
     #*********************************settings*****************************************
     #printCounter=[0,0]#vector{Int} fort debugging to be deleted
@@ -86,8 +86,15 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
     end
     
     for i = 1:T
-      for k=1:O# deleting this causes scheduler error
-          u[i][i][k]=x[i][k]-q[i][k-1]*a[i][i] #  later we will investigate inconsistencies of using data stored vs */ factorial!!! ...also do not confuse getindex for taylor...[0] first element and u[i][1]...first element    ########||||||||||||||||||||||||||||||||||||liqss|||||||||||||||||||||||||||||||||||||||||
+      #= for k=1:O# deleting this causes scheduler error
+          u[i][k]=x[i][k]-q[i][k-1]*a[i][i] #  later we will investigate inconsistencies of using data stored vs */ factorial!!! ...also do not confuse getindex for taylor...[0] first element and u[i][1]...first element    ########||||||||||||||||||||||||||||||||||||liqss|||||||||||||||||||||||||||||||||||||||||
+      end =#
+      for j=1:T
+        if j!=i
+          u[i][j][1]=x[i][1]-a[i][i]*q[i][0]-a[i][j]*q[j][0]
+        else
+          u[i][j][1]=x[i][1]-a[i][i]*q[i][0]
+        end
       end
       savedVars[i][1].coeffs .= x[i].coeffs  #to be changed  1 2 3 ?
       quantum[i] = relQ * abs(x[i].coeffs[1]) 
@@ -99,7 +106,7 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
       f(i,q,d,t,taylorOpsCache) #+t alloc   change to addT
       computeNextInputTime(Val(O), i, initTime, 0.1,taylorOpsCache[1] , nextInputTime, x,  quantum)
     end
-    
+   # @show u
     for i=1:Z
       clearCache(taylorOpsCache,cacheSize)
       output=zcf[i](x,d,t,taylorOpsCache).coeffs[1] #test this evaluation
@@ -117,7 +124,8 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
     count = 1 # not zero because intial value took 0th position
     len=length(savedTimes)
     printcount=0
-    while simt < ft #&& printcount < 5000000
+    limitedPrint=1
+    while simt < ft && printcount < 200000000
       printcount+=1
       sch = updateScheduler(nextStateTime,nextEventTime, nextInputTime)
       simt = sch[2]
@@ -133,21 +141,72 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
         if quantum[index] < absQ
           quantum[index] = absQ
         end
-       # qOld=q[index][0]
-       # derxOld=x[index][1] # along with ddx should be moved inside update
        # @timeit "state-updateQ" 
+      #=  @show tq[index],simt
+       @show q[index][0],q[index][1]
+       
+       qaux[index][1]=q[index][0]+(simt-tq[index])*q[index][1]
+       @show qaux[index][1] =#
         updateQ(Val(O),index,x,q,quantum,a,u,qaux,olddx,tq,tu,simt,ft) ########||||||||||||||||||||||||||||||||||||liqss|||||||||||||||||||||||||||||||||||||||||
         computeNextTime(Val(O), index, simt, nextStateTime, x, quantum) #
-        for i = 1:length(SD[index])
-          j = SD[index][i] 
+       #----------------------------------------------------check dependecy cycles---------------------------------------------    
+       for l = 1:length(SD[index])
+        j = SD[index][l] 
+        if j != 0 && j!=index && a[index][j]*a[j][index]!=0           
+          elapsed = simt - tx[j]
+          #xjaux = x[j](elapsed)# xAUX instead
+         # @timeit "if cycle" 
+           if isCycle_and_simulUpdate(Val(O),index,j,x,q,quantum,a,u,qaux,olddx,tx,tq,tu,simt,ft)
+         
+              Liqss_reComputeNextTime(Val(O), j, simt, nextStateTime, x, q, quantum,a)
+              Liqss_reComputeNextTime(Val(O), index, simt, nextStateTime, x, q, quantum,a)
+              for l = 1:length(SD[j])
+                k = SD[j][l] 
+                if k != 0           
+                  elapsed = simt - tx[k]
+                  if elapsed > 0
+                    x[k].coeffs[1] = x[k](elapsed)
+                  #  q[k].coeffs[1] = q[k](elapsed)
+                    if k!=j
+                    tx[k] = simt
+                  #  tq[k] = simt
+                    end
+                  end
+                  olddx[k][1]=x[k][1]
+                  f(k,q,d,t,taylorOpsCache)
+               #   @timeit "comp der"
+                   computeDerivative(Val(O), x[k], taylorOpsCache[1],integratorCache,elapsed)
+                  #computeDerivative(Val(O), x[j], taylorOpsCache[1])
+                 # @timeit "state-recompute" 
+                   Liqss_reComputeNextTime(Val(O), k, simt, nextStateTime, x, q, quantum,a)
+                  # println("begining of updateother after cycle detected")
+                   updateOtherApprox(Val(O),k,j,x,q,a,u,qaux,olddx,tu,simt)
+                end#end if k!=0
+              end#end for k depend on j
+              for l = 1:length(SZ[j])
+                k = SZ[index][l] 
+                if k != 0             
+                  #normally and later i should update q (integrate q=q+e derQ  for higher orders)
+                  clearCache(taylorOpsCache,cacheSize)
+                  computeNextEventTime(k,zcf[k](x,d,t,taylorOpsCache)[0],oldsignValue,simt,  nextEventTime, quantum)#,printCounter)
+                end  #end if j!=0
+              end#end for SZ
+              updateLinearApprox(Val(O),j,x,q,a,u,qaux,olddx,tu,simt)
+            end#end ifcycle check
+        end#end if j
+      end#end FOR_cycle check
+       #---------------------------------normal liqss: proceed--------------------------------
+        for l = 1:length(SD[index])
+          j = SD[index][l] 
           if j != 0           
             elapsed = simt - tx[j]
             if elapsed > 0
-              #"evaluate" x at new time only...derivatives get updated next using computeDerivativ()
               x[j].coeffs[1] = x[j](elapsed)
-              q[j].coeffs[1] = q[j](elapsed)
+              olddx[j][1]=x[j][1]
+             # q[j].coeffs[1] = q[j](elapsed)
+             #qtemp=q[j][0]
               tx[j] = simt
-              tq[j] = simt
+             # tq[j] = simt
             end
             f(j,q,d,t,taylorOpsCache)
          #   @timeit "comp der"
@@ -155,19 +214,12 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
             #computeDerivative(Val(O), x[j], taylorOpsCache[1])
            # @timeit "state-recompute" 
              Liqss_reComputeNextTime(Val(O), j, simt, nextStateTime, x, q, quantum,a)
-             if 50>simt>9
-              #@show a[1][2], a[2][1]
-             # @show u[j][index][1]+a[j][j]*q[j][0]+a[j][index]*q[index][0]
-             # @show x[j][1]
-             # @show nextStateTime
-              @show simt
-              @show printcount
-              #limitedPrint-=1
-             end
+            # println("begining of updateother aji after normal dependency")
+             updateOtherApprox(Val(O),j,index,x,q,a,u,qaux,olddx,tu,simt)
           end#end if j!=0
         end#end for SD
-        for i = 1:length(SZ[index])
-          j = SZ[index][i] 
+        for l = 1:length(SZ[index])
+          j = SZ[index][l] 
           if j != 0             
             #normally and later i should update q (integrate q=q+e derQ  for higher orders)
             clearCache(taylorOpsCache,cacheSize)
@@ -175,7 +227,7 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
           end  #end if j!=0
         end#end for SZ
 
-       # @timeit "updateLinearApprox"
+        #@timeit "updateLinearApprox"
          updateLinearApprox(Val(O),index,x,q,a,u,qaux,olddx,tu,simt)########||||||||||||||||||||||||||||||||||||liqss|||||||||||||||||||||||||||||||||||||||||
         ##################################input########################################
       elseif sch[3] == :ST_INPUT  # time of change has come to a state var that does not depend on anything...no one will give you a chance to change but yourself  
@@ -273,8 +325,8 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
     for i=1:T# throw away empty points
       resize!(savedVars[i],count)
     end
-   # print_timer()
-   
+    #print_timer()
+   # @show printcount
     resize!(savedTimes,count)
     Sol(savedTimes, savedVars)
     end#end integrate
