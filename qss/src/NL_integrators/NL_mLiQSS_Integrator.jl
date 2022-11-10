@@ -125,7 +125,7 @@ function mLiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D
     len=length(savedTimes)
     printcount=0
     limitedPrint=1
-    while simt < ft && printcount < 200000000
+    while simt < ft && printcount < 200
       printcount+=1
       sch = updateScheduler(nextStateTime,nextEventTime, nextInputTime)
       simt = sch[2]
@@ -154,10 +154,7 @@ function mLiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D
         j = SD[index][l] 
         if j != 0 && j!=index && a[index][j]*a[j][index]!=0           
           elapsed = simt - tx[j]
-          #xjaux = x[j](elapsed)# xAUX instead
-         # @timeit "if cycle" 
            if isCycle_and_simulUpdate(Val(O),index,j,x,q,quantum,a,u,qaux,olddx,tx,tq,tu,simt,ft)
-         
               Liqss_reComputeNextTime(Val(O), j, simt, nextStateTime, x, q, quantum,a)
               Liqss_reComputeNextTime(Val(O), index, simt, nextStateTime, x, q, quantum,a)
               for l = 1:length(SD[j])
@@ -165,11 +162,11 @@ function mLiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D
                 if k != 0           
                   elapsed = simt - tx[k]
                   if elapsed > 0
-                    x[k].coeffs[1] = x[k](elapsed)
-                  #  q[k].coeffs[1] = q[k](elapsed)
+                    x[k].coeffs[1] = x[k](elapsed) #
+                      q[k].coeffs[1] = q[k](elapsed)
                     if k!=j
-                    tx[k] = simt
-                  #  tq[k] = simt
+                    tx[k] = simt # 
+                     tq[k] = simt
                     end
                   end
                   olddx[k][1]=x[k][1]
@@ -203,10 +200,11 @@ function mLiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D
             if elapsed > 0
               x[j].coeffs[1] = x[j](elapsed)
               olddx[j][1]=x[j][1]
-             # q[j].coeffs[1] = q[j](elapsed)
+             #
+              q[j].coeffs[1] = q[j](elapsed)
              #qtemp=q[j][0]
               tx[j] = simt
-             # tq[j] = simt
+              tq[j] = simt
             end
             f(j,q,d,t,taylorOpsCache)
          #   @timeit "comp der"

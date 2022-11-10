@@ -85,6 +85,8 @@ end
 function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},av::MVector{T,MVector{T,Float64}},uv::MVector{T,MVector{T,MVector{O,Float64}}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tq::MVector{T,Float64},tu::MVector{T,Float64},simt::Float64,ft::Float64)where{T,O}
     q=qv[i][0] ;q1=qv[i][1]; x=xv[i][0];  x1=xv[i][1]; x2=xv[i][2]*2; u1=uv[i][i][1]; u2=uv[i][i][2]
     qaux[i][1]=q#+(simt-tq[i])*q1#appears only here...updated here and used in updateApprox and in updateQevent later
+   
+   println("qaux i inside updateQ= ",qaux[i][1])
     #q=qaux[i][1]# not needed...q used only in approx ddx which not needed to be exacte
     qaux[i][2]=q1                     #appears only here...updated here and used in updateQevent
     tq[i]=simt
@@ -167,7 +169,7 @@ function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
     #olddx[i][2]=ddx  #olddx[i][2] never used again so no need to update it 
     qv[i][0]=q
     qv[i][1]=q1  
-   # println("inside single updateQ: q & qaux[$i][1]= ",q," ; ",qaux[i][1])
+    println("inside single updateQ: q & qaux[$i][1]= ",q," ; ",qaux[i][1])
     return nothing
 end
 

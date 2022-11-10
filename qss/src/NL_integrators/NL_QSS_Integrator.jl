@@ -139,7 +139,7 @@ while simt < ft #&& printcount < 10
           x[j].coeffs[1] = x[j](elapsed)
           q[j].coeffs[1] = q[j](elapsed)
           tx[j] = simt
-          tq[j] = simt
+         tq[j] = simt
         end
         f(j,q,d,t,taylorOpsCache)
         #@timeit "state-compder" 
