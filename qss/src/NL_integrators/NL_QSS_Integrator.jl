@@ -107,7 +107,7 @@ simt = initTime
 count = 1 # not zero because intial value took 0th position
 len=length(savedTimes)
 #printcount=0
-while simt < ft #&& printcount < 10
+while simt < ft #&& printcount < 5
   #printcount+=1
   sch = updateScheduler(nextStateTime,nextEventTime, nextInputTime)
   simt = sch[2]

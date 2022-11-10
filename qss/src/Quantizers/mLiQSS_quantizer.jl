@@ -5,11 +5,22 @@ function updateOtherApprox(::Val{1},j::Int,index::Int,x::Vector{Taylor0{Float64}
    # @show q[index][0],qaux[index][1]
    # @show x[j][1],olddx[j][1]
    # println("aji before updateoher= ",a[j][index])
+   #if 1.21<simt<1.226597
+   #@show simt 
+   #@show j
+   # println("aji before updateoher= ",a[j][index])
+   # @show q[index][0],qaux[index][1]
+   # @show x[j][1],olddx[j][1]
+  # end
     if diffQ!=0
      a[j][index]=(x[j][1]-olddx[j][1])/diffQ
     else
      a[j][index]=0.0
     end
+   # if 1.21<simt<1.226597
+   #   println("aji afterupdateoher= ",a[j][index])
+      
+    # end
    # @show a[j][j],a[j][index]
    # println("u inside updateOther before update= ",u[j][index])
     u[j][index][1]=x[j][1]-a[j][j]*q[j][0]-a[j][index]*q[index][0]
@@ -18,31 +29,49 @@ function updateOtherApprox(::Val{1},j::Int,index::Int,x::Vector{Taylor0{Float64}
 end
 function updateOtherApprox(::Val{2},j::Int,index::Int,x::Vector{Taylor0{Float64}},q::Vector{Taylor0{Float64}},a::MVector{T,MVector{T,Float64}},u::MVector{T,MVector{T,MVector{O,Float64}}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tu::MVector{T,Float64},simt::Float64)where{T,O}
     diffQ=q[index][0]-qaux[index][1]
-
-    @show q[index][0],qaux[index][1]
-    @show x[j][1],olddx[j][1]
+   #if 1.54<simt<1.546597
+   
     println("aji before updateoher= ",a[j][index])
+    
+  # end
+   # println("aji before updateoher= ",a[j][index])
     if diffQ != 0.0
         a[j][index]=(x[j][1]-olddx[j][1])/diffQ
     else
         a[j][index]=0.0
     end
-    @show a[j][j],a[j][index]
-
-   println("u inside updateOther before update= ",u[j][index])
+  #  @show a[j][j],a[j][index]
+ # if 1.54<simt<1.546597
+    println("aji afterupdateoher= ",a[j][index])
+    
+  # end
+  # println("u inside updateOther before update= ",u[j][index])
     u[j][index][1]=x[j][1]-a[j][j]*q[j][0]-a[j][index]*q[index][0]
     u[j][index][2]=2*x[j][2]-a[j][j]*q[j][1]-a[j][index]*q[index][1]
-    println("u inside updateOther after update= ",u[j][index])
+  #  println("u inside updateOther after update= ",u[j][index])
     #tu[index]=simt  # comment did nothing but it makes sense to keep it because more accurate since u is changed
     return nothing
 end
 
 #############################################################################################################################
 function isCycle_and_simulUpdate(::Val{1},index::Int,j::Int, x::Vector{Taylor0{Float64}},q::Vector{Taylor0{Float64}}, quantum::Vector{Float64},a::MVector{T,MVector{T,Float64}},u::MVector{T,MVector{T,MVector{O,Float64}}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tx::MVector{T,Float64},tq::MVector{T,Float64},tu::MVector{T,Float64},simt::Float64,ft::Float64)where{T,O}
-          elapsed = simt - tx[j]
+  aii=a[index][index];ajj=a[j][j];aij=a[index][j];aji=a[j][index];uij=u[index][j][1];uji=u[j][index][1];xi=x[index][0];xj=x[j][0];x1i=x[index][1];x1j=x[j][1]
+  qi=q[index][0];qj=q[j][0]
+  
+  
+        elapsed = simt - tx[j]
           xjaux = x[j][0]+elapsed*x[j][1]
          dxj=a[j][index]*q[index][0]+a[j][j]*q[j][0]+u[j][index][1]
          iscycle=false
+
+         #= if 1.53<simt < 1.5429667149224133
+          @show simt
+          @show aii,ajj,aij,aji
+      @show uij,uji
+      @show qi,qj
+      @show xi,xjaux
+        end =#
+
           if dxj*x[j][1]<0
             qjplus=xjaux+sign(dxj)*quantum[j]
             dxi=a[index][index]*q[index][0]+a[index][j]*qjplus+u[index][j][1]
@@ -50,7 +79,13 @@ function isCycle_and_simulUpdate(::Val{1},index::Int,j::Int, x::Vector{Taylor0{F
                 iscycle=true
               qaux[j][1]=q[j][0]
               olddx[j][1]=x[j][1]
-              aii=a[index][index];ajj=a[j][j];aij=a[index][j];aji=a[j][index];uij=u[index][j][1];uji=u[j][index][1];xi=x[index][0];xj=x[j][0];x1i=x[index][1];x1j=x[j][1]
+              
+       @show simt
+              @show aii,ajj,aij,aji
+        @show uij,uji
+        @show qi,qj
+        @show xi,xjaux
+              
               h = ft-simt
               Δ=(1-h*aii)*(1-h*ajj)-h*h*aij*aji
               qi = ((1-h*ajj)*(xi+h*uij)+h*aij*(xjaux+h*uji))/Δ
@@ -58,6 +93,9 @@ function isCycle_and_simulUpdate(::Val{1},index::Int,j::Int, x::Vector{Taylor0{F
               if (abs(qi - xi) > 2*quantum[index] || abs(qj - xjaux) > 2*quantum[j]) # removing this did nothing...check @btime later
                 h1 = (abs(quantum[index] / x1i));h2 = (abs(quantum[j] / x1j));
                 h=min(h1,h2)
+                @show h1,h2
+               
+                println("h inside sqrt(quan/ddx)= ",h)
                 Δ=(1-h*aii)*(1-h*ajj)-h*h*aij*aji
                 if Δ==0
                   Δ=1e-12
@@ -65,6 +103,8 @@ function isCycle_and_simulUpdate(::Val{1},index::Int,j::Int, x::Vector{Taylor0{F
                 qi = ((1-h*ajj)*(xi+h*uij)+h*aij*(xjaux+h*uji))/Δ
                 qj = ((1-h*aii)*(xjaux+h*uji)+h*aji*(xi+h*uij))/Δ
               end
+              println("lets see qi and qj after second change using sqrt(quan/x2): ")
+              @show qi,qj
               maxIter=100
               while (abs(qi - xi) > 2*quantum[index] || abs(qj - xjaux) > 2*quantum[j]) && (maxIter>0)
                 maxIter-=1
@@ -79,6 +119,10 @@ function isCycle_and_simulUpdate(::Val{1},index::Int,j::Int, x::Vector{Taylor0{F
                 qi = ((1-h*ajj)*(xi+h*uij)+h*aij*(xjaux+h*uji))/Δ
                 qj = ((1-h*aii)*(xjaux+h*uji)+h*aji*(xi+h*uij))/Δ
               end
+              @show maxIter
+              println("after while loop")
+               @show qi,xi,quantum[index]
+               @show qj,xjaux,quantum[j]
              #println("after while loop")
               #@show qi,xi,quantum[index]
              # @show qj,xjaux,quantum[j]
@@ -101,21 +145,35 @@ function isCycle_and_simulUpdate(::Val{2},index::Int,j::Int, x::Vector{Taylor0{F
   e1 = simt - tu[j]
   xjaux = x[j](e1)# xAUX instead
  # println("ujj before update= ", u[j][j])
-    u[j][j][1]=u[j][j][1]+e1*u[j][j][2]
+  #  u[j][j][1]=u[j][j][1]+e1*u[j][j][2]
    # println("ujj after update= ", u[j][j])
     e2 = simt - tq[j]
     tu[j]=simt
     tq[j]=simt
     #= qaux[j][1]=q[j][0] #used to be after if check
     olddx[j][1]=x[j][1] =#
-    qaux[j][1]=q[j][0]+e2*q[j][1]
+    qaux[j][1]=q[j][0]+e2*q[j][1]  ###################should i eliminate the time update?????????
     olddx[j][1]=x[j][1]
-
-   u[j][index][1]=u[j][j][1]-a[j][index]*qaux[index][1]
+   ujitemp=u[j][index][1]
+   uji2temp=u[j][index][2]
+   #u[j][index][1]=u[j][j][1]-a[j][index]*qaux[index][1]# this update was tested...it did not mess things up (ujitemp, ((u[j])[index])[1]) = (-39.33780513962077, -39.28943520145807)
+                                                                                                                        #(uji2temp, ((u[j])[index])[2]) = (-5007.97451582322, -5007.97451582322)
    dxj=a[j][index]*q[index][0]+a[j][j]*qaux[j][1]+u[j][index][1]
-   u[j][index][2]=u[j][j][2]-a[j][index]*qaux[index][2]#########this should be already updated... this formula brings nothing new
+   #u[j][index][2]=u[j][j][2]-a[j][index]*qaux[index][2]#########this update was tested...it did not mess things up this should be already updated... this formula brings nothing new
+  
    ddxj=a[j][index]*q[index][1]+a[j][j]*q[j][1]+u[j][index][2]
    iscycle=false
+   if -6599<ddxj<-6597
+   # @show ujitemp,u[j][index][1]
+    @show uji2temp,u[j][index][2]
+    println("the previous big cuz of following")
+    @show a[j][index]#a[j][index]=-1511.8431617851193
+   @show x[j][1],olddx[j][1]
+   @show q[index][0],qaux[index][1]
+   @show simt
+   @show a[index][j]
+   
+   end
   #=  @show a,u
    @show dxj,xj1
    @show ddxj,xj2 =#
@@ -136,16 +194,27 @@ function isCycle_and_simulUpdate(::Val{2},index::Int,j::Int, x::Vector{Taylor0{F
       
       if (abs(dxi-x[index][1])>abs(dxi+x[index][1])/2 || abs(ddxi-2*x[index][2])>abs(ddxi+2*x[index][2])/2)
           iscycle=true
-          @show q[index][0],q[j][0]
-         @show x[index][0],xjaux
+          
+        #  @show q[index][0],q[j][0]
+       #  @show x[index][0],xjaux
        #   @show abs(q[index][0] - x[index][0]) > 2*quantum[index] ,2*quantum[index] 
         #  @show abs(q[j][0] - xjaux) > 2*quantum[j],2*quantum[j]
-          @show dxi,xi1
+        # @show j
+          #= @show dxi,xi1
           @show ddxi,xi2
+          @show dxj,xj1
+          @show ddxj,xj2 =#
+
+
         aii=a[index][index];ajj=a[j][j];aij=a[index][j];aji=a[j][index];uij=u[index][j][1];uji=u[j][index][1];uij2=u[index][j][2];uji2=u[j][index][2];xi=x[index][0];xj=x[j][0]
-       # @show aii,ajj,aij,aji
-       # @show uij,uji
-        h = ft-simt
+        qi=q[index][0];qj=q[j][0]
+        ajj=-1;aii=-1;aji=87;aij=3.01;uji=2.61;uij=3.68
+        @show simt
+        @show aii,ajj,aij,aji
+        @show uij,uji
+        @show qi,qj
+        @show xi,xjaux
+       #=  h = ft-simt
         Δ=(1-h*aii)*(1-h*ajj)-h*h*aij*aji
         α=(aii*(1-h*ajj)+h*aij*aji)/Δ
         β=(aij*(1-h*ajj)+h*aij*ajj)/Δ
@@ -170,12 +239,13 @@ function isCycle_and_simulUpdate(::Val{2},index::Int,j::Int, x::Vector{Taylor0{F
         qj=(-γ1*θ12-α1*θ22)/Δ1
         println("lets see qi and qj after initial change using ft: ")
         @show qi,qj
-        @show xi,xjaux
+        
         
         if (abs(qi - xi) > 2*quantum[index] || abs(qj - xjaux) > 2*quantum[j]) # removing this did nothing...check @btime later
           h1 = sqrt(abs(quantum[index]/x[index][2]));h2 = sqrt(abs(quantum[j]/x[j][2]));
+          @show h1,h2
           h=min(h1,h2)
-          @show h
+          println("h inside sqrt(quan/ddx)= ",h)
        #   @show a
        #   @show u
           Δ=(1-h*aii)*(1-h*ajj)-h*h*aij*aji
@@ -247,9 +317,56 @@ function isCycle_and_simulUpdate(::Val{2},index::Int,j::Int, x::Vector{Taylor0{F
         q[index][0]=qi# store back helper vars
         q[j][0]=qj
         q[index][1]=α*qi+β*qj+θ10
-        q[j][1]=γ*qi+λ*qj+θ20
-      #  println("lets see qi and qj after while change: ")
-      #  @show q[index][0],q[j][0]
+        q[j][1]=γ*qi+λ*qj+θ20 =#
+        h = ft-simt
+        Δ=(1-h*aii)*(1-h*ajj)-h*h*aij*aji
+        qi = ((1-h*ajj)*(xi+h*uij)+h*aij*(xjaux+h*uji))/Δ
+        qj = ((1-h*aii)*(xjaux+h*uji)+h*aji*(xi+h*uij))/Δ
+        if (abs(qi - xi) > 2*quantum[index] || abs(qj - xjaux) > 2*quantum[j]) # removing this did nothing...check @btime later
+          h1 = (abs(quantum[index] / xi1));h2 = (abs(quantum[j] / xj1));
+          h=min(h1,h2)
+          @show h1,h2
+               
+          println("h inside sqrt(quan/ddx)= ",h)
+          Δ=(1-h*aii)*(1-h*ajj)-h*h*aij*aji
+          if Δ==0
+            Δ=1e-12
+          end
+          qi = ((1-h*ajj)*(xi+h*uij)+h*aij*(xjaux+h*uji))/Δ
+          qj = ((1-h*aii)*(xjaux+h*uji)+h*aji*(xi+h*uij))/Δ
+        end
+        println("lets see qi and qj after second change using sqrt(quan/x2): ")
+              @show qi,qj
+        maxIter=100
+        while (abs(qi - xi) > 2*quantum[index] || abs(qj - xjaux) > 2*quantum[j]) && (maxIter>0)
+          maxIter-=1
+          h1 = h * (2*quantum[index] / abs(qi - xi));
+          h2 = h * (2*quantum[j] / abs(qj - xjaux));
+          h=min(h1,h2)
+          Δ=(1-h*aii)*(1-h*ajj)-h*h*aij*aji
+          if Δ==0
+           # println("delta==0")
+            Δ=1e-12
+          end
+          qi = ((1-h*ajj)*(xi+h*uij)+h*aij*(xjaux+h*uji))/Δ
+          qj = ((1-h*aii)*(xjaux+h*uji)+h*aji*(xi+h*uij))/Δ
+        end
+        @show maxIter
+        println("after while loop")
+         @show qi,xi,quantum[index]
+         @show qj,xjaux,quantum[j]
+          α=(aii*(1-h*ajj)+h*aij*aji)/Δ
+          β=(aij*(1-h*ajj)+h*aij*ajj)/Δ
+          γ=(aji*(1-h*aii)+h*aji*aii)/Δ
+          λ=(ajj*(1-h*aii)+h*aij*aji)/Δ
+          
+          θ10=(-h*(1-h*ajj)*(uij+h*uij2)-h*h*aij*(uji+h*uji2))/Δ
+          θ20=(-h*(1-h*aii)*(uji+h*uji2)-h*h*aji*(uij+h*uij2))/Δ
+         # θ11=xi+h*uij+h*h*(z1*(uij+h*uij2)+z2*(uji+h*uji2))/2
+          q[index][1]=α*qi+β*qj+θ10
+          q[j][1]=γ*qi+λ*qj+θ20
+      #=   println("lets see qi and qj after while change: ")
+        @show q[index][0],q[j][0] =#
         
       end #end second dependecy check
   end # end outer dependency check

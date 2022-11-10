@@ -86,11 +86,11 @@ function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
     q=qv[i][0] ;q1=qv[i][1]; x=xv[i][0];  x1=xv[i][1]; x2=xv[i][2]*2; u1=uv[i][i][1]; u2=uv[i][i][2]
     qaux[i][1]=q#+(simt-tq[i])*q1#appears only here...updated here and used in updateApprox and in updateQevent later
    
-   println("qaux i inside updateQ= ",qaux[i][1])
+  # println("qaux i inside updateQ= ",qaux[i][1])
     #q=qaux[i][1]# not needed...q used only in approx ddx which not needed to be exacte
     qaux[i][2]=q1                     #appears only here...updated here and used in updateQevent
     tq[i]=simt
-    olddx[i][1]=x1#appears only here...updated here and used in updateApprox   
+    #olddx[i][1]=x1#appears only here...updated here and used in updateApprox   
     u1=u1+(simt-tu[i])*u2 # for order 2: u=u+tu*deru  this is necessary deleting causes scheduler error
     uv[i][i][1]=u1
     tu[i]=simt  
@@ -169,7 +169,7 @@ function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
     #olddx[i][2]=ddx  #olddx[i][2] never used again so no need to update it 
     qv[i][0]=q
     qv[i][1]=q1  
-    println("inside single updateQ: q & qaux[$i][1]= ",q," ; ",qaux[i][1])
+   # println("inside single updateQ: q & qaux[$i][1]= ",q," ; ",qaux[i][1])
     return nothing
 end
 
@@ -611,6 +611,7 @@ function updateLinearApprox(::Val{1},i::Int,x::Vector{Taylor0{Float64}},q::Vecto
 end
 function updateLinearApprox(::Val{2},i::Int,x::Vector{Taylor0{Float64}},q::Vector{Taylor0{Float64}},a::MVector{T,MVector{T,Float64}},u::MVector{T,MVector{T,MVector{O,Float64}}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tu::MVector{T,Float64},simt::Float64)where{T,O}
     diffQ=q[i][0]-qaux[i][1]
+   # println("aii before updateoher= ",a[i][i])
     if diffQ != 0.0
         a[i][i]=(x[i][1]-olddx[i][1])/diffQ
        #=  if a[i][i]>0.0   # this is new for liqss2....deleting this causes the schedule static error unless changing also inside recompute a<0 to a!=0
@@ -619,6 +620,7 @@ function updateLinearApprox(::Val{2},i::Int,x::Vector{Taylor0{Float64}},q::Vecto
     else
         a[i][i]=0.0
     end
+   # println("aii before updateoher= ",a[i][i])
     u[i][i][1]=x[i][1]-a[i][i]*q[i][0]
     u[i][i][2]=2*x[i][2]-a[i][i]*q[i][1]
     tu[i]=simt  # comment did nothing but it makes sense to keep it because more accurate since u is changed

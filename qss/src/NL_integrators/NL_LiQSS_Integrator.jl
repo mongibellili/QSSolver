@@ -160,8 +160,8 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
              # @show u[j][index][1]+a[j][j]*q[j][0]+a[j][index]*q[index][0]
              # @show x[j][1]
              # @show nextStateTime
-              @show simt
-              @show printcount
+             # @show simt
+             # @show printcount
               #limitedPrint-=1
              end
           end#end if j!=0

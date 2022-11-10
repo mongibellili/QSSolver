@@ -16,35 +16,36 @@ end
 end
 ######################################################################################################################################"
 function computeDerivative( ::Val{1}  ,x::Taylor0{Float64},f::Taylor0{Float64},cache::Taylor0{Float64},elap::Float64  )
-   x.coeffs[2] =f(elap)
-   #x.coeffs[2] =f.coeffs[1]
+   #x.coeffs[2] =f(elap)
+   x.coeffs[2] =f.coeffs[1]
    return nothing
 end
-#= function computeDerivative( ::Val{2}  ,x::Taylor0{Float64},f::Taylor0{Float64}  ) # approx deriv ...same alloc gain in 11us for FT=5.0  58---69
+function computeDerivative( ::Val{2}  ,x::Taylor0{Float64},f::Taylor0{Float64},cache::Taylor0{Float64},elap::Float64 ) # approx deriv ...some alloc gain in 11us for FT=5.0  58---69
    x.coeffs[2] =f.coeffs[1]
    x.coeffs[3] =f.coeffs[2]/2
    return nothing
-end =#
-function computeDerivative( ::Val{2}  ,x::Taylor0{Float64},f::Taylor0{Float64},cache::Taylor0{Float64},elap::Float64 )
-  x.coeffs[2] =f(elap)
-  differentiate!(cache,f)
-  x.coeffs[3]=cache(elap)/2
-  return nothing
 end
-function computeDerivative( ::Val{3}  ,x::Taylor0{Float64},f::Taylor0{Float64},cache::Taylor0{Float64},elap::Float64 )
+#= function computeDerivative( ::Val{2}  ,x::Taylor0{Float64},f::Taylor0{Float64},cache::Taylor0{Float64},elap::Float64 )
+  x.coeffs[2] =f[0]#f(elap)
+  differentiate!(cache,f)
+  x.coeffs[3]=cache[0]/2#cache(elap)/2
+  return nothing
+end =#
+#= function computeDerivative( ::Val{3}  ,x::Taylor0{Float64},f::Taylor0{Float64},cache::Taylor0{Float64},elap::Float64 )
   x.coeffs[2] =f(elap)
   differentiate!(cache,f)
   x.coeffs[3]=cache(elap)/2
   ndifferentiate!(cache,f,2)
   x.coeffs[4]=cache(elap)/6
   return nothing
-end
-#= function computeDerivative( ::Val{3}  ,x::Taylor0{Float64},f::Taylor0{Float64},cache::Taylor0{Float64},elap::Float64 )
-  x.coeffs[2] =f(elap)
-  x.coeffs[3]=f.coeffs[2]/2
-  x.coeffs[4]=f.coeffs[3]/3 # this cheating shortcut does not always work. ft=20 is fine ft=50 sol shifts up a little
-  return nothing
 end =#
+
+function computeDerivative( ::Val{3}  ,x::Taylor0{Float64},f::Taylor0{Float64},cache::Taylor0{Float64},elap::Float64 )
+  x.coeffs[2] =f[0]#f(elap)
+  x.coeffs[3]=f.coeffs[2]/2
+  x.coeffs[4]=f.coeffs[3]/3 # 
+  return nothing
+end
 ######################################################################################################################################"
 function computeNextTime(::Val{1}, i::Int, currentTime::Float64, nextTime::MVector{T,Float64}, x::Vector{Taylor0{Float64}}, quantum::Vector{Float64})where{T}#i can be absorbed
   absDeltaT=1e-12 # minimum deltaT to protect against der=Inf coming from sqrt(0) for example...similar to min ΔQ
