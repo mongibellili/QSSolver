@@ -141,6 +141,7 @@ while simt < ft #&& printcount < 5
           tx[j] = simt
          tq[j] = simt
         end
+        clearCache(taylorOpsCache,cacheSize)
         f(j,q,d,t,taylorOpsCache)
         #@timeit "state-compder" 
          computeDerivative(Val(O), x[j], taylorOpsCache[1],integratorCache,elapsed)

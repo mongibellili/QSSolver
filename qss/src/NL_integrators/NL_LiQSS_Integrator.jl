@@ -149,6 +149,7 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
               tx[j] = simt
               tq[j] = simt
             end
+            clearCache(taylorOpsCache,cacheSize)
             f(j,q,d,t,taylorOpsCache)
          #   @timeit "comp der"
              computeDerivative(Val(O), x[j], taylorOpsCache[1],integratorCache,elapsed)
