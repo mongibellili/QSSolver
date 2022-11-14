@@ -118,7 +118,7 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
     len=length(savedTimes)
     printcount=0
     while simt < ft #&& printcount < 5000000
-      printcount+=1
+     # printcount+=1
       sch = updateScheduler(nextStateTime,nextEventTime, nextInputTime)
       simt = sch[2]
       index = sch[1]
@@ -156,15 +156,15 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
             #computeDerivative(Val(O), x[j], taylorOpsCache[1])
            # @timeit "state-recompute" 
              Liqss_reComputeNextTime(Val(O), j, simt, nextStateTime, x, q, quantum,a)
-             if 50>simt>9
+             #= if 50>simt>9
               #@show a[1][2], a[2][1]
              # @show u[j][index][1]+a[j][j]*q[j][0]+a[j][index]*q[index][0]
              # @show x[j][1]
              # @show nextStateTime
-             # @show simt
-             # @show printcount
+              @show simt
+              @show printcount
               #limitedPrint-=1
-             end
+             end =#
           end#end if j!=0
         end#end for SD
         for i = 1:length(SZ[index])
@@ -275,7 +275,7 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
       resize!(savedVars[i],count)
     end
    # print_timer()
-   
+  # @show printcount
     resize!(savedTimes,count)
     Sol(savedTimes, savedVars)
     end#end integrate

@@ -26,9 +26,9 @@ function computeDerivative( ::Val{2}  ,x::Taylor0{Float64},f::Taylor0{Float64},c
    return nothing
 end
 #= function computeDerivative( ::Val{2}  ,x::Taylor0{Float64},f::Taylor0{Float64},cache::Taylor0{Float64},elap::Float64 )
-  x.coeffs[2] =f[0]#f(elap)
+  x.coeffs[2] =f(elap)
   differentiate!(cache,f)
-  x.coeffs[3]=cache[0]/2#cache(elap)/2
+  x.coeffs[3]=cache(elap)/2
   return nothing
 end =#
 #= function computeDerivative( ::Val{3}  ,x::Taylor0{Float64},f::Taylor0{Float64},cache::Taylor0{Float64},elap::Float64 )

@@ -13,8 +13,11 @@ function plotSol(sol::Sol)
       end
      display(plot!(sol.savedTimes, temp,label="x$k")) 
 
-    #=  if k%2==0#k=2
-      display(plot!(sol.savedTimes,temp,seriestype = :scatter,label="x$k",xlims=(20,50),ylims=(0.698,0.702)))
+     #= if k%2==0#k=2
+      display(plot!(sol.savedTimes,temp,label="x$k",xlims=(20,30),ylims=(0.698,0.702)))
+     end =#
+     #= if k%2==0#k=2
+      display(plot!(sol.savedTimes,temp,label="x$k",xlims=(7,12),ylims=(0.69,0.71)))
      end =#
 
     # display(plot!(sol.savedTimes, temp,seriestype = :scatter,label="x$k",xlims=(10,12),ylims=(-0.5,0.5)))  

@@ -1,4 +1,4 @@
-#= function updateQ(::Val{1},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},av::MVector{T,MVector{T,Float64}},uv::MVector{T,MVector{T,MVector{O,Float64}}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tq::MVector{T,Float64},tu::MVector{T,Float64},simt::Float64,ft::Float64)where{T,O}
+#= function updateQ(::Val{1},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},av::MVector{T,MVector{T,Float64}},uv::MVector{T,MVector{O,Float64}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tq::MVector{T,Float64},tu::MVector{T,Float64},simt::Float64,ft::Float64)where{T,O}
     qaux[i][1]=qv[i][0]# index shift....sorry but be careful: taylor 1st elemtn is at 0, a vect 1st elemnt is at 1
     olddx[i][1]=xv[i][1]
    # qv[i][0]=xv[i][0]
@@ -79,14 +79,11 @@ function updateQ(::Val{1},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
         end
     end
     qv[i][0]=q
-   # println("inside single updateQ: q & qaux[$i][1]= ",q," ; ",qaux[i][1])
     return nothing
 end
 function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},av::MVector{T,MVector{T,Float64}},uv::MVector{T,MVector{T,MVector{O,Float64}}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tq::MVector{T,Float64},tu::MVector{T,Float64},simt::Float64,ft::Float64)where{T,O}
     q=qv[i][0] ;q1=qv[i][1]; x=xv[i][0];  x1=xv[i][1]; x2=xv[i][2]*2; u1=uv[i][i][1]; u2=uv[i][i][2]
-    qaux[i][1]=q+(simt-tq[i])*q1#appears only here...updated here and used in updateApprox and in updateQevent later
-   
-  # println("qaux i inside updateQ= ",qaux[i][1])
+    qaux[i][1]=q#+(simt-tq[i])*q1#appears only here...updated here and used in updateApprox and in updateQevent later
     #q=qaux[i][1]# not needed...q used only in approx ddx which not needed to be exacte
     qaux[i][2]=q1                     #appears only here...updated here and used in updateQevent
     tq[i]=simt
@@ -124,21 +121,15 @@ function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
         h = ft-simt
         q = ((x + h * u1 + h * h / 2 * u2) * (1 - h * a) + (h * h / 2 * a - h) * (u1 + h * u2)) /
                  (1 - h * a + h * h * a * a / 2)
-                 #= q = ((x + h * u1 + h * h / 2 * u2) * (1 - h * a) + (h * h / 2 * a ) * (u1 + h * u2)) /
-                 (1 - 2*h * a + h * h * a * a / 2) =#
         if (abs(q - x) > 2 * quan) # removing this did nothing...check @btime later
           h = sqrt(abs(2*quan / ddx)) # sqrt highly recommended...removing it leads to many sim steps..//2* is necessary in 2*quan when using ddx
           q = ((x + h * u1 + h * h / 2 * u2) * (1 - h * a) + (h * h / 2 * a - h) * (u1 + h * u2)) /
                    (1 - h * a + h * h * a * a / 2)
-                  #=  q = ((x + h * u1 + h * h / 2 * u2) * (1 - h * a) + (h * h / 2 * a ) * (u1 + h * u2)) /
-                 (1 - 2*h * a + h * h * a * a / 2) =#
         end
         while (abs(q - x) > 2 * quan) 
           h = h *sqrt(2*quan / abs(q - x))
           q = ((x + h * u1 + h * h / 2 * u2) * (1 - h * a) + (h * h / 2 * a - h) * (u1 + h * u2)) /
                    (1 - h * a + h * h * a * a / 2)
-                  #=  q = ((x + h * u1 + h * h / 2 * u2) * (1 - h * a) + (h * h / 2 * a ) * (u1 + h * u2)) /
-                 (1 - 2*h * a + h * h * a * a / 2) =#
         end
         q1=(a*q+u1+h*u2)/(1-h*a)  #later investigate 1=h*a
     else
@@ -169,7 +160,6 @@ function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
     #olddx[i][2]=ddx  #olddx[i][2] never used again so no need to update it 
     qv[i][0]=q
     qv[i][1]=q1  
-   # println("inside single updateQ: q & qaux[$i][1]= ",q," ; ",qaux[i][1])
     return nothing
 end
 
@@ -247,7 +237,7 @@ end
     qv[i][1]=q1  
     return nothing
 end =#
-#= function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},av::MVector{T,MVector{T,Float64}},uv::MVector{T,MVector{T,MVector{O,Float64}}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tq::MVector{T,Float64},tu::MVector{T,Float64},simt::Float64,ft::Float64)where{T,O}
+#= function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},av::MVector{T,MVector{T,Float64}},uv::MVector{T,MVector{O,Float64}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tq::MVector{T,Float64},tu::MVector{T,Float64},simt::Float64,ft::Float64)where{T,O}
     q=xv[i][0]
     q1=qv[i][1]
     x=xv[i][0]
@@ -323,7 +313,7 @@ end =#
     qv[i][1]=q1  
     return nothing
 end  =#
-#= function updateQ(::Val{3},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},av::MVector{T,MVector{T,Float64}},uv::MVector{T,MVector{T,MVector{O,Float64}}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tq::MVector{T,Float64},tu::MVector{T,Float64},simt::Float64,ft::Float64)where{T,O}
+#= function updateQ(::Val{3},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},av::MVector{T,MVector{T,Float64}},uv::MVector{T,MVector{O,Float64}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tq::MVector{T,Float64},tu::MVector{T,Float64},simt::Float64,ft::Float64)where{T,O}
     q=xv[i][0]  # q=x used in liqss1 and liqss3
     q1=qv[i][1]
     q2=qv[i][2]
@@ -611,7 +601,6 @@ function updateLinearApprox(::Val{1},i::Int,x::Vector{Taylor0{Float64}},q::Vecto
 end
 function updateLinearApprox(::Val{2},i::Int,x::Vector{Taylor0{Float64}},q::Vector{Taylor0{Float64}},a::MVector{T,MVector{T,Float64}},u::MVector{T,MVector{T,MVector{O,Float64}}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tu::MVector{T,Float64},simt::Float64)where{T,O}
     diffQ=q[i][0]-qaux[i][1]
-   # println("aii before updateoher= ",a[i][i])
     if diffQ != 0.0
         a[i][i]=(x[i][1]-olddx[i][1])/diffQ
        #=  if a[i][i]>0.0   # this is new for liqss2....deleting this causes the schedule static error unless changing also inside recompute a<0 to a!=0
@@ -620,7 +609,6 @@ function updateLinearApprox(::Val{2},i::Int,x::Vector{Taylor0{Float64}},q::Vecto
     else
         a[i][i]=0.0
     end
-   # println("aii before updateoher= ",a[i][i])
     u[i][i][1]=x[i][1]-a[i][i]*q[i][0]
     u[i][i][2]=2*x[i][2]-a[i][i]*q[i][1]
     tu[i]=simt  # comment did nothing but it makes sense to keep it because more accurate since u is changed
