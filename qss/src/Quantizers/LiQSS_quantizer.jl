@@ -624,6 +624,11 @@ function updateLinearApprox(::Val{2},i::Int,x::Vector{Taylor0{Float64}},q::Vecto
     u[i][i][1]=x[i][1]-a[i][i]*q[i][0]
     u[i][i][2]=2*x[i][2]-a[i][i]*q[i][1]
     tu[i]=simt  # comment did nothing but it makes sense to keep it because more accurate since u is changed
+    if debug
+        println("u$i$i = ",u[i][i][1])
+        println("du$i$i = ",u[i][i][2])
+        println("tu[$i] = ",tu[i])
+    end
     return nothing
 end
 function updateLinearApprox(::Val{3},i::Int,x::Vector{Taylor0{Float64}},q::Vector{Taylor0{Float64}},a::MVector{T,MVector{T,Float64}},u::MVector{T,MVector{T,MVector{O,Float64}}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tu::MVector{T,Float64},simt::Float64)where{T,O}
@@ -640,5 +645,6 @@ function updateLinearApprox(::Val{3},i::Int,x::Vector{Taylor0{Float64}},q::Vecto
     u[i][i][2]=2*x[i][2]-a[i][i]*q[i][1]  #2*x[i][2]-a[i][i]*q[i][1]  #if a==0 deru same as derderx meaning that in updateQ if derderx> we dont have to check if deru>0 ....note1
     u[i][i][3]=6*x[i][3]-a[i][i]*2*q[i][2]  #3*x[i][3]-a[i][i]*q[i][2]
     tu[i]=simt  # uncomment did nothing
+   
     return nothing
 end

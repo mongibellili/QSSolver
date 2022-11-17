@@ -1,4 +1,5 @@
 module qss
+const global debug=false
 using RuntimeGeneratedFunctions
 using StaticArrays
 using SymEngine

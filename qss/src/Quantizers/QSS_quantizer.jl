@@ -2,17 +2,23 @@
   x.coeffs[1] = x(elapsed)
 end
 @inline function integrateState(::Val{2}, x::Taylor0{Float64},cacheT::Taylor0{Float64},elapsed::Float64) #@inline increased performance
+ # @show x
   x.coeffs[1] = x(elapsed)
+  #@show x
   differentiate!(cacheT,x)
   x.coeffs[2] = cacheT(elapsed)
+  #@show x
   #cacheT.coeffs.=0.0 #clear cache
 end
 @inline function integrateState(::Val{3}, x::Taylor0{Float64},cacheT::Taylor0{Float64},elapsed::Float64) #@inline increased performance
+ 
   x.coeffs[1] = x(elapsed)
   differentiate!(cacheT,x)
+  
   x.coeffs[2] = cacheT(elapsed)
   ndifferentiate!(cacheT,x,2)
   x.coeffs[3] = cacheT(elapsed)/2
+ 
 end
 ######################################################################################################################################"
 function computeDerivative( ::Val{1}  ,x::Taylor0{Float64},f::Taylor0{Float64},cache::Taylor0{Float64},elap::Float64  )
