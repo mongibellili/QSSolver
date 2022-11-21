@@ -11,13 +11,16 @@ function plotSol(sol::Sol)
       for i = 1:numPoints #each point is a taylor
           push!(temp, sol.savedVars[k][i].coeffs[1])
       end
-     display(plot!(sol.savedTimes, temp,label="x$k")) 
+     #display(plot!(sol.savedTimes, temp,label="x$k")) 
 
-     #= if k%2==0#k=2
-      display(plot!(sol.savedTimes,temp,label="x$k",xlims=(20,30),ylims=(0.698,0.702)))
+     
+     display(plot!(sol.savedTimes,temp,label="x$k",xlims=(100,160),ylims=(-0.000002,0.000002)))
+
+    #=  if k%2==0#k=2
+      display(plot!(sol.savedTimes,temp,seriestype = :scatter,title="System3-mliqss2",label="x$k",xlims=(7,50),ylims=(0.698,0.702)))
      end =#
      #= if k%2==0#k=2
-      display(plot!(sol.savedTimes,temp,label="x$k",xlims=(7,12),ylims=(0.69,0.71)))
+      display(plot!(sol.savedTimes,temp,label="x$k",xlims=(20,50),ylims=(0.6,0.8)))
      end =#
 
     # display(plot!(sol.savedTimes, temp,seriestype = :scatter,label="x$k",xlims=(10,12),ylims=(-0.5,0.5)))  

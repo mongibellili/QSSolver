@@ -145,9 +145,20 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
             if elapsed > 0
               #"evaluate" x at new time only...derivatives get updated next using computeDerivativ()
               x[j].coeffs[1] = x[j](elapsed)
-              q[j].coeffs[1] = q[j](elapsed)
+             # q[j].coeffs[1] = q[j](elapsed)
               tx[j] = simt
-              tq[j] = simt
+             # tq[j] = simt
+            end
+            for b = 1:length(SD[j]) # elapsed update all other vars that this derj depends upon
+              s = SD[j][b] 
+              if s != 0           
+                elapsed = simt - tq[s]
+                if elapsed>0
+                  #q[s].coeffs[1] = q[s](elapsed) # order3 should update dq
+                  integrateState(Val(O),q[s],integratorCache,elapsed)
+                  tq[s]=simt
+                end
+              end
             end
             clearCache(taylorOpsCache,cacheSize)
             f(j,q,d,t,taylorOpsCache)
@@ -198,6 +209,7 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
             if quantum[j] < absQ
               quantum[j] = absQ
             end
+            
             clearCache(taylorOpsCache,cacheSize)
             f(j,q,d,t,taylorOpsCache)
             computeDerivative(Val(O), x[j], taylorOpsCache[1],integratorCache,elapsed)

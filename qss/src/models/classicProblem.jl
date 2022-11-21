@@ -51,3 +51,16 @@ function twoVarSys13(j::Int, q::Vector{Taylor0{Float64}}, d::Vector{Float64}, t:
         return nothing
     end
 end
+function twoVarSys15(j::Int, q::Vector{Taylor0{Float64}}, d::Vector{Float64}, t::Taylor0{Float64}, cache::Vector{Taylor0{Float64}})
+    if j == 1
+        #= none:1 =#
+        muladdT(-4.0, q[1], mulT(0.5, q[2], cache[2]), cache[1])
+        #= none:1 =#
+        return nothing
+    else
+        #= none:1 =#
+        subT(q[1], mulT(0.25, q[2], cache[2]), cache[1])
+        #= none:1 =#
+        return nothing
+    end
+end

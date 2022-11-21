@@ -45,15 +45,15 @@ function mupdateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylo
  #=  println("inside mupdate: before qaux[i][1]= ",qaux[i][1])
   qaux[i][1]=q#+(simt-tq[i])*q1#appears only here...updated here and used in updateApprox and in updateQevent later
   println("inside mupdate:after qaux[i][1]= ",qaux[i][1]) =#
-# println("qaux i inside updateQ= ",qaux[i][1])
+  # println("qaux i inside updateQ= ",qaux[i][1])
   #q=qaux[i][1]# not needed...q used only in approx ddx which not needed to be exacte
   q=qv[i][0] ;q1=qv[i][1]; x=xv[i][0];  x1=xv[i][1]; x2=xv[i][2]*2; u1=uv[i][i][1]; u2=uv[i][i][2]
 
-#= if debug
-  println("qaux$i was = ",qaux[i][1])
-  println("q$i was = ",qv[i][0])
-end =#
-e=simt-tq[i]
+  #= if debug
+    println("qaux$i was = ",qaux[i][1])
+    println("q$i was = ",qv[i][0])
+  end =#
+  e=simt-tq[i]
   qaux[i][1]=q+e*q1
   if debug println("inside mupdate qaux$i becomes = ",qaux[i][1]) end
   qaux[i][2]=q1                     #appears only here...updated here and used in updateQevent
@@ -70,7 +70,7 @@ e=simt-tq[i]
  end
  
   # olddx[i][2]=2*x2# 
-#=  if 14.1 <simt <=16.653630365539454
+  #=  if 14.1 <simt <=16.653630365539454
         @show simt,av
        
  end =#
@@ -128,7 +128,7 @@ e=simt-tq[i]
   println("h used was = ",h) 
   println("inside mupdate q$i becomes = ",qv[i][0]) 
   println("inside mupdate derq$i becomes = ",qv[i][1]) 
-end
+  end
   return nothing
 end
 
@@ -148,6 +148,7 @@ function isCycle_and_simulUpdate(::Val{1},index::Int,j::Int, x::Vector{Taylor0{F
     qjplus=xjaux+sign(dxj)*quanj
     dxi=aii*qi+aij*qjplus+uij
     if dxi*x1j<0
+      println("********simul update(val1) double if passed; simt= ",simt)
       iscycle=true            
       h = ft-simt
       Δ=(1-h*aii)*(1-h*ajj)-h*h*aij*aji
@@ -272,6 +273,7 @@ function isCycle_and_simulUpdate(::Val{2},index::Int,j::Int, x::Vector{Taylor0{F
        @show a
        @show u =#
      # end
+   #  println("********simul update(val2) double if passed; simt= ",simt)
         iscycle=true
         A=[aii aij;aji ajj]
         I=[1 0;0 1]
@@ -295,8 +297,8 @@ function isCycle_and_simulUpdate(::Val{2},index::Int,j::Int, x::Vector{Taylor0{F
         maxIter=600
         while (abs(qi - xi) > 2*quani || abs(qj - xjaux) > 2*quanj) && (maxIter>0)
           maxIter-=1
-          h1 = h * sqrt(2*quani / abs(qi - xi));
-          h2 = h * sqrt(2*quanj / abs(qj - xjaux));
+          h1 = h * (2*quani / abs(qi - xi));
+          h2 = h * (2*quanj / abs(qj - xjaux));
           h=min(h1,h2)
           N=inv(I-h*A)
           Q=inv(I-h*A+h*N*A-h*h*A*N*A/2)*(((h*h/2)*A-h*I)*N*(U+h*U2)+X+h*U+h*h*U2)         
@@ -379,4 +381,10 @@ function updateOtherApprox(::Val{2},j::Int,index::Int,x::Vector{Taylor0{Float64}
   #  println("u inside updateOther after update= ",u[j][index])
     #tu[index]=simt  # comment did nothing but it makes sense to keep it because more accurate since u is changed
   return nothing
+end
+function updateOlddx(::Val{1}, k::Int,x::Vector{Taylor0{Float64}},olddx::MVector{T,MVector{O,Float64}},elapsed::Float64)where{T,O}
+  olddx[k][1]=x[k][1]
+end
+function updateOlddx(::Val{2}, k::Int,x::Vector{Taylor0{Float64}},olddx::MVector{T,MVector{O,Float64}},elapsed::Float64)where{T,O}
+  olddx[k][1]=x[k][1]+2*x[k][2]*elapsed
 end

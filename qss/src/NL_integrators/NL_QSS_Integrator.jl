@@ -137,9 +137,20 @@ while simt < ft #&& printcount < 5
         if elapsed > 0
           #"evaluate" x only at new time ...derivatives get updated next using computeDerivativ()
           x[j].coeffs[1] = x[j](elapsed)
-          q[j].coeffs[1] = q[j](elapsed)
+        #  q[j].coeffs[1] = q[j](elapsed)
           tx[j] = simt
-         tq[j] = simt
+        # tq[j] = simt
+        end
+        for b = 1:length(SD[j]) # elapsed update all other vars that this derj depends upon.needed even for only two vars: imagine index=1, derx1=f1(q) won't consider q2 elapsed!!!! 
+          s = SD[j][b] 
+          if s != 0           
+            elapsed = simt - tq[s]
+            if elapsed>0
+              #q[s].coeffs[1] = q[s](elapsed) ## order3 should update dq
+              integrateState(Val(O),q[s],integratorCache,elapsed)
+              tq[s]=simt
+            end
+          end
         end
         clearCache(taylorOpsCache,cacheSize)
         f(j,q,d,t,taylorOpsCache)

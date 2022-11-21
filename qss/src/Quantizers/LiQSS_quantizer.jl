@@ -59,6 +59,8 @@ function updateQ(::Val{1},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
                 dx=1e-26
            # end
         end
+    #for order1 finding h is easy but for higher orders iterations are cheaper than finding exact h using a quadratic,cubic...
+    #exacte for order1: h=-2Δ/(u+xa-2aΔ) or h=2Δ/(u+xa+2aΔ)
         h = ft-simt
         q = (x + h * u) /(1 - h * a)
         if (abs(q - x) > 2 * quantum[i]) # removing this did nothing...check @btime later
@@ -522,7 +524,7 @@ function Liqss_reComputeNextTime(::Val{1}, i::Int, currentTime::Float64, nextTim
     if xv[i][1] !=0.0
         dt=(q-x)/xv[i][1]
         if dt>0.0
-            nextTime[i]=currentTime+dt
+            nextTime[i]=currentTime+dt# later guard against very small dt
         else
             if xv[i][1]>0.0  
                 nextTime[i]=currentTime+(q-x+2*quantum[i])/xv[i][1]
@@ -537,12 +539,21 @@ function Liqss_reComputeNextTime(::Val{1}, i::Int, currentTime::Float64, nextTim
         nextTime[i]=Inf
     end
 end
-function Liqss_reComputeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTime::MVector{T,Float64}, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},a::MVector{T,MVector{T,Float64}})where{T}
+
+
+
+
+
+
+#this shortcut did not work (infinite loop) for system15 ft=160.
+
+#= function Liqss_reComputeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTime::MVector{T,Float64}, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},a::MVector{T,MVector{T,Float64}})where{T}
     q=qv[i][0]
     x=xv[i][0]
     q1=qv[i][1]
     x1=xv[i][1]
     x2=xv[i][2]
+    #if xv[i][1] !=0.0
     if  x2!=0.0 && a[i][i] != 0.0  # a!=0 cuz when a==0 x1=0+u  and then u updated below as u=x1-0 meaning that x1==u=oldx1....no change ie nexttime should be Inf???
         nextTime[i]=currentTime+sqrt(abs((q-x)/(x2)))  #64.829 μs (580 allocations: 46.54 KiB)
        #nextTime[i]=currentTime+sqrt(abs((quantum[i])/(x2)))  #64.503 μs (584 allocations: 46.66 KiB)
@@ -553,21 +564,92 @@ function Liqss_reComputeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTim
     else
         nextTime[i]=Inf
     end
-    #removing the previous 5 lines-->78.725 μs (656 allocations: 48.91 KiB)
-   #=  coef=@SVector [q - x , q1-x1,-x2]#
-    nextTime[i] = currentTime + minPosRoot(coef, Val(2))
-    coef=setindex(coef,q - x + 2*quantum[i],1) =#
+    #removing the previous 6 lines and adding time3 -->78.725 μs (656 allocations: 48.91 KiB)
     coef=@SVector [q - x + 2*quantum[i], q1-x1,-x2]#
     time1 = currentTime + minPosRoot(coef, Val(2))
     coef=setindex(coef,q - x - 2*quantum[i],1)
     time2 = currentTime + minPosRoot(coef, Val(2))
     time1 = time1 < time2 ? time1 : time2    
+   #=coef=setindex(coef,q - x,1)
+    time3 = currentTime + minPosRoot(coef, Val(2))
+    time1 = time1 < time3 ? time1 : time3  =#  
     nextTime[i] = time1 < nextTime[i] ? time1 : nextTime[i]
     #= if q*q1<0 && a[i][i] > 10.0*quantum[i] # uncomment did nothing
         time3=currentTime-q/a[i][i]-2*abs(quantum[i]/q1)
         nextTime[i] = time3 < nextTime[i] ? time3 : nextTime[i]
     end  =#   
+   #=  else
+        nextTime[i]=Inf
+    end =#
+end =#
+function Liqss_reComputeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTime::MVector{T,Float64}, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},a::MVector{T,MVector{T,Float64}})where{T}
+    q=qv[i][0]
+    x=xv[i][0]
+    q1=qv[i][1]
+    x1=xv[i][1]
+    x2=xv[i][2]
+ 
+    coef=@SVector [q - x + 2*quantum[i], q1-x1,-x2]#
+    time1 = currentTime + minPosRoot(coef, Val(2))
+    coef=setindex(coef,q - x - 2*quantum[i],1)
+    time2 = currentTime + minPosRoot(coef, Val(2))
+    time1 = time1 < time2 ? time1 : time2    
+    coef=setindex(coef,q - x,1)
+    time3 = currentTime + minPosRoot(coef, Val(2))
+    nextTime[i] = time1 < time3 ? time1 : time3    
+    #nextTime[i] = time1 < nextTime[i] ? time1 : nextTime[i]
+
+
+    if nextTime[i] < currentTime  
+        println("q neither heading towards x nor getting away by 2quantums")
+        nextTime[i]=currentTime+1e-6
+    end
+
+
+
+    #= if q*q1<0 && a[i][i] > 10.0*quantum[i] # uncomment did nothing
+        time3=currentTime-q/a[i][i]-2*abs(quantum[i]/q1)
+        nextTime[i] = time3 < nextTime[i] ? time3 : nextTime[i]
+    end  =#   
 end
+
+
+
+
+
+
+
+
+
+
+
+#= function Liqss_reComputeNextTime(::Val{3}, i::Int, currentTime::Float64, nextTime::MVector{T,Float64}, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},a::MVector{T,MVector{T,Float64}})where{T}
+    q=qv[i][0]
+    x=xv[i][0]
+    q1=qv[i][1]
+    x1=xv[i][1]
+    x2=xv[i][2]
+    q2=qv[i][2]
+    x3=xv[i][3]
+   
+    coef=@SVector [q - x + 2*quantum[i], q1-x1,q2-x2,-x3]#
+    time1 = currentTime + minPosRoot(coef, Val(3))
+    coef=setindex(coef,q - x - 2*quantum[i],1)
+    time2 = currentTime + minPosRoot(coef, Val(3))
+    time1 = time1 < time2 ? time1 : time2   
+    coef=setindex(coef,q - x,1)
+    time3 = currentTime + minPosRoot(coef, Val(3))
+    nextTime[i] = time1 < time3 ? time1 : time3    
+    #nextTime[i] = time1 < nextTime[i] ? time1 : nextTime[i]
+    if nextTime[i] < currentTime  
+        nextTime[i]=currentTime+1e-6
+    end
+    #= if q*q1<0 && a[i][i] > 10.0*quantum[i] # uncomment did nothing
+        time3=currentTime-q/a[i][i]-2*abs(quantum[i]/q1)
+        nextTime[i] = time3 < nextTime[i] ? time3 : nextTime[i]
+    end  =#   
+end =#
+
 function Liqss_reComputeNextTime(::Val{3}, i::Int, currentTime::Float64, nextTime::MVector{T,Float64}, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},a::MVector{T,MVector{T,Float64}})where{T}
     q=qv[i][0]
     x=xv[i][0]
@@ -582,7 +664,7 @@ function Liqss_reComputeNextTime(::Val{3}, i::Int, currentTime::Float64, nextTim
        # nextTime[i]=currentTime+(abs((q1-x1)/(x3)))#758.059 ms (934 allocations: 64.02 KiB)
       # nextTime[i]=currentTime+sqrt(abs((q1-x1)/(x3)))#2.997 ms (934 allocations: 64.02 KiB)#correct
        #nextTime[i]=currentTime+sqrt(abs((x1)/(x3)))#654.351 μs (934 allocations: 64.02 KiB)#shifts up a little
-       nextTime[i]=currentTime+cbrt(abs((q-x)/(x3)))#634.635 μs (934 allocations: 64.02 KiB)#**********correct*******************
+       nextTime[i]=currentTime+cbrt(abs((q-x)/(x3)))#634.635 μs (934 allocations: 64.02 KiB)#*******************correct*******************
      # nextTime[i]=currentTime+cbrt(abs((quantum[i])/(x3)))#632.743 μs (934 allocations: 64.02 KiB)#shifts up
     else
         nextTime[i]=Inf
@@ -598,6 +680,23 @@ function Liqss_reComputeNextTime(::Val{3}, i::Int, currentTime::Float64, nextTim
         nextTime[i] = time3 < nextTime[i] ? time3 : nextTime[i]
     end  =#   
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #######################################################################################################################################################
 function updateLinearApprox(::Val{1},i::Int,x::Vector{Taylor0{Float64}},q::Vector{Taylor0{Float64}},a::MVector{T,MVector{T,Float64}},u::MVector{T,MVector{T,MVector{O,Float64}}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tu::MVector{T,Float64},simt::Float64)where{T,O}
     diffQ=q[i][0]-qaux[i][1]
