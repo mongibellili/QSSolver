@@ -141,22 +141,36 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
         for i = 1:length(SD[index])
           j = SD[index][i] 
           if j != 0           
-            elapsed = simt - tx[j]
+            elapsedx = simt - tx[j]
             if elapsed > 0
               #"evaluate" x at new time only...derivatives get updated next using computeDerivativ()
-              x[j].coeffs[1] = x[j](elapsed)
+              x[j].coeffs[1] = x[j](elapsedx)
              # q[j].coeffs[1] = q[j](elapsed)
               tx[j] = simt
              # tq[j] = simt
             end
-            for b = 1:length(SD[j]) # elapsed update all other vars that this derj depends upon
-              s = SD[j][b] 
-              if s != 0           
-                elapsed = simt - tq[s]
-                if elapsed>0
-                  #q[s].coeffs[1] = q[s](elapsed) # order3 should update dq
-                  integrateState(Val(O),q[s],integratorCache,elapsed)
-                  tq[s]=simt
+            elapsedq = simt - tq[j]
+            if elapsedq > 0
+              #"evaluate" x only at new time ...derivatives get updated next using computeDerivativ()
+              
+              integrateState(Val(O-1),q[j],integratorCache,elapsedq)
+             # q[j].coeffs[1] = q[j](elapsedq) # ouch ! this bit me for a day: q needs to be updated here for recomputeNext, not just for the derivatives!!!
+                                                      # if debug println("x$j elapse updated")  end 
+              
+             tq[j] = simt
+            end
+
+
+            for b = 1:T # elapsed update all other vars that this derj depends upon.needed for when sys has 3 or more vars.
+              sj = jacobian[j][b] 
+              if sj != 0  
+                                                  #   if debug  @show sj   end      
+                elapsedq = simt - tq[b]
+                if elapsedq>0
+                 # q[b].coeffs[1] = q[b](elapsed) ## 
+                  integrateState(Val(O-1),q[b],integratorCache,elapsedq)
+                  tq[b]=simt
+                                                   #   if debug println("q$b elapse updated under sj") end
                 end
               end
             end

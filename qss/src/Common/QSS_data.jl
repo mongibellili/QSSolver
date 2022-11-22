@@ -159,7 +159,7 @@ function QSS_Unique_Solve(f::Function,prob::NLODEProblem{T,D,Z,Y},finalTime::Flo
             for j=1:T  
                ex=jacobian[i][j]
                for k in eachindex(dsym)
-                   ex=subs(ex, dsym[k]=>d[k])#getback d[0] d[1]...in order to get initial correct jacobian to get initial Aii
+                   ex=subs(ex, dsym[k]=>d[k])#getback d[0] d[1]...in order to get initial correct jacobian to get initial Aii#later check and add sysmbols qi....
                end        
                 temparr[j]=ex
             end

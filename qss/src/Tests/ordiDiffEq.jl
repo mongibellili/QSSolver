@@ -16,23 +16,41 @@ function odeDiffEquPackage()
         du[2] =u[1]-0.25*u[2] 
     
     end
-    tspan = (0.0,160.0)
+    tspan = (0.0,5.0)
     u0 = [1.0,0.0]
     prob = ODEProblem(funcName,u0,tspan)
-    sol = solve(prob,BS3(),abstol = 1e-9, reltol = 1e-5)
+    sol = solve(prob,BS3(),abstol = 1e-6, reltol = 1e-3)
     #sol = solve(prob,Rosenbrock23(),abstol = 1e-6, reltol = 1e-3)
-   
-    #display(sol)
+  
+   u1=(-sqrt(257)-15)/8
+u2=(sqrt(257)-15)/8
+λ1=(-sqrt(257)-17)/8
+λ2=(sqrt(257)-17)/8
+c1=-4/sqrt(257)
+c2=4/sqrt(257)
+x1(t)=c1*u1*exp(λ1*t)+c2*u2*exp(λ2*t)
+x2(t)=c1*exp(λ1*t)+c2*exp(λ2*t)
+   sumTrueSqr1=0.0
+   sumDiffSqr1=0.0
+   relerror1=0.0
+   numPoints=length(sol.t)
+   for i = 1:numPoints
+      ft=x2(sol.t[i])
+      sumDiffSqr1+=(sol.u[i][2]-ft)*(sol.u[i][2]-ft)
+      sumTrueSqr1+=ft*ft
+    end
+    relerror1=sqrt(sumDiffSqr1/sumTrueSqr1)
+    display(relerror1)
    # display(plot!(sol))
-    display(plot!(sol,xlims=(100,160),ylims=(-0.000002,0.000002)))
+ #=    display(plot!(sol,xlims=(100,160),ylims=(-0.000002,0.000002)))
   #  display(plot!(sol,xlims=(10.0,10.0005),ylims=(-0.49971,-0.49960)))
     println("done")
-    readline() 
+    readline()  =#
 end
 #@btime 
 odeDiffEquPackage()  
 
-u1=(-sqrt(257)-15)/8
+#=u1=(-sqrt(257)-15)/8
 u2=(sqrt(257)-15)/8
 λ1=(-sqrt(257)-17)/8
 λ2=(sqrt(257)-17)/8
@@ -44,7 +62,7 @@ display(plot!(x1,title="against BS3:ΔQ=1e-5",label="true x1",xlims=(100,160),yl
 display(plot!(x2,label="true x2",xlims=(100,160),ylims=(-0.000002,0.000002)))
 println("press enter to exit")
 readline()
-
+ =#
 
 #= function test()
     odeprob = @NLodeProblem begin

@@ -3,6 +3,25 @@ struct Sol
     savedTimes::Vector{Float64} 
     savedVars::Vector{Array{Taylor0{Float64}}}
 end
+function getError(sol::Sol,index::Int,f::Function)
+  numPoints=length(sol.savedTimes)
+  numVars=length(sol.savedVars)
+  sumTrueSqr=0.0
+  sumDiffSqr=0.0
+  relerror=0.0
+  if index<=numVars
+    for i = 1:numPoints #each point is a taylor
+      ft=f(sol.savedTimes[i])
+      sumDiffSqr+=(sol.savedVars[index][i].coeffs[1]-ft)*(sol.savedVars[index][i].coeffs[1]-ft)
+      sumTrueSqr+=ft*ft
+    end
+    relerror=sqrt(sumDiffSqr/sumTrueSqr)
+  else
+    error("the system contains only $numVars variables!")
+  end
+  return relerror
+
+end
 function plotSol(sol::Sol)
     numPoints=length(sol.savedTimes)
     numVars=length(sol.savedVars)
@@ -11,10 +30,10 @@ function plotSol(sol::Sol)
       for i = 1:numPoints #each point is a taylor
           push!(temp, sol.savedVars[k][i].coeffs[1])
       end
-     #display(plot!(sol.savedTimes, temp,label="x$k")) 
-
+     display(plot!(sol.savedTimes, temp,title="System1-qss2",label="x$k")) 
+     #display(plot!(sol.savedTimes, temp,title="System1-qss2",label="x$k",xlims=(0,0.6),ylims=(-0.4,1))) 
      
-     display(plot!(sol.savedTimes,temp,label="x$k",xlims=(100,160),ylims=(-0.000002,0.000002)))
+    # display(plot!(sol.savedTimes,temp,label="x$k",xlims=(100,160),ylims=(-0.000002,0.000002))) # system5 against true solution
 
     #=  if k%2==0#k=2
       display(plot!(sol.savedTimes,temp,seriestype = :scatter,title="System3-mliqss2",label="x$k",xlims=(7,50),ylims=(0.698,0.702)))

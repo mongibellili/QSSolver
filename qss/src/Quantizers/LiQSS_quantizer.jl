@@ -102,10 +102,10 @@ function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
     quan=quantum[i]
     if a!=0.0
         if ddx ==0.0
-            ddx=a*a*q+a*u1 +u2
-            if ddx==0.0
+            #= ddx=a*a*q+a*u1 +u2
+            if ddx==0.0 =#
                 ddx=1e-26# changing -40 to -6 nothing changed
-            end
+            #end
         end
          #=   coef=@SVector [ -2* quantum[i], x*a+2*quantum[i]+u,(a*u+u1+x*a*a+2*quantum[i]*a*a)/2]#*2
             h =  minPosRoot(coef, Val(2))
@@ -722,7 +722,7 @@ function updateLinearApprox(::Val{2},i::Int,x::Vector{Taylor0{Float64}},q::Vecto
    # println("aii before updateoher= ",a[i][i])
     u[i][i][1]=x[i][1]-a[i][i]*q[i][0]
     u[i][i][2]=2*x[i][2]-a[i][i]*q[i][1]
-    tu[i]=simt  # comment did nothing but it makes sense to keep it because more accurate since u is changed
+    #tu[i]=simt  # comment did nothing but it makes sense to keep it because more accurate since u is changed
     if debug
         println("u$i$i = ",u[i][i][1])
         println("du$i$i = ",u[i][i][2])

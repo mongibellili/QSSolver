@@ -183,8 +183,46 @@ function mLiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D
                   #  Liqss_reComputeNextTime(Val(O), index, simt, nextStateTime, x, q, quantum,a)
                for l = 1:length(SD[j])
                       k = SD[j][l] 
-                      if k != 0           
-                        elapsed = simt - tx[k]
+                      if k != 0  
+                        
+                        elapsedx = simt - tx[k]
+                        if elapsedx > 0
+                          #"evaluate" x only at new time ...derivatives get updated next using computeDerivativ()
+                          x[k].coeffs[1] = x[k](elapsedx)
+                         
+                          
+                                                                 #  if debug println("x$j elapse updated")  end 
+                          tx[k] = simt
+                        
+                        end
+                        elapsedq = simt - tq[k]
+                        if elapsedq > 0
+                          #"evaluate" x only at new time ...derivatives get updated next using computeDerivativ()
+                          
+                          integrateState(Val(O-1),q[k],integratorCache,elapsedq)
+                         # q[j].coeffs[1] = q[j](elapsedq) # ouch ! this bit me for a day: q needs to be updated here for recomputeNext, not just for the derivatives!!!
+                                                                  # if debug println("x$j elapse updated")  end 
+                          
+                         tq[k] = simt
+                        end
+        
+                        for b = 1:T # elapsed update all other vars that this derj depends upon.needed for when sys has 3 or more vars.
+                          sj = jacobian[k][b] 
+                          if sj != 0  
+                                                               #  if debug  @show sj   end      
+                            elapsedq = simt - tq[b]
+                            if elapsedq>0
+                             # q[b].coeffs[1] = q[b](elapsed) ## 
+                              integrateState(Val(O-1),q[b],integratorCache,elapsedq)
+                              tq[b]=simt
+                                                                 # if debug println("q$b elapse updated under sj") end
+                            end
+                          end
+                        end
+
+
+
+                       #=  elapsed = simt - tx[k]
                         if elapsed>0
                          x[k].coeffs[1] = x[k](elapsed) #
                          #olddx[k][1]=x[k][1]+2*x[k][2]*elapsed #olddx always has to be elapsed updated
@@ -201,11 +239,11 @@ function mLiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D
                               elapsed = simt - tq[s]
                               if elapsed>0
                                 #q[s].coeffs[1] = q[s](elapsed) #
-                                integrateState(Val(O),q[s],integratorCache,elapsed)
+                                integrateState(Val(O-1),q[s],integratorCache,elapsed)
                                 tq[s]=simt
                               end
                             end
-                          end
+                          end =#
                         clearCache(taylorOpsCache,cacheSize)
                         f(k,q,d,t,taylorOpsCache)
                         computeDerivative(Val(O), x[k], taylorOpsCache[1],integratorCache,elapsed)
@@ -249,26 +287,37 @@ function mLiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D
           j = SD[index][l] 
                                                                           if debug println("j depends on i; j=",j) end
           if j != 0           
-            elapsed = simt - tx[j]
-            if elapsed>0
-                  x[j].coeffs[1] = x[j](elapsed)
-                  #olddx[j][1]=x[j][1]+2*x[j][2]*elapsed    # make this order friendly
-                  updateOlddx(Val(O), j,x,olddx,elapsed)
-                  tx[j]=simt
+            elapsedx = simt - tx[j]
+            if elapsedx > 0
+              #"evaluate" x only at new time ...derivatives get updated next using computeDerivativ()
+              x[j].coeffs[1] = x[j](elapsedx)
+             
+              
+                                                       if debug println("x$j elapse updated")  end 
+              tx[j] = simt
+            
+            end
+            elapsedq = simt - tq[j]
+            if elapsedq > 0
+              #"evaluate" x only at new time ...derivatives get updated next using computeDerivativ()
+              
+              integrateState(Val(O-1),q[j],integratorCache,elapsedq)
+             # q[j].coeffs[1] = q[j](elapsedq) # ouch ! this bit me for a day: q needs to be updated here for recomputeNext, not just for the derivatives!!!
+                                                       if debug println("x$j elapse updated")  end 
+              
+             tq[j] = simt
             end
 
-                                                                          if debug 
-                                                                            println("x[$j] and q1, q2= ",x[j][0]," ",q[1][0]," ",q[2][0],) 
-                                                                            println("olddx$j= ", olddx[j][1])
-                                                                          end
-            for b = 1:length(SD[j]) # elapsed update all other vars that this derj depends upon
-              s = SD[j][b] 
-              if s != 0           
-                elapsed = simt - tq[s]
-                if elapsed>0
-                  #q[s].coeffs[1] = q[s](elapsed) #
-                  integrateState(Val(O),q[s],integratorCache,elapsed)
-                  tq[s]=simt
+            for b = 1:T # elapsed update all other vars that this derj depends upon.needed for when sys has 3 or more vars.
+              sj = jacobian[j][b] 
+              if sj != 0  
+                                                     if debug  @show sj   end      
+                elapsedq = simt - tq[b]
+                if elapsedq>0
+                 # q[b].coeffs[1] = q[b](elapsed) ## 
+                  integrateState(Val(O-1),q[b],integratorCache,elapsedq)
+                  tq[b]=simt
+                                                      if debug println("q$b elapse updated under sj") end
                 end
               end
             end
