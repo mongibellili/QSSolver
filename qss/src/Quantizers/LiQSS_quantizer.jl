@@ -547,7 +547,7 @@ end
 
 #this shortcut did not work (infinite loop) for system15 ft=160.
 
-#= function Liqss_reComputeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTime::MVector{T,Float64}, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},a::MVector{T,MVector{T,Float64}})where{T}
+function Liqss_reComputeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTime::MVector{T,Float64}, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},a::MVector{T,MVector{T,Float64}})where{T}
     q=qv[i][0]
     x=xv[i][0]
     q1=qv[i][1]
@@ -581,8 +581,8 @@ end
    #=  else
         nextTime[i]=Inf
     end =#
-end =#
-function Liqss_reComputeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTime::MVector{T,Float64}, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},a::MVector{T,MVector{T,Float64}})where{T}
+end
+#= function Liqss_reComputeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTime::MVector{T,Float64}, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},a::MVector{T,MVector{T,Float64}})where{T}
     q=qv[i][0]
     x=xv[i][0]
     q1=qv[i][1]
@@ -611,7 +611,7 @@ function Liqss_reComputeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTim
         time3=currentTime-q/a[i][i]-2*abs(quantum[i]/q1)
         nextTime[i] = time3 < nextTime[i] ? time3 : nextTime[i]
     end  =#   
-end
+end =#
 
 
 

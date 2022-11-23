@@ -2,6 +2,7 @@
 struct Sol
     savedTimes::Vector{Float64} 
     savedVars::Vector{Array{Taylor0{Float64}}}
+    algName::String
 end
 function getError(sol::Sol,index::Int,f::Function)
   numPoints=length(sol.savedTimes)
@@ -20,8 +21,35 @@ function getError(sol::Sol,index::Int,f::Function)
     error("the system contains only $numVars variables!")
   end
   return relerror
-
 end
+
+function plotError(sol::Sol,index::Int,f::Function)
+  numPoints=length(sol.savedTimes)
+  numVars=length(sol.savedVars)
+  if index<=numVars
+    temp = []
+    for i = 1:numPoints #each point is a taylor
+      ft=f(sol.savedTimes[i])
+        push!(temp, abs(sol.savedVars[index][i].coeffs[1]-ft)/ft)
+    end
+   display(plot!(sol.savedTimes, temp,title="Error_$(sol.algName)",label="x$index")) 
+  else
+    error("the system contains only $numVars variables!")
+  end
+  println("press enter to exit")
+  readline()
+end
+
+function evaluateSol(sol::Sol,index::Int,t::Float64)
+  for i=1:length(sol[1])#savedTimes
+      if sol[1][i]>t # i is closest lower point
+          return sol[2][index][i-1](t-sol[1][i-1])#taylor evaluation after small elapsed with the point before (i-1)
+      end
+  end
+end
+(sol::Sol)(index::Int,t::Float64) = evaluateSol(sol,index,t)
+
+
 function plotSol(sol::Sol)
     numPoints=length(sol.savedTimes)
     numVars=length(sol.savedVars)
@@ -93,14 +121,7 @@ function plotSol(savedTimes::Vector{Float64} , savedVar::Vector{Taylor0{Float64}
       println("press enter to exit")
       readline()
 end
-function evaluateSol(sol::Sol,index::Int,t::Float64)
-        for i=1:length(sol[1])#savedTimes
-            if sol[1][i]>t # i is closest lower point
-                return sol[2][index][i-1](t-sol[1][i-1])#taylor evaluation after small elapsed with the point before (i-1)
-            end
-        end
-end
-(sol::Sol)(index::Int,t::Float64) = evaluateSol(sol,index,t)
+
 
   
 function getindex(s::Sol, i::Int64)

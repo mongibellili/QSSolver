@@ -1,4 +1,4 @@
-using Plots
+#= using Plots
 #analytic to this
 #= u = [1.0, 0.0]
 discrete = [0.0]
@@ -16,3 +16,10 @@ display(plot!(x1,xlims=(60,80),ylims=(0,0.0004)))
 display(plot!(x2,xlims=(60,80),ylims=(0,0.0004)))
 println("press enter to exit")
 readline()
+ =#
+ savedVars=Vector{Float64}(undef, 2)
+ display(savedVars);println()
+ savedVars[1]=3.14
+ resize!(savedVars,4)
+ savedVars[3]=3.14
+ display(savedVars)

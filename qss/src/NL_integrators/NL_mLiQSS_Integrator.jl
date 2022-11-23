@@ -28,7 +28,7 @@ function mLiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D
     d = odep.discreteVars
     #----------to compute derivatives
     jacobian = odep.jacobian
-
+    jac=changeBasicToInts(jacobian)# change from type nonisbits to int so that access is cheaper down
     a=s.initJac
     u=s.u
     tu=s.tu
@@ -207,8 +207,8 @@ function mLiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D
                         end
         
                         for b = 1:T # elapsed update all other vars that this derj depends upon.needed for when sys has 3 or more vars.
-                          sj = jacobian[k][b] 
-                          if sj != 0  
+                          #sj = jac[k][b] 
+                          if jac[k][b] != 0  
                                                                #  if debug  @show sj   end      
                             elapsedq = simt - tq[b]
                             if elapsedq>0
@@ -309,8 +309,8 @@ function mLiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D
             end
 
             for b = 1:T # elapsed update all other vars that this derj depends upon.needed for when sys has 3 or more vars.
-              sj = jacobian[j][b] 
-              if sj != 0  
+              #sj = jacobian[j][b] 
+              if jac[j][b] != 0  
                                                      if debug  @show sj   end      
                 elapsedq = simt - tq[b]
                 if elapsedq>0
@@ -452,10 +452,14 @@ function mLiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D
             len=count*2
             for i=1:T
               resize!(savedVars[i],len)
+              for z=count:len
+              savedVars[i][z]=Taylor0(zeros(O+1),O) # without this, the new ones are undefined
+              end
             end
             resize!(savedTimes,len)
           end
           for k = 1:T
+              
               savedVars[k][count].coeffs .=x[k].coeffs 
           end
          savedTimes[count]=simt
@@ -467,7 +471,7 @@ function mLiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D
     #print_timer()
    # @show printcount
     resize!(savedTimes,count)
-    Sol(savedTimes, savedVars)
+    Sol(savedTimes, savedVars,"mliqss$O")
     end#end integrate
     
     

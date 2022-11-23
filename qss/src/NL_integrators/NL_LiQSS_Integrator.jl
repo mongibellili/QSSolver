@@ -28,7 +28,7 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
     d = odep.discreteVars
     #----------to compute derivatives
     jacobian = odep.jacobian
-
+    jac=changeBasicToInts(jacobian)# change from type nonisbits to int so that access is cheaper down
     a=s.initJac
     u=s.u
     tu=s.tu
@@ -118,7 +118,7 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
     len=length(savedTimes)
     printcount=0
     while simt < ft #&& printcount < 5000000
-     # printcount+=1
+      printcount+=1
       sch = updateScheduler(nextStateTime,nextEventTime, nextInputTime)
       simt = sch[2]
       index = sch[1]
@@ -162,8 +162,8 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
 
 
             for b = 1:T # elapsed update all other vars that this derj depends upon.needed for when sys has 3 or more vars.
-              sj = jacobian[j][b] 
-              if sj != 0  
+              #sj = jac[j][b] 
+              if jac[j][b]  != 0  
                                                   #   if debug  @show sj   end      
                 elapsedq = simt - tq[b]
                 if elapsedq>0
@@ -288,6 +288,9 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
             len=count*2
             for i=1:T
               resize!(savedVars[i],len)
+              for z=count:len
+                savedVars[i][z]=Taylor0(zeros(O+1),O) # without this, the new ones are undefined
+                end
             end
             resize!(savedTimes,len)
           end
@@ -301,9 +304,9 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
       resize!(savedVars[i],count)
     end
    # print_timer()
-  # @show printcount
+   #@show printcount
     resize!(savedTimes,count)
-    Sol(savedTimes, savedVars)
+    Sol(savedTimes, savedVars,"liqss$O")
     end#end integrate
     
     

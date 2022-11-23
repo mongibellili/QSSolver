@@ -45,6 +45,12 @@
         println("scheduler *******nextInputTime= ",nextInputTime)
         println("scheduler *******nextstateTime= ",nextStateTime)
         println("also the whole system may be static! developer: fill last point(at ft) or remaing points with same values and exit!")
+        #example:
+        #= u = [1.0, 0.0]
+        discrete = [0.0]
+        du[1] = 10.01*u[1]-100.0*u[2]+2020.0
+        du[2] =-10.1*u[1]-0.001*u[2]+0.2 =#
+        returnedVar=(1,Inf,:ST_STATE)
     end
     return returnedVar 
 end

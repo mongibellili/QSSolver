@@ -1,5 +1,5 @@
 @inline function integrateState(::Val{0}, x::Taylor0{Float64},cacheT::Taylor0{Float64},elapsed::Float64) #@inline increased performance
-  
+  x.coeffs[1] = x(elapsed)
 end
 
 @inline function integrateState(::Val{1}, x::Taylor0{Float64},cacheT::Taylor0{Float64},elapsed::Float64) #@inline increased performance

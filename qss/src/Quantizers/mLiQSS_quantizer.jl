@@ -102,11 +102,11 @@ function mupdateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylo
         q = ((x + h * u1 + h * h / 2 * u2) * (1 - h * a) + (h * h / 2 * a - h) * (u1 + h * u2)) /
                  (1 - h * a + h * h * a * a / 2)
       end
-      if maxIter < 200
-        println("maxiter of mpudate= ",maxIter)
+     #=  if maxIter < 200
+       # println("maxiter of mpudate= ",maxIter)
         
 
-      end
+      end =#
       q1=(a*q+u1+h*u2)/(1-h*a)  #later investigate 1=h*a
   else
       #ddx=u2
@@ -148,7 +148,7 @@ function isCycle_and_simulUpdate(::Val{1},index::Int,j::Int, x::Vector{Taylor0{F
     qjplus=xjaux+sign(dxj)*quanj
     dxi=aii*qi+aij*qjplus+uij
     if dxi*x1j<0
-      println("********simul update(val1) double if passed; simt= ",simt)
+     # println("********simul update(val1) double if passed; simt= ",simt)
       iscycle=true            
       h = ft-simt
       Δ=(1-h*aii)*(1-h*ajj)-h*h*aij*aji
@@ -305,11 +305,11 @@ function isCycle_and_simulUpdate(::Val{2},index::Int,j::Int, x::Vector{Taylor0{F
           qi=Q[1]
           qj=Q[2]
         end
-        if maxIter < 20
+       #=  if maxIter < 20
            @show maxIter
            @show simt
            @show a
-        end
+        end =#
        if debug @show maxIter  end
         q[index][0]=qi# store back helper vars
         q[j][0]=qj
