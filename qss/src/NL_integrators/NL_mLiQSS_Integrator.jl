@@ -469,7 +469,7 @@ function mLiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D
       resize!(savedVars[i],count)
     end
     #print_timer()
-   # @show printcount
+    @show printcount
     resize!(savedTimes,count)
     Sol(savedTimes, savedVars,"mliqss$O")
     end#end integrate

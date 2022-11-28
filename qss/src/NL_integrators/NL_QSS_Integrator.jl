@@ -111,7 +111,7 @@ len=length(savedTimes)
 printcount=0
 #debug=false
 while simt < ft #&& printcount < 10000
-  #printcount+=1
+  printcount+=1
   sch = updateScheduler(nextStateTime,nextEventTime, nextInputTime)
   simt = sch[2]
   index = sch[1]
@@ -296,7 +296,7 @@ for i=1:T# throw away empty points
   resize!(savedVars[i],count)
 end
 # print_timer()
-#@show printcount
+@show printcount
 resize!(savedTimes,count)
 Sol(savedTimes, savedVars,"qss$O")
 end#end integrate

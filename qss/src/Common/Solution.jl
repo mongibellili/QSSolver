@@ -32,7 +32,7 @@ function plotError(sol::Sol,index::Int,f::Function)
       ft=f(sol.savedTimes[i])
         push!(temp, abs(sol.savedVars[index][i].coeffs[1]-ft)/ft)
     end
-   display(plot!(sol.savedTimes, temp,title="Error_$(sol.algName)",label="x$index")) 
+   display(plot!(sol.savedTimes, temp,title="Error:(N-T)/T",label="$(sol.algName)")) 
   else
     error("the system contains only $numVars variables!")
   end
@@ -58,7 +58,7 @@ function plotSol(sol::Sol)
       for i = 1:numPoints #each point is a taylor
           push!(temp, sol.savedVars[k][i].coeffs[1])
       end
-     display(plot!(sol.savedTimes, temp,title="System1-qss2",label="x$k")) 
+     display(plot!(sol.savedTimes, temp,title="$(sol.algName)",label="x$k")) 
      #display(plot!(sol.savedTimes, temp,title="System1-qss2",label="x$k",xlims=(0,0.6),ylims=(-0.4,1))) 
      
     # display(plot!(sol.savedTimes,temp,label="x$k",xlims=(100,160),ylims=(-0.000002,0.000002))) # system5 against true solution
@@ -97,6 +97,25 @@ end =#
     end
       println("press enter to exit")
       readline()
+end
+function plotSol_Der1(sol::Sol)
+  numPoints=length(sol.savedTimes)
+  numVars=length(sol.savedVars)
+  for k=1:numVars
+    temp = []
+    for i = 1:numPoints #each point is a taylor
+        push!(temp, sol.savedVars[k][i].coeffs[1])
+    end
+   display(plot!(sol.savedTimes, temp,label="x$k")) 
+   temp2 = []
+    for i = 1:numPoints #each point is a taylor
+        push!(temp2, sol.savedVars[k][i].coeffs[2])
+    end
+   display(plot!(sol.savedTimes, temp2,title="$(sol.algName)",label="dx$k")) 
+    
+  end
+    println("press enter to exit")
+    readline()
 end
 function plotSol(savedTimes::Vector{Float64} ,  savedVars::Vector{Array{Taylor0{Float64}}})
     numPoints=length(savedTimes)
