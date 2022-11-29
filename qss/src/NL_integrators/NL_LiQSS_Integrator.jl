@@ -1,6 +1,6 @@
- using TimerOutputs
+ #using TimerOutputs
 function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,Z,Y},f::Function) where {O,T,D,Z,Y}
-  reset_timer!()
+  #reset_timer!()
     #*********************************settings*****************************************
     #printCounter=[0,0]#vector{Int} fort debugging to be deleted
     ft = s.finalTime
@@ -135,7 +135,8 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
         end
        # qOld=q[index][0]
        # derxOld=x[index][1] # along with ddx should be moved inside update
-        @timeit "updateQ" updateQ(Val(O),index,x,q,quantum,a,u,qaux,olddx,tq,tu,simt,ft) ########||||||||||||||||||||||||||||||||||||liqss|||||||||||||||||||||||||||||||||||||||||
+        #@timeit "updateQ" 
+        updateQ(Val(O),index,x,q,quantum,a,u,qaux,olddx,tq,tu,simt,ft) ########||||||||||||||||||||||||||||||||||||liqss|||||||||||||||||||||||||||||||||||||||||
        # @timeit "computeNextTime" 
         computeNextTime(Val(O), index, simt, nextStateTime, x, quantum) #
         for i = 1:length(SD[index])
@@ -179,7 +180,8 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
             #@timeit "comp der" 
             computeDerivative(Val(O), x[j], taylorOpsCache[1],integratorCache,elapsed)
             #computeDerivative(Val(O), x[j], taylorOpsCache[1])
-            @timeit "-recompute" Liqss_reComputeNextTime(Val(O), j, simt, nextStateTime, x, q, quantum,a)
+          #  @timeit "-recompute"
+             Liqss_reComputeNextTime(Val(O), j, simt, nextStateTime, x, q, quantum,a)
              #= if 50>simt>9
               #@show a[1][2], a[2][1]
              # @show u[j][index][1]+a[j][j]*q[j][0]+a[j][index]*q[index][0]
@@ -200,7 +202,8 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
           end  #end if j!=0
         end#end for SZ
 
-        @timeit "updateLinearApprox" updateLinearApprox(Val(O),index,x,q,a,u,qaux,olddx,tu,simt)########||||||||||||||||||||||||||||||||||||liqss|||||||||||||||||||||||||||||||||||||||||
+       # @timeit "updateLinearApprox" 
+        updateLinearApprox(Val(O),index,x,q,a,u,qaux,olddx,tu,simt)########||||||||||||||||||||||||||||||||||||liqss|||||||||||||||||||||||||||||||||||||||||
         ##################################input########################################
       elseif sch[3] == :ST_INPUT  # time of change has come to a state var that does not depend on anything...no one will give you a chance to change but yourself  
        # println("input")
@@ -301,7 +304,7 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
     for i=1:T# throw away empty points
       resize!(savedVars[i],count)
     end
-    print_timer()
+  #  print_timer()
    @show printcount
     resize!(savedTimes,count)
     Sol(savedTimes, savedVars,"liqss$O")

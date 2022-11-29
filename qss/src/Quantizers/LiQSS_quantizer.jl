@@ -471,7 +471,7 @@ function updateQ(::Val{3},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
         maxIter=215
         while (abs(q - x) > 2 * quan) && (maxIter>0)
             maxIter-=1
-          h = h *sqrt(quan / abs(q - x));
+          h = h *sqrt(2*quan / abs(q - x));
           α=h*(1-a*h+h*h*a*a/3)/(1-h*a)
           β=-α*(u1-u1*h*a-h*h*(a*u2+u3)/2)/(1-a*h+h*h*a*a/2)-h*h*(0.5-h*a/6)*(u2+h*u3)/(1-a*h)+x+h*u1+h*h*u2/2+h*h*h*u3/6
         #γ=(1-a*h+h*h*a*a/2-h*h*h*a*a*a/6)/(1-a*h+h*h*a*a/2)
@@ -503,7 +503,7 @@ function updateQ(::Val{3},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
        # q=x+2*quantum[i]  #2*Δ errors solution escapes down
        # q=x+quantum[i]   #removing it errors
         if x3!=0.0
-            h=cbrt(abs(quan/x3))
+            h=cbrt(abs(6*quan/x3))
             q=x-h*h*h*x3/6
            #=  q=x+h*h*h*u3/6
             q1=u1-h*h*u3/2   
