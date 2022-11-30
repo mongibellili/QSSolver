@@ -73,7 +73,7 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
     #######################################compute initial values##################################################
     n=1
     for k = 1:O # compute initial derivatives for x and q (similar to a recursive way )
-      n=n*k
+      n=n*k #factorial
        for i = 1:T
           q[i].coeffs[k] = x[i].coeffs[k]  # q computed from x and it is going to be used in the next x
         end
@@ -86,8 +86,12 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
     end
     
     for i = 1:T
+      p=1
+      
       for k=1:O# deleting this causes scheduler error
-          u[i][i][k]=x[i][k]-q[i][k-1]*a[i][i] #  later we will investigate inconsistencies of using data stored vs */ factorial!!! ...also do not confuse getindex for taylor...[0] first element and u[i][1]...first element    ########||||||||||||||||||||||||||||||||||||liqss|||||||||||||||||||||||||||||||||||||||||
+        p=p*k
+        m=p/k
+          u[i][i][k]=p*x[i][k]-m*q[i][k-1]*a[i][i] #  later we will investigate inconsistencies of using data stored vs */ factorial!!! ...also do not confuse getindex for taylor...[0] first element and u[i][1]...first element    ########||||||||||||||||||||||||||||||||||||liqss|||||||||||||||||||||||||||||||||||||||||
       end
       savedVars[i][1].coeffs .= x[i].coeffs  #to be changed  1 2 3 ?
       quantum[i] = relQ * abs(x[i].coeffs[1]) 
@@ -138,7 +142,7 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
         #@timeit "updateQ" 
         updateQ(Val(O),index,x,q,quantum,a,u,qaux,olddx,tq,tu,simt,ft) ########||||||||||||||||||||||||||||||||||||liqss|||||||||||||||||||||||||||||||||||||||||
        # @timeit "computeNextTime" 
-        computeNextTime(Val(O), index, simt, nextStateTime, x, quantum) #
+       Liqss_ComputeNextTime(Val(O), index, simt, nextStateTime, x,q, quantum) #
         for i = 1:length(SD[index])
           j = SD[index][i] 
           if j != 0           
@@ -305,7 +309,7 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
       resize!(savedVars[i],count)
     end
   #  print_timer()
-   @show printcount
+   #@show printcount
     resize!(savedTimes,count)
     Sol(savedTimes, savedVars,"liqss$O")
     end#end integrate

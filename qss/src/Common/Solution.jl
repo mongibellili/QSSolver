@@ -23,16 +23,82 @@ function getError(sol::Sol,index::Int,f::Function)
   return relerror
 end
 
-function plotError(sol::Sol,index::Int,f::Function)
+function plotRelativeError(sol::Sol,index::Int,f::Function)
   numPoints=length(sol.savedTimes)
   numVars=length(sol.savedVars)
   if index<=numVars
     temp = []
+    tempt = []
     for i = 1:numPoints #each point is a taylor
       ft=f(sol.savedTimes[i])
-        push!(temp, abs(sol.savedVars[index][i].coeffs[1]-ft)/ft)
+      if ft>1e-12 || ft < -1e-12
+        push!(temp, abs((sol.savedVars[index][i].coeffs[1]-ft)/ft))
+        push!(tempt,sol.savedTimes[i])
+      end
     end
-   display(plot!(sol.savedTimes, temp,title="Error:(N-T)/T",label="$(sol.algName)")) 
+   display(plot!(tempt, temp,title="RelError:(S-T)/T for x$index",label="$(sol.algName)")) 
+  else
+    error("the system contains only $numVars variables!")
+  end
+  println("press enter to exit")
+  readline()
+end
+function plotAbsoluteError(sol::Sol,index::Int,f::Function)
+  numPoints=length(sol.savedTimes)
+  numVars=length(sol.savedVars)
+  if index<=numVars
+    temp = []
+   # tempt = []
+    for i = 1:numPoints #each point is a taylor
+      ft=f(sol.savedTimes[i])
+      #if ft>1e-2 || ft < -1e-2
+        push!(temp, abs((sol.savedVars[index][i].coeffs[1]-ft)))
+       # push!(tempt,sol.savedTimes[i])
+     # end
+    end
+   display(plot!(sol.savedTimes, temp,title="AbsError:(S-T) for x$index",label="$(sol.algName)")) 
+  else
+    error("the system contains only $numVars variables!")
+  end
+  println("press enter to exit")
+  readline()
+end
+function plotCumulativeSquaredRelativeError(sol::Sol,index::Int,f::Function)
+  numPoints=length(sol.savedTimes)
+  numVars=length(sol.savedVars)
+  sumTrueSqr=0.0
+  sumDiffSqr=0.0
+  
+  if index<=numVars
+    temp = []
+    for i = 1:numPoints #each point is a taylor
+      ft=f(sol.savedTimes[i])
+      sumDiffSqr+=(sol.savedVars[index][i].coeffs[1]-ft)*(sol.savedVars[index][i].coeffs[1]-ft)
+      sumTrueSqr+=ft*ft
+        push!(temp, sqrt(sumDiffSqr/sumTrueSqr))
+    end
+   display(plot!(sol.savedTimes, temp,title="Error:sqrt(∑(S-T)^2/∑T^2) for x$index",label="$(sol.algName)")) 
+  else
+    error("the system contains only $numVars variables!")
+  end
+  println("press enter to exit")
+  readline()
+end
+function plotMSE(sol::Sol,index::Int,f::Function)
+  numPoints=length(sol.savedTimes)
+  numVars=length(sol.savedVars)
+ # sumTrueSqr=0.0
+  sumDiffSqr=0.0
+  
+  if index<=numVars
+    temp = []
+    for i = 1:numPoints #each point is a taylor
+      ft=f(sol.savedTimes[i])
+      sumDiffSqr+=(sol.savedVars[index][i].coeffs[1]-ft)*(sol.savedVars[index][i].coeffs[1]-ft)
+     # sumTrueSqr+=ft*ft
+        push!(temp, (sumDiffSqr/i))
+    end
+   display(plot!(sol.savedTimes, temp,title="Error:(∑(S-T)^2/i) for x$index",label="$(sol.algName)")) 
   else
     error("the system contains only $numVars variables!")
   end

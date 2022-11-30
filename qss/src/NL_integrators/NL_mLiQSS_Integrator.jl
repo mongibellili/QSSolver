@@ -101,11 +101,12 @@ function mLiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D
       p=1
       for k=1:O
         p=p*k
+        m=p/k
         for j=1:T
           if j!=i
-            u[i][j][k]=p*x[i][k]-a[i][i]*q[i][k-1]-a[i][j]*q[j][k-1]
+            u[i][j][k]=p*x[i][k]-a[i][i]*m*q[i][k-1]-a[i][j]*m*q[j][k-1]
           else
-            u[i][j][k]=p*x[i][k]-a[i][i]*q[i][k-1]
+            u[i][j][k]=p*x[i][k]-a[i][i]*m*q[i][k-1]
           end
         end
       end
