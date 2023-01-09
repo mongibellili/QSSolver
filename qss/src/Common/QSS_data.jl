@@ -6,7 +6,7 @@ struct QSS_data{T,Z}
     tx ::  MVector{T,Float64} 
     tq :: MVector{T,Float64} 
     nextStateTime :: MVector{T,Float64}    
-    nextInputTime :: Vector{Float64}  # later change to Mvector
+    nextInputTime :: MVector{T,Float64}  # later change to Mvector
     nextEventTime :: MVector{Z,Float64}  
     t::Taylor0{Float64}# mute taylor var to be used with math functions to represent time
     integratorCache::Taylor0{Float64}
@@ -33,7 +33,7 @@ struct LiQSS_data{T,Z,O}
     tx ::  MVector{T,Float64} 
     tq :: MVector{T,Float64} 
     nextStateTime :: MVector{T,Float64}    
-    nextInputTime :: Vector{Float64}  # later change to Mvector
+    nextInputTime :: MVector{T,Float64}  # later change to Mvector
     nextEventTime :: MVector{Z,Float64}  
     t::Taylor0{Float64}# mute taylor var to be used with math functions to represent time
     integratorCache::Taylor0{Float64}
@@ -61,14 +61,19 @@ liqss3()=Val(6)
 mliqss1()=Val(7)
 mliqss2()=Val(8)
 mliqss3()=Val(9)
+smliqss1()=Val(10)
+smliqss2()=Val(11)
+smliqss3()=Val(12)
 
 function getOrderfromSolverMethod(::Val{V}) where {V}  # @generated and inline did not enhance performance  
     if V==1 || V==2 || V==3
         return V
     elseif V==4 || V==5 || V==6
         return V-3
-    else
+    elseif V==7 || V==8 || V==9
         return V-6
+    else
+        return V-9
     end
 end
 
@@ -81,11 +86,11 @@ end
 function save_prob_to_model(prob::NLODEProblem{T,D,Z,Y},path::String,modelName::String) where {T,D,Z,Y}#user wants to change the name of the model
     newFunName=Symbol(modelName)
     isdefined(Main,newFunName) && error("model exists!")# if the user included the path, if not it will just append a second function with same name
-    def=splitdef(prob.eqs)
-    def[:name] = newFunName 
-    newFun=combinedef(def)
+    def=splitdef(prob.eqs)# get equs
+    def[:name] = newFunName #change name
+    newFun=combinedef(def) # put back equs
     open(path, "a") do io        
-         println(io,string(newFun))  
+         println(io,string(newFun))   # write it to a file
      end
 end
 
@@ -104,7 +109,7 @@ function QSS_Unique_Solve(f::Function,prob::NLODEProblem{T,D,Z,Y},finalTime::Flo
      x = Vector{Taylor0{Float64}}(undef, T)
      q = Vector{Taylor0{Float64}}(undef, T)
      nextStateTime = @MVector zeros(T)
-     nextInputTime =  zeros(T)
+     nextInputTime =  @MVector zeros(T)
      tx = @MVector zeros(T)
      tq = @MVector zeros(T)
      nextEventTime=@MVector zeros(Z)
@@ -174,8 +179,10 @@ function QSS_Unique_Solve(f::Function,prob::NLODEProblem{T,D,Z,Y},finalTime::Flo
         liqssdata= LiQSS_data(initJac,u,tu,qaux,olddx,quantum,x,q,tx,tq,nextStateTime,nextInputTime ,nextEventTime , t, integratorCache,order,savedVars,savedTimes,taylorOpsCache,finalTime,savetimeincrement, initialTime,dQmin,dQrel)
         if V==4 || V==5 || V==6
             LiQSS_integrate(Val(V-3),liqssdata,prob,f)
-        else
+        elseif V==7 || V==8 || V==9
             mLiQSS_integrate(Val(V-6),liqssdata,prob,f)
+        else
+            smLiQSS_integrate(Val(V-9),liqssdata,prob,f)
         end
     end
      #return nothing be careful to add this

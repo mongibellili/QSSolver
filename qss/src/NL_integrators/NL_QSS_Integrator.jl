@@ -31,6 +31,8 @@ jacobian = odep.jacobian
 discJac = odep.discreteJacobian
 jac=changeBasicToInts(jacobian)# change from type nonisbits to int so that access is cheaper down
 #display(jac)
+
+numSteps = zeros(MVector{T,Int})
 #----------to compute ZC expressions
 zc_jac = odep.ZC_jacobian
 ZC_discJac = odep.ZC_jacDiscrete
@@ -87,11 +89,14 @@ for i = 1:T
     quantum[i] = absQ
   end
   computeNextTime(Val(O), i, initTime, nextStateTime, x, quantum)
+ 
   clearCache(taylorOpsCache,cacheSize)
   f(i,q,d,t,taylorOpsCache) #+t alloc   change to addT
   computeNextInputTime(Val(O), i, initTime, 0.1,taylorOpsCache[1] , nextInputTime, x,  quantum)
 end
-
+@show nextStateTime
+@show nextInputTime
+@show nextEventTime
 for i=1:Z
   clearCache(taylorOpsCache,cacheSize)
   output=zcf[i](x,d,t,taylorOpsCache).coeffs[1] #test this evaluation
@@ -109,12 +114,18 @@ simt = initTime
 count = 1 # not zero because intial value took 0th position
 len=length(savedTimes)
 printcount=0
+printcount2=0
+tempquan=[]
+    tempquanTime=[]
 #debug=false
-while simt < ft #&& printcount < 10000
+while simt < ft && printcount < 200000
+  #if simt>1.0
   printcount+=1
+ # end
   sch = updateScheduler(nextStateTime,nextEventTime, nextInputTime)
   simt = sch[2]
   index = sch[1]
+  numSteps[index]+=1
   t[0]=simt
   ##########################################state########################################
   
@@ -125,6 +136,15 @@ while simt < ft #&& printcount < 10000
     quantum[index] = relQ * abs(x[index].coeffs[1]) #derx=coef[2]*fac(1), derderx=coef[3]*fac(2)            
     if quantum[index] < absQ
       quantum[index] = absQ
+     #=  println("quan limited")
+      @show simt =#
+    end
+    #integrateState(Val(O-1),q[index],integratorCache,elapsed)
+    if index==2 #&& simt>1.0
+      # push!(tempquan,abs(x[index][0]-q[index][0]))
+     #=  push!(tempquan,quantum[index])
+      push!(tempquanTime,simt) =#
+      printcount2+=1
     end
     tx[index] = simt
     #@timeit "updateQ" 
@@ -146,12 +166,9 @@ while simt < ft #&& printcount < 10000
                 elapsedx = simt - tx[j]
                 if elapsedx > 0
                   #"evaluate" x only at new time ...derivatives get updated next using computeDerivativ()
-                  x[j].coeffs[1] = x[j](elapsedx)
-                  
-                  
+                  x[j].coeffs[1] = x[j](elapsedx)                 
                                                          #  if debug println("x$j elapse updated")  end 
                   tx[j] = simt
-                
                 end
                 elapsedq = simt - tq[j]
                 if elapsedq > 0
@@ -297,7 +314,11 @@ for i=1:T# throw away empty points
 end
 # print_timer()
 @show printcount
+@show printcount2
+  #= display(plot!(tempquanTime, tempquan,title="quantum graph for x2",label="qss$O")) 
+  println("press enter to exit")
+  readline() =#
 resize!(savedTimes,count)
-Sol(savedTimes, savedVars,"qss$O")
+Sol(savedTimes, savedVars,"qss$O",string(nameof(f)),numSteps,absQ)
 end#end integrate
 

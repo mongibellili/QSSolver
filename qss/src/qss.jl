@@ -8,14 +8,15 @@ using MacroTools: postwalk, prewalk, @capture
 import Base.:-
 import Base.:+
 import Base.:*
-using Plots: plot!,plot
+using Plots: plot!,plot,savefig
+using Dates: now,year,month,day,hour,minute #fortimestamp
 
 
 RuntimeGeneratedFunctions.init(@__MODULE__)
 
 
 #this section belongs to taylorseries subcomponent
-import Base: ==, +, -, *, /, ^
+import Base: ==, +, -, *, /, ^                      ###################################+ * - repated
 
 import Base: iterate, size, eachindex, firstindex, lastindex,
     eltype, length, getindex, setindex!, axes, copyto!
@@ -33,7 +34,8 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
 
 
     # list of public (API) to the user, not between files as those are linked as if in one file
-    export SimSettings,QSS_Problem,QSS_Solve ,  qss1,qss2,qss3,liqss1,liqss2,liqss3,mliqss1,mliqss2,mliqss3,saveat,plotSol,plotSol_Der1,evaluateSol,getError,plotError
+    export QSS_Solve ,  qss1,qss2,qss3,liqss1,liqss2,liqss3,mliqss1,mliqss2,mliqss3,saveat
+    export save_Sol,plotSol,plot_save_Sol,plot_save_SolVars,plotSol_Der1,evaluateSol,getError,plotAbsoluteError,plotRelativeError,plotCumulativeSquaredRelativeError,plotMSE
 
     export  @NLodeProblem,save_prob_to_model,QSS_Solve_from_model
 
@@ -75,7 +77,5 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
     include("Quantizers/QSS_quantizer.jl")
     include("Quantizers/LiQSS_quantizer.jl")
     include("Quantizers/mLiQSS_quantizer.jl")
-
-
 end # module
 

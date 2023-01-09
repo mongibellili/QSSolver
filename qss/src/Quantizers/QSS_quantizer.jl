@@ -1,5 +1,5 @@
 @inline function integrateState(::Val{0}, x::Taylor0{Float64},cacheT::Taylor0{Float64},elapsed::Float64) #@inline increased performance
-  x.coeffs[1] = x(elapsed)
+  #x.coeffs[1] = x(elapsed)
 end
 
 @inline function integrateState(::Val{1}, x::Taylor0{Float64},cacheT::Taylor0{Float64},elapsed::Float64) #@inline increased performance
@@ -78,11 +78,13 @@ function computeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTime::MVect
     absDeltaT=1e-12 # minimum deltaT to protect against der=Inf coming from sqrt(0) for example...similar to min ΔQ
       if (x[i].coeffs[3]) != 0
           tempTime=max(sqrt(abs(quantum[i] / ((x[i].coeffs[3])))),absDeltaT)
+          
           if tempTime!=absDeltaT #normal
               nextTime[i] = currentTime + tempTime#sqrt(abs(quantum[i] / ((x[i].coeffs[3])*2))) #*2 cuz coeff contains fact()
           else#usual sqrt(quant/der) is very small
             x[i].coeffs[3]=sign(x[i].coeffs[3])*(abs(quantum[i])/(absDeltaT*absDeltaT))/2# adjust second derivative if it is too high
             nextTime[i] = currentTime + tempTime
+            println("smalldelta in compute next")
           end
       else
         nextTime[i] = Inf
@@ -116,11 +118,23 @@ function reComputeNextTime(::Val{1}, index::Int, currentTime::Float64, nextTime:
 end
 
 function reComputeNextTime(::Val{2}, index::Int, currentTime::Float64, nextTime::MVector{T,Float64}, x::Vector{Taylor0{Float64}},q::Vector{Taylor0{Float64}}, quantum::Vector{Float64})where{T}
+  absDeltaT=1e-12
   coef=@SVector [q[index].coeffs[1] - (x[index].coeffs[1]) - quantum[index], q[index].coeffs[2]-x[index].coeffs[2],-(x[index].coeffs[3])]#not *2 because i am solving c+bt+a/2*t^2
-  time1 = currentTime + minPosRoot(coef, Val(2))
+  time1 =  minPosRoot(coef, Val(2))
   coef=setindex(coef,q[index].coeffs[1] - (x[index].coeffs[1]) + quantum[index],1)
-  time2 = currentTime + minPosRoot(coef, Val(2))
-  nextTime[index] = time1 < time2 ? time1 : time2
+  time2 =  minPosRoot(coef, Val(2))
+  timeTemp = time1 < time2 ? time1 : time2
+  tempTime=max(timeTemp,absDeltaT)
+
+  if tempTime==absDeltaT #normal
+   # x[index].coeffs[3]=sign(x[index].coeffs[3])*(abs(quantum[index])/(absDeltaT*absDeltaT))/2
+    println("smalldelta in recompute next")
+  end
+
+
+
+  nextTime[index] = currentTime +tempTime
+
   #later guard against very small Δt like in computenext
   return nothing
 end
@@ -135,7 +149,7 @@ function reComputeNextTime(::Val{3}, index::Int, currentTime::Float64, nextTime:
   return nothing
 end
 ######################################################################################################################################"
-function computeNextInputTime(::Val{1}, i::Int, currentTime::Float64,elapsed::Float64, tt::Taylor0{Float64} ,nextInputTime::Vector{Float64}, x::Vector{Taylor0{Float64}}, quantum::Vector{Float64})where{T<:Int64}
+function computeNextInputTime(::Val{1}, i::Int, currentTime::Float64,elapsed::Float64, tt::Taylor0{Float64} ,nextInputTime::MVector{T,Float64}, x::Vector{Taylor0{Float64}}, quantum::Vector{Float64})where{T}
     df=0.0
     oldDerX=x[i].coeffs[2]
     newDerX=tt.coeffs[1] 
@@ -153,7 +167,7 @@ function computeNextInputTime(::Val{1}, i::Int, currentTime::Float64,elapsed::Fl
 end
 
   
-function computeNextInputTime(::Val{2}, i::Int, currentTime::Float64,elapsed::Float64, tt::Taylor0{Float64} ,nextInputTime::Vector{Float64}, x::Vector{Taylor0{Float64}}, quantum::Vector{Float64})where{T<:Int64}
+function computeNextInputTime(::Val{2}, i::Int, currentTime::Float64,elapsed::Float64, tt::Taylor0{Float64} ,nextInputTime::MVector{T,Float64}, x::Vector{Taylor0{Float64}}, quantum::Vector{Float64})where{T}
     df=0.0
     oldDerDerX=((x[i].coeffs[3])*2.0)
     newDerDerX=(tt.coeffs[2])
@@ -170,7 +184,7 @@ function computeNextInputTime(::Val{2}, i::Int, currentTime::Float64,elapsed::Fl
       return nothing
 end
 
-function computeNextInputTime(::Val{3}, i::Int, currentTime::Float64,elapsed::Float64, tt::Taylor0{Float64} ,nextInputTime::Vector{Float64}, x::Vector{Taylor0{Float64}}, quantum::Vector{Float64})where{T<:Int64}
+function computeNextInputTime(::Val{3}, i::Int, currentTime::Float64,elapsed::Float64, tt::Taylor0{Float64} ,nextInputTime::MVector{T,Float64}, x::Vector{Taylor0{Float64}}, quantum::Vector{Float64})where{T}
   df=0.0
   oldDerDerX=((x[i].coeffs[4])*6.0)
   newDerDerX=(tt.coeffs[3])*2.0

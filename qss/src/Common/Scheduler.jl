@@ -1,5 +1,5 @@
 
- function updateScheduler(nextStateTime::MVector{T,Float64},nextEventTime :: MVector{Z,Float64},nextInputTime :: Vector{Float64} )where{T,Z}   #later MVect for nextInput
+ function updateScheduler(nextStateTime::MVector{T,Float64},nextEventTime :: MVector{Z,Float64},nextInputTime :: MVector{T,Float64} )where{T,Z}   #later MVect for nextInput
     minStateTime=Inf
     minState_index=0  # what if all nextstateTime= Inf ...especially at begining????? min_index stays 0!!!
     minEventTime=Inf
