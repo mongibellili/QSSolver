@@ -22,7 +22,11 @@ function odeDiffEquPackage()
     tspan = (0.0,1000.0)
     u0 = [1.0,0.0]
     prob = ODEProblem(funcName,u0,tspan)
+<<<<<<< HEAD
     sol = solve(prob,BS3(),saveat=1.0,abstol = 1e-9, reltol = 1e-5)
+=======
+    sol = solve(prob,Rodas5P(),saveat=1.0,abstol = 1e-9, reltol = 1e-5)
+>>>>>>> ee1ea40e28192d3d5a4e88a58aa57a201afb63b3
     #sol = solve(prob,Rosenbrock23(),abstol = 1e-6, reltol = 1e-3)
   
     u1=(7*sqrt(51)-50)/100
@@ -55,9 +59,14 @@ function odeDiffEquPackage()
         ft=x2(sol.t[i])
         push!(temp, abs(sol.u[i][2]-ft)/ft)
       end
+<<<<<<< HEAD
      display(plot!(sol.t, temp,label="BS3")) 
      println("done")
      readline() 
+=======
+     display(plot!(sol.t, temp,label="Rodas5P")) 
+
+>>>>>>> ee1ea40e28192d3d5a4e88a58aa57a201afb63b3
 
    # display(plot!(sol))
  #=    display(plot!(sol,xlims=(100,160),ylims=(-0.000002,0.000002)))

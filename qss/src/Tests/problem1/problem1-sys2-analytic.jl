@@ -20,11 +20,19 @@ function test()
      
     end
    # solliqss1=QSS_Solve_from_model(twoVarSys12,odeprob,50.0,liqss1(),saveat(0.5),0.0,1e-9,1e-5)
+<<<<<<< HEAD
     solliqss2=QSS_Solve_from_model(twoVarSys12,odeprob,1000.0,liqss2(),saveat(1.0),0.0,1e-9,1e-5)
     solliqss3=QSS_Solve_from_model(twoVarSys12,odeprob,1000.0,liqss3(),saveat(1.0),0.0,1e-9,1e-5)
    # solliqss3=QSS_Solve_from_model(twoVarSys12,odeprob,5.0,liqss3())
 
    u1=(7*sqrt(51)-50)/100
+=======
+   # solliqss2=QSS_Solve_from_model(twoVarSys12,odeprob,200.0,liqss2(),saveat(0.5),0.0,1e-9,1e-5)
+    solliqss3=QSS_Solve_from_model(twoVarSys12,odeprob,5.0,liqss3(),saveat(0.1),0.0,1e-6,1e-3)
+   # solliqss3=QSS_Solve_from_model(twoVarSys12,odeprob,5.0,liqss3())
+
+   #= u1=(7*sqrt(51)-50)/100
+>>>>>>> ee1ea40e28192d3d5a4e88a58aa57a201afb63b3
    u2=(-7*sqrt(51)-50)/100
    λ1=-7*sqrt(51)-50
    λ2=7*sqrt(51)-50
@@ -33,6 +41,7 @@ function test()
    
    x1(t)=c1*u1*exp(λ1*t)+c2*u2*exp(λ2*t)+20.2
    x2(t)=c1*exp(λ1*t)+c2*exp(λ2*t)
+<<<<<<< HEAD
      plotRelativeError(solliqss2,1,x1)
      plotRelativeError(solliqss3,1,x1)
    #  plotAbsoluteError(solliqss3,2,x2)
@@ -40,12 +49,19 @@ function test()
    #=  plotMSE(solliqss2,2,x2) 
     plotMSE(solliqss3,2,x2)  =#
 
+=======
+    # plotError(solliqss1,2,x2)
+    plotRelativeError(solliqss2,2,x2)
+    plotRelativeError(solliqss3,2,x2)  =#
+    #= plotCumulativeSquaredRelativeError(solliqss2,2,x2)
+    plotCumulativeSquaredRelativeError(solliqss3,2,x2)  =#
+    
+>>>>>>> ee1ea40e28192d3d5a4e88a58aa57a201afb63b3
 
    # plotSol(solliqss2)
  #plotSol(solliqss3)
 end
-#@btime 
-test()
+@btime test()
 
 #= function odeDiffEquPackage()
  
@@ -74,8 +90,13 @@ test()
  
 end
  odeDiffEquPackage()  =#  
+<<<<<<< HEAD
 
 #=  u1=(7*sqrt(51)-50)/100
+=======
+#= 
+ u1=(7*sqrt(51)-50)/100
+>>>>>>> ee1ea40e28192d3d5a4e88a58aa57a201afb63b3
 u2=(-7*sqrt(51)-50)/100
 λ1=-7*sqrt(51)-50
 λ2=7*sqrt(51)-50

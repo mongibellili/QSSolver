@@ -141,8 +141,12 @@ function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
         #tempH1=h
         q = ((x + h * u1 + h * h / 2 * u2) * (1 - h * a) + (h * h / 2 * a - h) * (u1 + h * u2)) /
                  (1 - h * a + h * h * a * a / 2)
+<<<<<<< HEAD
         
         if (abs(q - x) >  2*quan) # removing this did nothing...check @btime later
+=======
+        if (abs(q - x) >  quan) # removing this did nothing...check @btime later
+>>>>>>> ee1ea40e28192d3d5a4e88a58aa57a201afb63b3
           h = sqrt(abs(2*quan / ddx)) # sqrt highly recommended...removing it leads to many sim steps..//2* is necessary in 2*quan when using ddx
           q = ((x + h * u1 + h * h / 2 * u2) * (1 - h * a) + (h * h / 2 * a - h) * (u1 + h * u2)) /
                    (1 - h * a + h * h * a * a / 2)
@@ -150,11 +154,16 @@ function updateQ(::Val{2},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
             @show h
            end =#
         end
+<<<<<<< HEAD
         maxIter=1000
         tempH=h
         while (abs(q - x) >  2*quan) && (maxIter>0)
             
           h = h *1.96*(quan / abs(q - x))
+=======
+        while (abs(q - x) >  quan) 
+          h = h *quan / abs(q - x)
+>>>>>>> ee1ea40e28192d3d5a4e88a58aa57a201afb63b3
           q = ((x + h * u1 + h * h / 2 * u2) * (1 - h * a) + (h * h / 2 * a - h) * (u1 + h * u2)) /
                    (1 - h * a + h * h * a * a / 2)
           maxIter-=1
@@ -641,17 +650,18 @@ function updateQ(::Val{3},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
            # dddx=a*a*a*(q)+a*a*u+a*u1+u2 #*2
            # if dddx==0.0
                 dddx=1e-26# changing -40 to -6 nothing changed
+<<<<<<< HEAD
                 println("dddx=0")  #this appeared once with sys1 liqss3
+=======
+                println("dddx=0")
+>>>>>>> ee1ea40e28192d3d5a4e88a58aa57a201afb63b3
            # end
         end
-     
-
         h = ft-simt
         α=h*(1-a*h+h*h*a*a/3)/(1-h*a)
         β=-α*(u1-u1*h*a-h*h*(a*u2+u3)/2)/(1-a*h+h*h*a*a/2)-h*h*(0.5-h*a/6)*(u2+h*u3)/(1-a*h)+x+h*u1+h*h*u2/2+h*h*h*u3/6
-        
-        #γ=(1-a*h+h*h*a*a/2-h*h*h*a*a*a/6)/(1-a*h+h*h*a*a/2)
         γ=1-a*h+α*a*(1-a*h)/(1-a*h+h*h*a*a/2)
+<<<<<<< HEAD
       #=  β=h*h*(2*a*u1+h*a*(2*u2/3-4*a*u1/3+u1/2+h*(a*a*u1/3+u3/6-11*a*u2/12+h*a*(a*u2/4-u3/4+h*a*u3/12))))/(1-a*h)+x+h*h*h*u3/6
        γ=1-a*h+h*h*a*a/2-h*h*h*a*a*a/6 =#
         q = β/γ
@@ -667,44 +677,46 @@ function updateQ(::Val{3},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
 
         #= β=h*h*(2*a*u1+h*a*(2*u2/3-4*a*u1/3+u1/2+h*(a*a*u1/3+u3/6-11*a*u2/12+h*a*(a*u2/4-u3/4+h*a*u3/12))))/(1-a*h)+x+h*h*h*u3/6
        γ=1-a*h+h*h*a*a/2-h*h*h*a*a*a/6 =#
+=======
+>>>>>>> ee1ea40e28192d3d5a4e88a58aa57a201afb63b3
         q = β/γ
+        if (abs(q - x) >  quan) # removing this did nothing...check @btime later
+            h = cbrt(abs((6*quan) / dddx));
+            α=h*(1-a*h+h*h*a*a/3)/(1-h*a)
+            β=-α*(u1-u1*h*a-h*h*(a*u2+u3)/2)/(1-a*h+h*h*a*a/2)-h*h*(0.5-h*a/6)*(u2+h*u3)/(1-a*h)+x+h*u1+h*h*u2/2+h*h*h*u3/6
+            γ=1-a*h+α*a*(1-a*h)/(1-a*h+h*h*a*a/2)
+            q = β/γ
         end
+<<<<<<< HEAD
        # println(abs(q - x) > 2 * quan)
         
         maxIter=515
         while (abs(q - x) >  quan) && (maxIter>0)
             maxIter-=1
           h = h *(0.95*quan / abs(q - x));
+=======
+        maxIter=215
+        while (abs(q - x) >  quan) && (maxIter>0)
+          maxIter-=1
+          h = h *quan / abs(q - x);
+>>>>>>> ee1ea40e28192d3d5a4e88a58aa57a201afb63b3
           α=h*(1-a*h+h*h*a*a/3)/(1-h*a)
           β=-α*(u1-u1*h*a-h*h*(a*u2+u3)/2)/(1-a*h+h*h*a*a/2)-h*h*(0.5-h*a/6)*(u2+h*u3)/(1-a*h)+x+h*u1+h*h*u2/2+h*h*h*u3/6
-        #γ=(1-a*h+h*h*a*a/2-h*h*h*a*a*a/6)/(1-a*h+h*h*a*a/2)
-        γ=1-a*h+α*a*(1-a*h)/(1-a*h+h*h*a*a/2)
-
-       #=  β=h*h*(2*a*u1+h*a*(2*u2/3-4*a*u1/3+u1/2+h*(a*a*u1/3+u3/6-11*a*u2/12+h*a*(a*u2/4-u3/4+h*a*u3/12))))/(1-a*h)+x+h*h*h*u3/6
-       γ=1-a*h+h*h*a*a/2-h*h*h*a*a*a/6 =#
-        q = β/γ
+          γ=1-a*h+α*a*(1-a*h)/(1-a*h+h*h*a*a/2)
+          q = β/γ
         end
          if maxIter < 200
              println("maxiter of mpudate= ",maxIter)
+<<<<<<< HEAD
          end
 
 
+=======
+         end =#
+>>>>>>> ee1ea40e28192d3d5a4e88a58aa57a201afb63b3
         q1=(a*(1-h*a)*q+u1*(1-h*a)-h*h*(a*u2+u3)/2)/(1-h*a+h*h*a*a/2)
         q2=(a*q1+u2+h*u3)/(1-h*a)
- 
     else
-        #dddx=u3
-        #= if x3>0.0
-            q=x+quan
-        else
-            q=x-quan
-        end =#
-       # println("a=0")
-
-       # q=x+quantum[i]  #works fine !!!
-       # q=x-quantum[i] #errors ...solution escapes up...later test if this behavior is specific to this problem or it is a general thing
-       # q=x+2*quantum[i]  #2*Δ errors solution escapes down
-       # q=x+quantum[i]   #removing it errors
         if x3!=0.0
             h=cbrt(abs(6*quan/x3))
             q=x+h*h*h*x3/6
@@ -716,9 +728,7 @@ function updateQ(::Val{3},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
             #= q2=u2+h*u3 
             q1=u1+h*u2+h*h*u3/2-h*q2
             q=x+h*u1+h*h*u2/2+h*h*h*u3/6-h*q1-h*h*q2/2 =#
-          #  q=x+x1*h+x2*h*h/2+h*h*h*x3/6
-           
-           
+          #  q=x+x1*h+x2*h*h/2+h*h*h*x3/6        
        else
            #=  q1=x1#u
             q2=x2#u1 =#
@@ -776,6 +786,7 @@ function updateQ(::Val{3},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor
     return nothing
 end
 
+<<<<<<< HEAD
 #= function updateQ(::Val{3},i::Int, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},av::MVector{T,MVector{T,Float64}},uv::MVector{T,MVector{T,MVector{O,Float64}}},qaux::MVector{T,MVector{O,Float64}},olddx::MVector{T,MVector{O,Float64}},tq::MVector{T,Float64},tu::MVector{T,Float64},simt::Float64,ft::Float64)where{T,O}
     q=qv[i][0];q1=qv[i][1];q2=2*qv[i][2];x=xv[i][0];x1=xv[i][1];x2=2*xv[i][2];x3=6*xv[i][3];u1=uv[i][i][1];u2=uv[i][i][2];u3=uv[i][i][3]
     qaux[i][1]=q+(simt-tq[i])*q1+(simt-tq[i])*(simt-tq[i])*q2/2#appears only here...updated here and used in updateApprox and in updateQevent later
@@ -918,12 +929,16 @@ end
     coef=@SVector [qv[i][0]- xv[i][0] , qv[i][1]-xv[i][1],-xv[i][2]]#
     nextTime[i] = currentTime + minPosRoot(coef, Val(2))
 end =#
+=======
+
+>>>>>>> ee1ea40e28192d3d5a4e88a58aa57a201afb63b3
 function Liqss_ComputeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTime::MVector{T,Float64}, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64})where{T}
     q=qv[i][0]
     x=xv[i][0]
     q1=qv[i][1]
     x1=xv[i][1]
     x2=xv[i][2]
+<<<<<<< HEAD
     #if xv[i][1] !=0.0
     if  x2!=0.0  
         nextTime[i]=currentTime+sqrt(abs((q-x)/(x2)))  
@@ -932,11 +947,26 @@ function Liqss_ComputeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTime:
     end
 end
 #= function Liqss_ComputeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTime::MVector{T,Float64}, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64})where{T}
+=======
+    
+   
+    coef=@SVector [q - x , q1-x1,-x2]#
+    nextTime[i] = currentTime + minPosRoot(coef, Val(2))
+    
+    #nextTime[i] = time1 < nextTime[i] ? time1 : nextTime[i]
+    #= if q*q1<0 && a[i][i] > 10.0*quantum[i] # uncomment did nothing
+        time3=currentTime-q/a[i][i]-2*abs(quantum[i]/q1)
+        nextTime[i] = time3 < nextTime[i] ? time3 : nextTime[i]
+    end  =#   
+end
+function Liqss_ComputeNextTime(::Val{3}, i::Int, currentTime::Float64, nextTime::MVector{T,Float64}, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64})where{T}
+>>>>>>> ee1ea40e28192d3d5a4e88a58aa57a201afb63b3
     q=qv[i][0]
     x=xv[i][0]
     q1=qv[i][1]
     x1=xv[i][1]
     x2=xv[i][2]
+<<<<<<< HEAD
     #if xv[i][1] !=0.0
     if  x2!=0.0  
         nextTime[i]=currentTime+sqrt(abs((quantum[i])/(x2)))  
@@ -944,6 +974,24 @@ end
         nextTime[i]=Inf
     end
 end  =#
+=======
+    q2=qv[i][2]
+    x3=xv[i][3]
+   
+    coef=@SVector [q - x , q1-x1,q2-x2,-x3]#
+    nextTime[i] = currentTime + minPosRoot(coef, Val(3))
+    
+    #nextTime[i] = time1 < nextTime[i] ? time1 : nextTime[i]
+    #= if q*q1<0 && a[i][i] > 10.0*quantum[i] # uncomment did nothing
+        time3=currentTime-q/a[i][i]-2*abs(quantum[i]/q1)
+        nextTime[i] = time3 < nextTime[i] ? time3 : nextTime[i]
+    end  =#   
+end
+
+
+
+
+>>>>>>> ee1ea40e28192d3d5a4e88a58aa57a201afb63b3
 
 ##########################################################################################################################################################
 #= function Liqss_reComputeNextTime(::Val{1}, i::Int, currentTime::Float64, nextTime::MVector{T,Float64}, xv::Vector{Taylor0{Float64}},qv::Vector{Taylor0{Float64}}, quantum::Vector{Float64},a::MVector{T,MVector{T,Float64}})where{T}

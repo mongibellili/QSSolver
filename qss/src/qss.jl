@@ -35,7 +35,11 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
 
     # list of public (API) to the user, not between files as those are linked as if in one file
     export QSS_Solve ,  qss1,qss2,qss3,liqss1,liqss2,liqss3,mliqss1,mliqss2,mliqss3,saveat
+<<<<<<< HEAD
     export save_Sol,plotSol,plot_save_Sol,plot_save_SolVars,plotSol_Der1,evaluateSol,getError,plotAbsoluteError,plotRelativeError,plotCumulativeSquaredRelativeError,plotMSE
+=======
+    export plotSol,plotSol_Der1,evaluateSol,getError,plotAbsoluteError,plotRelativeError,plotCumulativeSquaredRelativeError,plotMSE
+>>>>>>> ee1ea40e28192d3d5a4e88a58aa57a201afb63b3
 
     export  @NLodeProblem,save_prob_to_model,QSS_Solve_from_model
 

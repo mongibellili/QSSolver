@@ -39,9 +39,13 @@ function plotRelativeError(sol::Sol,index::Int,f::Function)
         push!(tempt,sol.savedTimes[i])
       end
     end
+<<<<<<< HEAD
   # display(plot!(tempt, temp,title="RelError:(S-T)/T for x$index",label="$(sol.algName)")) 
   display(plot!(tempt, temp,title="RelError:(S-T)/T for x$index",label="$(sol.algName)",xlims=(80,200),ylims=(0.0,0.0002)) )
    
+=======
+   display(plot!(tempt, temp,title="RelError:(S-T)/T for x$index",label="$(sol.algName)")) 
+>>>>>>> ee1ea40e28192d3d5a4e88a58aa57a201afb63b3
   else
     error("the system contains only $numVars variables!")
   end
@@ -61,9 +65,13 @@ function plotAbsoluteError(sol::Sol,index::Int,f::Function)
        # push!(tempt,sol.savedTimes[i])
      # end
     end
+<<<<<<< HEAD
    #display(plot!(sol.savedTimes, temp,title="AbsError:(S-T) for x$index",label="$(sol.algName)")) 
    display(plot!(sol.savedTimes, temp,title="AbsError:(S-T) for x$index",label="$(sol.algName)",xlims=(80,200),ylims=(0.0,0.0002))) 
    
+=======
+   display(plot!(sol.savedTimes, temp,title="AbsError:(S-T) for x$index",label="$(sol.algName)")) 
+>>>>>>> ee1ea40e28192d3d5a4e88a58aa57a201afb63b3
   else
     error("the system contains only $numVars variables!")
   end

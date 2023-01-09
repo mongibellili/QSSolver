@@ -73,7 +73,7 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
     #######################################compute initial values##################################################
     n=1
     for k = 1:O # compute initial derivatives for x and q (similar to a recursive way )
-      n=n*k
+      n=n*k #factorial
        for i = 1:T
           q[i].coeffs[k] = x[i].coeffs[k]  # q computed from x and it is going to be used in the next x
         end
@@ -87,13 +87,20 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
    # @show a# sys2: [[0.0, 0.01], [-100.0, -100.0]]
     for i = 1:T
       p=1
+<<<<<<< HEAD
      
+=======
+      
+>>>>>>> ee1ea40e28192d3d5a4e88a58aa57a201afb63b3
       for k=1:O# deleting this causes scheduler error
         p=p*k
         m=p/k
           u[i][i][k]=p*x[i][k]-m*q[i][k-1]*a[i][i] #  later we will investigate inconsistencies of using data stored vs */ factorial!!! ...also do not confuse getindex for taylor...[0] first element and u[i][1]...first element    ########||||||||||||||||||||||||||||||||||||liqss|||||||||||||||||||||||||||||||||||||||||
+<<<<<<< HEAD
           #= println("$p*x[$i][$k]= ", p*x[i][k])
           println("$m*q[$i][$(k-1)]*a[$i][$i]= ",m*q[i][k-1]*a[i][i]) =#
+=======
+>>>>>>> ee1ea40e28192d3d5a4e88a58aa57a201afb63b3
       end
     end
    # @show u #sys2:[[0.0, 19.2], [0.0, 0.0]], [[0.0, 0.0], [1920.0, 0.0]]
@@ -196,6 +203,7 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
          #=  println("quan limited")
           @show simt =#
         end
+<<<<<<< HEAD
        # updateQ(Val(O),index,x,q,quantum,a,u,qaux,olddx,tq,tu,simt,ft)
        
         updateQ(Val(O),index,x,q,quantum,a,u,qaux,olddx,tq,tu,simt,ft,nextStateTime) ########||||||||||||||||||||||||||||||||||||liqss|||||||||||||||||||||||||||||||||||||||||
@@ -256,6 +264,14 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
      
        # computeNextTime(Val(O), index, simt, nextStateTime, x, quantum) #
        # Liqss_ComputeNextTime(Val(O), index, simt, nextStateTime, x,q, quantum)
+=======
+       # qOld=q[index][0]
+       # derxOld=x[index][1] # along with ddx should be moved inside update
+        #@timeit "updateQ" 
+        updateQ(Val(O),index,x,q,quantum,a,u,qaux,olddx,tq,tu,simt,ft) ########||||||||||||||||||||||||||||||||||||liqss|||||||||||||||||||||||||||||||||||||||||
+       # @timeit "computeNextTime" 
+       Liqss_ComputeNextTime(Val(O), index, simt, nextStateTime, x,q, quantum) #
+>>>>>>> ee1ea40e28192d3d5a4e88a58aa57a201afb63b3
         for i = 1:length(SD[index])
           j = SD[index][i] 
           if j != 0           
@@ -438,11 +454,15 @@ function LiQSS_integrate(::Val{O}, s::LiQSS_data{T,Z,O}, odep::NLODEProblem{T,D,
       resize!(savedVars[i],count)
     end
   #  print_timer()
+<<<<<<< HEAD
    @show printcount
    println("------------------------------------------------------------------------------------")
    #=  display(plot!(tempquanTime, tempquan,title="quantum graph for x2",label="liqss$O")) 
   println("press enter to exit")
   readline() =#
+=======
+   #@show printcount
+>>>>>>> ee1ea40e28192d3d5a4e88a58aa57a201afb63b3
     resize!(savedTimes,count)
     Sol(savedTimes, savedVars,"liqss$O",string(nameof(f)),numSteps,absQ)
     end#end integrate
