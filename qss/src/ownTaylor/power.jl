@@ -12,27 +12,27 @@
 Taylor0{Interval{T}}^n, where `power_by_squaring` is used), to
 use internally `pow!`.
 =#
-^(a::Taylor0, n::Integer) = a^float(n)
+#^(a::Taylor0, n::Integer) = a^float(n)
 
 
 
 
 
-    function ^(a::Taylor0{T}, n::Integer) where {T<:Integer}
+    function ^(a::Taylor0, n::Integer) 
         n == 0 && return one(a)
         n == 1 && return copy(a)
         n == 2 && return square(a)
-        n < 0 && throw(DomainError())
+        n < 0 && throw(DomainError("taylor^n & n<0 !!"))
         return power_by_squaring(a, n)
     end
 
-   function ^(a::Taylor0{Rational{T}}, n::Integer) where {T<:Integer}
+ #=   function ^(a::Taylor0{Rational{T}}, n::Integer) where {T<:Integer}
         n == 0 && return one(a)
         n == 1 && return copy(a)
         n == 2 && return square(a)
         n < 0 && return inv( a^(-n) )
         return power_by_squaring(a, n)
-    end
+    end =#
 
     ^(a::Taylor0, x::Rational) = a^(x.num/x.den)
 
@@ -73,17 +73,17 @@ use internally `pow!`.
 ## Real power ##
 function ^(a::Taylor0, r::S) where {S<:Real}
     # println()
-    a0 = constant_term(a)
+    #a0 = constant_term(a)
     # @show(a, a0)
-    aux = one(a0)^r
+    #aux = one(a0)^r
     # @show(aux)
 
-    iszero(r) && return Taylor0(aux, a.order)
-    aa = aux*a
+    iszero(r) && return Taylor0(1.0, a.order)
+   # aa = aux*a
   #  @show(aa)
-    r == 1 && return aa
-    r == 2 && return square(aa)
-    r == 1/2 && return sqrt(aa)
+    r == 1 && return a
+    r == 2 && return square(a)
+    r == 1/2 && return sqrt(a)
 
     l0 = findfirst(a)
    # @show l0
@@ -91,11 +91,11 @@ function ^(a::Taylor0, r::S) where {S<:Real}
    # @show lnull
     if (a.order-lnull < 0) || (lnull > a.order)
        # @show a.order
-        return Taylor0( zero(aux), a.order)
+        return Taylor0( 0.0, a.order)
     end
     c_order = l0 == 0 ? a.order : min(a.order, trunc(Int,r*a.order))
     # @show(c_order)
-    c = Taylor0(zero(aux), c_order)
+    c = Taylor0(0.0, c_order)
     for k = 0:c_order
         pow!(c, aa, r, k)
     end
@@ -123,7 +123,7 @@ exploits `k_0`, the order of the first non-zero coefficient of `a`.
 
 """  =#
 
-@inline function pow!(c::Taylor0{T}, a::Taylor0{T}, r::S, k::Int) where {T<:Number,S<:Real}
+@inline function pow!(c::Taylor0, a::Taylor0, r::S, k::Int) where {S<:Real}
 
     if r == 0
         return one!(c, a, k)
@@ -223,8 +223,8 @@ c_k & = & 2 \sum_{j=0}^{(k-2)/2} a_{k-j} a_j + (a_{k/2})^2,
 """ sqr! =#
 
 
-    begin
-        @inline function sqr!(c::Taylor0{T}, a::Taylor0{T}, k::Int) where {T<:Number}
+   
+        @inline function sqr!(c::Taylor0, a::Taylor0, k::Int) 
             if k == 0
                 @inbounds c[0] = constant_term(a)^2
                 return nothing
@@ -233,24 +233,24 @@ c_k & = & 2 \sum_{j=0}^{(k-2)/2} a_{k-j} a_j + (a_{k/2})^2,
             kodd = k%2
             kend = div(k - 2 + kodd, 2)
             @inbounds for i = 0:kend
-                if Taylor0 == Taylor0
+               # if Taylor0 == Taylor0
                     c[k] += a[i] * a[k-i]
-                else
+               #=  else
                     mul!(c[k], a[i], a[k-i])
-                end
+                end =#
             end
             @inbounds c[k] = 2 * c[k]
             kodd == 1 && return nothing
 
-            if Taylor0 == Taylor0
+            #if Taylor0 == Taylor0
                 @inbounds c[k] += a[div(k,2)]^2
-            else
+            #= else
                 sqr!(c[k], a[div(k,2)])
-            end
+            end =#
 
             return nothing
         end
-    end
+  
 
 
 
@@ -327,7 +327,7 @@ coefficient, which must be even.
 
 """ sqrt! =#
 
-@inline function sqrt!(c::Taylor0{T}, a::Taylor0{T}, k::Int, k0::Int=0) where {T<:Number}
+@inline function sqrt!(c::Taylor0, a::Taylor0, k::Int, k0::Int=0) 
     
     #println("k= ",k)
    # println("k0= ",k0)

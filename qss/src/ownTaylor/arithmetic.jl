@@ -9,9 +9,9 @@
 # Arithmetic operations: +, -, *, /
 
 ## Equality ##
-==(a::Taylor0{T}, b::Taylor0{S}) where {T<:Number,S<:Number} = ==(promote(a,b)...)
+#= ==(a::Taylor0, b::Taylor0{S}) where {T<:Number,S<:Number} = ==(promote(a,b)...) =#
 
-function ==(a::Taylor0{T}, b::Taylor0{T}) where {T<:Number}
+function ==(a::Taylor0, b::Taylor0) 
 #=     if a.order != b.order
         a, b = fixorder(a, b)
     end =#
@@ -37,10 +37,10 @@ function one(a::Taylor0)
 end
 ## Addition  fallback for case a+a+a+a+a+a+a+a+a+a+a+a+a+a##
 
-(+)(a::Taylor0{T}, b::Taylor0{S}) where {T<:Number,S<:Number} =
-    (+)(promote(a,b)...)
+#= (+)(a::Taylor0, b::Taylor0{S}) where {T<:Number,S<:Number} =
+    (+)(promote(a,b)...) =#
 
-function (+)(a::Taylor0{T}, b::Taylor0{T}) where {T<:Number}
+function (+)(a::Taylor0, b::Taylor0) 
 #=     if a.order != b.order
         a, b = fixorder(a, b)
     end =#
@@ -55,19 +55,19 @@ function (+)(a::Taylor0)
     return Taylor0(v, a.order)
 end
 
-(+)(a::Taylor0{T}, b::S) where {T<:Number,S<:Number} =
-(+)(promote(a,b)...)
+#= (+)(a::Taylor0, b::S) where {T<:Number,S<:Number} =
+(+)(promote(a,b)...) =#
 
-function (+)(a::Taylor0{T}, b::T) where {T<:Number}
+function (+)(a::Taylor0, b::T) where {T<:Number}
     coeffs = copy(a.coeffs)
     @inbounds coeffs[1] = (+)(a[0], b)
     return Taylor0(coeffs, a.order)
 end
 
-(+)(b::S, a::Taylor0{T}) where {T<:Number,S<:Number} =
-    (+)(promote(b,a)...)
+#= (+)(b::S, a::Taylor0) where {T<:Number,S<:Number} =
+    (+)(promote(b,a)...) =#
 
-function (+)(b::T, a::Taylor0{T}) where {T<:Number}
+function (+)(b::T, a::Taylor0) where {T<:Number}
     coeffs = similar(a.coeffs)
     @__dot__ coeffs = (+)(a.coeffs)
     @inbounds coeffs[1] = (+)(b, a[0])
@@ -77,10 +77,10 @@ end
        
 ## substraction ##
 
-#= (-)(a::Taylor0{T}, b::Taylor0{S}) where {T<:Number,S<:Number} =
-    (-)(promote(a,b)...)
+#= (-)(a::Taylor0, b::Taylor0{S}) where {T<:Number,S<:Number} =
+    (-)(promote(a,b)...) =#
 
-function (-)(a::Taylor0{T}, b::Taylor0{T}) where {T<:Number}
+function (-)(a::Taylor0, b::Taylor0) 
     if a.order != b.order
         a, b = fixorder(a, b)
     end
@@ -95,25 +95,25 @@ function (-)(a::Taylor0)
     return Taylor0(v, a.order)
 end
 
-(-)(a::Taylor0{T}, b::S) where {T<:Number,S<:Number} =
-(-)(promote(a,b)...)
+#= (-)(a::Taylor0, b::S) where {T<:Number,S<:Number} =
+(-)(promote(a,b)...) =#
 
-function (-)(a::Taylor0{T}, b::T) where {T<:Number}
+function (-)(a::Taylor0, b::T) where {T<:Number}
     coeffs = copy(a.coeffs)
     @inbounds coeffs[1] = (-)(a[0], b)
     return Taylor0(coeffs, a.order)
 end
 
-(-)(b::S, a::Taylor0{T}) where {T<:Number,S<:Number} =
-    (-)(promote(b,a)...)
+#= (-)(b::S, a::Taylor0) where {T<:Number,S<:Number} =
+    (-)(promote(b,a)...) =#
 
-function (-)(b::T, a::Taylor0{T}) where {T<:Number}
+function (-)(b::T, a::Taylor0) where {T<:Number}
     coeffs = similar(a.coeffs)
     @__dot__ coeffs = (-)(a.coeffs)
     @inbounds coeffs[1] = (-)(b, a[0])
     return Taylor0(coeffs, a.order)
 end       
-     =#
+    
 
 
 
@@ -122,7 +122,7 @@ end
 
 ## Multiplication fallback for case a*a*a*a*a*a*a*a*a*a*a*a*a##
 
-function *(a::Taylor0{T}, b::Taylor0{T}) where {T<:Number}
+function *(a::Taylor0, b::Taylor0) 
 #=         if a.order != b.order
             a, b = fixorder(a, b)
         end =#
@@ -136,27 +136,27 @@ end
 
 
 
-function *(a::T, b::Taylor0{S}) where {T<:NumberNotSeries,S<:NumberNotSeries}
+#= function *(a::T, b::Taylor0{S}) where {T<:NumberNotSeries,S<:NumberNotSeries}
     @inbounds aux = a * b.coeffs[1]
     v = Array{typeof(aux)}(undef, length(b.coeffs))
     @__dot__ v = a * b.coeffs
     return Taylor0(v, b.order)
 end
 
-*(b::Taylor0{S}, a::T) where {T<:NumberNotSeries,S<:NumberNotSeries} = a * b
+*(b::Taylor0{S}, a::T) where {T<:NumberNotSeries,S<:NumberNotSeries} = a * b =#
 
-function (*)(a::T, b::Taylor0{T}) where {T<:Number}
+function (*)(a::T, b::Taylor0) where {T<:Number}
     v = Array{T}(undef, length(b.coeffs))
     @__dot__ v = a * b.coeffs
     return Taylor0(v, b.order)
 end
 
-*(b::Taylor0{T}, a::T) where {T<:Number} = a * b
+*(b::Taylor0, a::T) where {T<:Number} = a * b
  
 
 # Internal multiplication functions
 
-     @inline function mul!(c::Taylor0{T}, a::Taylor0{T}, b::Taylor0{T}, k::Int) where {T<:Number}       
+     @inline function mul!(c::Taylor0, a::Taylor0, b::Taylor0, k::Int)        
             @inbounds c[k] = a[0] * b[k]       
         @inbounds for i = 1:k         
                 c[k] += a[i] * b[k-i]         
@@ -199,30 +199,30 @@ Return `c = a*b` with no allocation; all arguments are `HomogeneousPolynomial`.
 
 
 ## Division ##
-function /(a::Taylor0{Rational{T}}, b::S) where {T<:Integer,S<:NumberNotSeries}
+#= function /(a::Taylor0{Rational{T}}, b::S) where {T<:Integer,S<:NumberNotSeries}
     R = typeof( a[0] // b)
     v = Array{R}(undef, a.order+1)
     @__dot__ v = a.coeffs // b
     return Taylor0(v, a.order)
-end
+end =#
 
-function /(a::Taylor0{T}, b::S) where {T<:NumberNotSeries,S<:NumberNotSeries}
+#= function /(a::Taylor0, b::S) where {T<:NumberNotSeries,S<:NumberNotSeries}
+    @inbounds aux = a.coeffs[1] / b
+    v = Array{typeof(aux)}(undef, length(a.coeffs))
+    @__dot__ v = a.coeffs / b
+    return Taylor0(v, a.order)
+end =#
+
+function /(a::Taylor0, b::T) where {T<:Number}
     @inbounds aux = a.coeffs[1] / b
     v = Array{typeof(aux)}(undef, length(a.coeffs))
     @__dot__ v = a.coeffs / b
     return Taylor0(v, a.order)
 end
 
-function /(a::Taylor0{T}, b::T) where {T<:Number}
-    @inbounds aux = a.coeffs[1] / b
-    v = Array{typeof(aux)}(undef, length(a.coeffs))
-    @__dot__ v = a.coeffs / b
-    return Taylor0(v, a.order)
-end
+#= /(a::Taylor0, b::Taylor0{S}) where {T<:Number,S<:Number} = /(promote(a,b)...) =#
 
-/(a::Taylor0{T}, b::Taylor0{S}) where {T<:Number,S<:Number} = /(promote(a,b)...)
-
-function /(a::Taylor0{T}, b::Taylor0{T}) where {T<:Number}
+function /(a::Taylor0, b::Taylor0) 
     iszero(a) && !iszero(b) && return zero(a)
     if a.order != b.order
         a, b = fixorder(a, b)
@@ -299,13 +299,13 @@ exploits `k_0`, the order of the first non-zero coefficient of `a`.
     return nothing
 end
 
-@inline function div!(v::Taylor0, a::Taylor0, b::NumberNotSeries, k::Int)
+#= @inline function div!(v::Taylor0, a::Taylor0, b::NumberNotSeries, k::Int)
     @inbounds v[k] = a[k] / b
     return nothing
 end
 
 div!(v::Taylor0, b::NumberNotSeries, a::Taylor0, k::Int) =
-    div!(v::Taylor0, Taylor0(b, a.order), a, k)
+    div!(v::Taylor0, Taylor0(b, a.order), a, k) =#
 
 
 
@@ -316,9 +316,9 @@ div!(v::Taylor0, b::NumberNotSeries, a::Taylor0, k::Int) =
 
 Multiply A*B and save the result in Y.
 """ =#
-#= function mul!(y::Vector{Taylor0{T}},
+#= function mul!(y::Vector{Taylor0},
         a::Union{Matrix{T},SparseMatrixCSC{T}},
-        b::Vector{Taylor0{T}}) where {T<:Number}
+        b::Vector{Taylor0}) where {T<:Number}
 
     n, k = size(a)
     @assert (length(y)== n && length(b)== k)
@@ -350,9 +350,9 @@ end =#
 
 # Adapted from (Julia v1.2) stdlib/v1.2/LinearAlgebra/src/dense.jl#721-734,
 # licensed under MIT "Expat".
-# Specialize a method of `inv` for Matrix{Taylor0{T}}. Simply, avoid pivoting,
+# Specialize a method of `inv` for Matrix{Taylor0}. Simply, avoid pivoting,
 # since the polynomial field is not an ordered one.
-# function Base.inv(A::StridedMatrix{Taylor0{T}}) where T
+# function Base.inv(A::StridedMatrix{Taylor0}) where T
 #     checksquare(A)
 #     S = Taylor0{typeof((one(T)*zero(T) + one(T)*zero(T))/one(T))}
 #     AA = convert(AbstractArray{S}, A)
@@ -375,10 +375,10 @@ const LU_NoPivot = VERSION >= v"1.7.0-DEV.1188" ? NoPivot() : Val(false)
 # Adapted from (Julia v1.2) stdlib/v1.2/LinearAlgebra/src/lu.jl#240-253
 # and (Julia v1.4.0-dev) stdlib/LinearAlgebra/v1.4/src/lu.jl#270-274,
 # licensed under MIT "Expat".
-# Specialize a method of `lu` for Matrix{Taylor0{T}}, which avoids pivoting,
+# Specialize a method of `lu` for Matrix{Taylor0}, which avoids pivoting,
 # since the polynomial field is not an ordered one.
 # We can't assume an ordered field so we first try without pivoting
-function lu(A::AbstractMatrix{Taylor0{T}}; check::Bool = true) where {T<:Number}
+function lu(A::AbstractMatrix{Taylor0}; check::Bool = true) where {T<:Number}
     S = Taylor0{lutype(T)}
     F = lu!(copy_oftype(A, S), LU_NoPivot; check = false)
     if issuccess(F)

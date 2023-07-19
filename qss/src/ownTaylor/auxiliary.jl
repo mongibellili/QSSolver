@@ -74,23 +74,23 @@ getcoeff(a::Taylor0, n::Int) = (@assert 0 ≤ n ≤ a.order; return a[n])
 getindex(a::Taylor0, n::Int) = a.coeffs[n+1]
 getindex(a::Taylor0, u::UnitRange{Int}) = view(a.coeffs, u .+ 1 )
 getindex(a::Taylor0, c::Colon) = view(a.coeffs, c)
-getindex(a::Taylor0{T}, u::StepRange{Int,Int}) where {T<:Number} =
+getindex(a::Taylor0, u::StepRange{Int,Int})  =
     view(a.coeffs, u[:] .+ 1)
 
-setindex!(a::Taylor0{T}, x::T, n::Int) where {T<:Number} = a.coeffs[n+1] = x
-setindex!(a::Taylor0{T}, x::T, u::UnitRange{Int}) where {T<:Number} =
+setindex!(a::Taylor0, x::T, n::Int) where {T<:Number} = a.coeffs[n+1] = x
+setindex!(a::Taylor0, x::T, u::UnitRange{Int}) where {T<:Number} =
     a.coeffs[u .+ 1] .= x
-function setindex!(a::Taylor0{T}, x::Array{T,1}, u::UnitRange{Int}) where {T<:Number}
+function setindex!(a::Taylor0, x::Array{T,1}, u::UnitRange{Int}) where {T<:Number}
     @assert length(u) == length(x)
     for ind in eachindex(x)
         a.coeffs[u[ind]+1] = x[ind]
     end
 end
-setindex!(a::Taylor0{T}, x::T, c::Colon) where {T<:Number} = a.coeffs[c] .= x
-setindex!(a::Taylor0{T}, x::Array{T,1}, c::Colon) where {T<:Number} = a.coeffs[c] .= x
-setindex!(a::Taylor0{T}, x::T, u::StepRange{Int,Int}) where {T<:Number} =
+setindex!(a::Taylor0, x::T, c::Colon) where {T<:Number} = a.coeffs[c] .= x
+setindex!(a::Taylor0, x::Array{T,1}, c::Colon) where {T<:Number} = a.coeffs[c] .= x
+setindex!(a::Taylor0, x::T, u::StepRange{Int,Int}) where {T<:Number} =
     a.coeffs[u[:] .+ 1] .= x
-function setindex!(a::Taylor0{T}, x::Array{T,1}, u::StepRange{Int,Int}) where {T<:Number}
+function setindex!(a::Taylor0, x::Array{T,1}, u::StepRange{Int,Int}) where {T<:Number}
     @assert length(u) == length(x)
     for ind in eachindex(x)
         a.coeffs[u[ind]+1] = x[ind]
@@ -113,7 +113,7 @@ end =#
 @inline lastindex(a::Taylor0) = a.order
 
 @inline eachindex(a::Taylor0) = firstindex(a):lastindex(a)
-@inline numtype(::Taylor0{S}) where {S<:Number} = S
+#@inline numtype(::Taylor0{S}) where {S<:Number} = S
 @inline size(a::Taylor0) = size(a.coeffs)
 @inline get_order(a::Taylor0) = a.order
 
@@ -128,7 +128,7 @@ Returns the type of the elements of the coefficients of `a`.
 """ numtype =#
 
 # Dumb methods included to properly export normalize_taylor (if IntervalArithmetic is loaded)
-@inline normalize_taylor(a::AbstractSeries) = a
+#@inline normalize_taylor(a::AbstractSeries) = a
 
 
 ## fixorder ##
@@ -156,13 +156,13 @@ end =#
 end
 
 # Finds the first non zero entry; extended to Taylor0
-function Base.findfirst(a::Taylor0{T}) where {T<:Number}
+function Base.findfirst(a::Taylor0) 
     first = findfirst(x->!iszero(x), a.coeffs)
     isa(first, Nothing) && return -1
     return first-1
 end
 # Finds the last non-zero entry; extended to Taylor0
-function Base.findlast(a::Taylor0{T}) where {T<:Number}
+function Base.findlast(a::Taylor0) 
     last = findlast(x->!iszero(x), a.coeffs)
     isa(last, Nothing) && return -1
     return last-1
@@ -171,7 +171,7 @@ end
 
 ## copyto! ##
 # Inspired from base/abstractarray.jl, line 665
- function copyto!(dst::Taylor0{T}, src::Taylor0{T}) where {T<:Number}
+ function copyto!(dst::Taylor0, src::Taylor0) 
         length(dst) < length(src) && throw(ArgumentError(string("Destination has fewer elements than required; no copy performed")))
         destiter = eachindex(dst)
         y = iterate(destiter)
@@ -203,7 +203,7 @@ constant_term(a::Number) = a
 Returns the linear part of `a` as a polynomial (`Taylor0` or `TaylorN`),
 *without* the constant term. The fallback behavior is to return `a` itself.
 """ =#
-linear_polynomial(a::Taylor0) = Taylor0([zero(a[1]), a[1]], a.order)
+#= linear_polynomial(a::Taylor0) = Taylor0([zero(a[1]), a[1]], a.order)
 
 linear_polynomial(a::Vector{T}) where {T<:Number} = linear_polynomial.(a)
 
@@ -218,4 +218,4 @@ nonlinear_polynomial(a::AbstractSeries) = a - constant_term(a) - linear_polynomi
 
 nonlinear_polynomial(a::Vector{T}) where {T<:Number} = nonlinear_polynomial.(a)
 
-nonlinear_polynomial(a::Number) = zero(a)
+nonlinear_polynomial(a::Number) = zero(a) =#

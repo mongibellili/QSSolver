@@ -198,17 +198,17 @@
 
 # Recursive functions (homogeneous coefficients)
 
-        @inline function identity!(c::Taylor0{T}, a::Taylor0{T}, k::Int) where {T<:Number}
+        @inline function identity!(c::Taylor0, a::Taylor0, k::Int) 
             @inbounds c[k] = identity(a[k])
             return nothing
         end
 
-        @inline function zero!(c::Taylor0{T}, a::Taylor0{T}, k::Int) where {T<:Number}
+        @inline function zero!(c::Taylor0, a::Taylor0, k::Int) 
             @inbounds c[k] = zero(a[k])
             return nothing
         end
 
-        @inline function one!(c::Taylor0{T}, a::Taylor0{T}, k::Int) where {T<:Number}
+        @inline function one!(c::Taylor0, a::Taylor0, k::Int) 
             if k == 0
                 @inbounds c[0] = one(a[0])
             else
@@ -217,7 +217,7 @@
             return nothing
         end
 
-        @inline function abs!(c::Taylor0{T}, a::Taylor0{T}, k::Int) where {T<:Number}
+        @inline function abs!(c::Taylor0, a::Taylor0, k::Int) 
             z = zero(constant_term(a))
             if constant_term(constant_term(a)) > constant_term(z)
                 return add!(c, a, k)
@@ -231,9 +231,9 @@
             return nothing
         end
 
-        @inline abs2!(c::Taylor0{T}, a::Taylor0{T}, k::Int) where {T<:Number} = sqr!(c, a, k)
+        @inline abs2!(c::Taylor0, a::Taylor0, k::Int)  = sqr!(c, a, k)
 
-        @inline function exp!(c::Taylor0{T}, a::Taylor0{T}, k::Int) where {T<:Number}
+        @inline function exp!(c::Taylor0, a::Taylor0, k::Int) 
             if k == 0
                 @inbounds c[0] = exp(constant_term(a))  #this was already computed before!!no need to do anything if k==0
                 return nothing
@@ -250,7 +250,7 @@
             return nothing
         end
 
-        @inline function log!(c::Taylor0{T}, a::Taylor0{T}, k::Int) where {T<:Number}
+        @inline function log!(c::Taylor0, a::Taylor0, k::Int) 
             if k == 0
                 @inbounds c[0] = log(constant_term(a))
                 return nothing
@@ -271,7 +271,7 @@
             return nothing
         end
 
-        @inline function sincos!(s::Taylor0{T}, c::Taylor0{T}, a::Taylor0{T}, k::Int) where {T<:Number}
+        @inline function sincos!(s::Taylor0, c::Taylor0, a::Taylor0, k::Int) 
             if k == 0
                 a0 = constant_term(a)
                 @inbounds s[0], c[0] = sincos( a0 )
@@ -294,7 +294,7 @@
             return nothing
         end
 
-        @inline function tan!(c::Taylor0{T}, a::Taylor0{T}, c2::Taylor0{T}, k::Int) where {T<:Number}
+        @inline function tan!(c::Taylor0, a::Taylor0, c2::Taylor0, k::Int) 
             if k == 0
                 @inbounds aux = tan( constant_term(a) )
                 @inbounds c[0] = aux
@@ -316,7 +316,7 @@
             return nothing
         end
 
-        @inline function asin!(c::Taylor0{T}, a::Taylor0{T}, r::Taylor0{T}, k::Int) where {T<:Number}
+        @inline function asin!(c::Taylor0, a::Taylor0, r::Taylor0, k::Int) 
             if k == 0
                 a0 = constant_term(a)
                 @inbounds c[0] = asin( a0 )
@@ -337,7 +337,7 @@
             return nothing
         end
 
-        @inline function acos!(c::Taylor0{T}, a::Taylor0{T}, r::Taylor0{T}, k::Int) where {T<:Number}
+        @inline function acos!(c::Taylor0, a::Taylor0, r::Taylor0, k::Int) 
             if k == 0
                 a0 = constant_term(a)
                 @inbounds c[0] = acos( a0 )
@@ -358,7 +358,7 @@
             return nothing
         end
 
-        @inline function atan!(c::Taylor0{T}, a::Taylor0{T}, r::Taylor0{T}, k::Int) where {T<:Number}
+        @inline function atan!(c::Taylor0, a::Taylor0, r::Taylor0, k::Int) 
             if k == 0
                 a0 = constant_term(a)
                 @inbounds c[0] = atan( a0 )
@@ -379,7 +379,7 @@
             return nothing
         end
 
-        @inline function sinhcosh!(s::Taylor0{T}, c::Taylor0{T}, a::Taylor0{T}, k::Int) where {T<:Number}
+        @inline function sinhcosh!(s::Taylor0, c::Taylor0, a::Taylor0, k::Int) 
             if k == 0
                 @inbounds s[0] = sinh( constant_term(a) )
                 @inbounds c[0] = cosh( constant_term(a) )
@@ -403,7 +403,7 @@
             return nothing
         end
 
-        @inline function tanh!(c::Taylor0{T}, a::Taylor0{T}, c2::Taylor0{T}, k::Int) where {T<:Number}
+        @inline function tanh!(c::Taylor0, a::Taylor0, c2::Taylor0, k::Int) 
             if k == 0
                 @inbounds aux = tanh( constant_term(a) )
                 @inbounds c[0] = aux
@@ -425,7 +425,7 @@
             return nothing
         end
 
-        @inline function asinh!(c::Taylor0{T}, a::Taylor0{T}, r::Taylor0{T}, k::Int) where {T<:Number}
+        @inline function asinh!(c::Taylor0, a::Taylor0, r::Taylor0, k::Int) 
             if k == 0
                 a0 = constant_term(a)
                 @inbounds c[0] = asinh( a0 )
@@ -446,7 +446,7 @@
             return nothing
         end
 
-        @inline function acosh!(c::Taylor0{T}, a::Taylor0{T}, r::Taylor0{T}, k::Int) where {T<:Number}
+        @inline function acosh!(c::Taylor0, a::Taylor0, r::Taylor0, k::Int) 
             if k == 0
                 a0 = constant_term(a)
                 @inbounds c[0] = acosh( a0 )
@@ -467,7 +467,7 @@
             return nothing
         end
 
-        @inline function atanh!(c::Taylor0{T}, a::Taylor0{T}, r::Taylor0{T}, k::Int) where {T<:Number}
+        @inline function atanh!(c::Taylor0, a::Taylor0, r::Taylor0, k::Int) 
             if k == 0
                 a0 = constant_term(a)
                 @inbounds c[0] = atanh( a0 )
@@ -509,15 +509,15 @@ f^{-1}(t) = \sum_{n=1}^{N} \frac{t^n}{n!} \left.
 
 """ inverse =#
 
-function inverse(f::Taylor0{T}) where {T<:Number}
-    if f[0] != zero(T)
+function inverse(f::Taylor0) 
+    if f[0] != 0.0
         throw(DomainError(f,
         """
         Evaluation of Taylor0 series at 0 is non-zero. For high accuracy, revert
         a Taylor0 series with first coefficient 0 and re-expand about f(0).
         """))
     end
-    z = Taylor0(T,f.order)
+    z = Taylor0(0.0,f.order)
     zdivf = z/f
     zdivfpown = zdivf
     S = TS.numtype(zdivf)

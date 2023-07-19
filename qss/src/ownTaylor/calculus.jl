@@ -16,7 +16,7 @@ The order of the result is `a.order-1`.
 The function `derivative` is an exact synonym of `differentiate`.
 """ =#
 function differentiate(a::Taylor0)
-    res = Taylor0(zero(a[0]), get_order(a)-1)
+    res = Taylor0(zero(a[0]), a.order(a)-1)
     for ord in eachindex(res)
         differentiate!(res, a, ord)
     end
@@ -51,17 +51,17 @@ function differentiate!(p::Taylor0, a::Taylor0, k::Int)
     end
     return nothing
 end
-function differentiate!(cache::Taylor0{Float64}, a::Taylor0{Float64})
-    for k=0:a.order-1
+function differentiate!(::Val{O},cache::Taylor0, a::Taylor0)where {O}
+    for k=0:O-1
        # differentiate!(res, a, ord)
        # if k < a.order
           @inbounds cache[k] = (k+1)*a[k+1]
       #end
     end
-    cache[a.order]=0.0
+    cache[O]=0.0  #cache Letter O not zero
     nothing
 end
-function differentiate(a::Taylor0{T}, n::Int) where {T <: Number}
+function differentiate(a::Taylor0, n::Int) 
     if n > a.order
         return Taylor0(T, 0)
     elseif n==0
@@ -69,20 +69,20 @@ function differentiate(a::Taylor0{T}, n::Int) where {T <: Number}
     else
         res = differentiate(a)
         for i = 2:n
-            differentiate!(res, res)
+            differentiate!(Val(a.order),res, res)
         end
         return Taylor0(view(res.coeffs, 1:a.order-n+1))
     end
 end
-function ndifferentiate!(cache::Taylor0{Float64},a::Taylor0{T}, n::Int) where {T <: Number}
+function ndifferentiate!(cache::Taylor0,a::Taylor0, n::Int) 
     if n > a.order
         cache.coeffs.=0.0
     elseif n==0
         cache.coeffs.=a.coeffs
     else
-        differentiate!(cache,a)
+        differentiate!(Val(a.order),cache,a)
         for i = 2:n
-            differentiate!(cache, cache)
+            differentiate!(Val(a.order),cache, cache)
         end
         #return Taylor0(view(res.coeffs, 1:a.order-n+1))
     end
@@ -95,9 +95,9 @@ end
 
 Return the value of the `n`-th differentiate of the polynomial `a`.
 """ =#
-function differentiate(n::Int, a::Taylor0{T}) where {T<:Number}
+function differentiate(n::Int, a::Taylor0) 
     @assert a.order ≥ n ≥ 0
-    factorial( widen(n) ) * a[n] :: T
+    factorial( widen(n) ) * a[n] 
 end
 
 ## Integrating ##
@@ -107,7 +107,7 @@ end
 Return the integral of `a::Taylor0`. The constant of integration
 (0-th order coefficient) is set to `x`, which is zero if ommitted.
 """ =#
-function integrate(a::Taylor0{T}, x::S) where {T<:Number,S<:Number}
+function integrate(a::Taylor0, x::S) where {S<:Number}
     order = get_order(a)
     aa = a[0]/1 + zero(x)
     R = typeof(aa)
@@ -119,16 +119,16 @@ function integrate(a::Taylor0{T}, x::S) where {T<:Number,S<:Number}
     @inbounds coeffs[1] = convert(R, x)
     return Taylor0(coeffs, a.order)
 end
-integrate(a::Taylor0{T}) where {T<:Number} = integrate(a, zero(a[0]))
+integrate(a::Taylor0)  = integrate(a, zero(a[0]))
 
-function integrate!(p::Taylor0{T}, a::Taylor0{T}, x::S) where {T<:Number,S<:Number}
+function integrate!(p::Taylor0, a::Taylor0, x::S) where {S<:Number}
     p.coeffs[1]=x
     @inbounds for i = 1:a.order
         p[i] = a[i-1] / i
     end
     return nothing
 end
-function integrate!( a::Taylor0{T}, x::S) where {T<:Number,S<:Number}
+function integrate!( a::Taylor0, x::S) where {S<:Number}
     
     @inbounds for i in a.order-1:-1:0
         a[i+1] = a[i] / (i+1)
