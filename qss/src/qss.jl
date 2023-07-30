@@ -1,15 +1,16 @@
-module formalqss
+module qss
 
 const global verbose=true
 
 # const global debug=false
 
-using ResumableFunctions
+#using ResumableFunctions
 using RuntimeGeneratedFunctions
 using StaticArrays
+using SymEngine
 using Reexport
 @reexport using StaticArrays
-@reexport using ResumableFunctions
+#@reexport using ResumableFunctions
 #using SymEngine##########might not need
 using ExprTools  #combineddef
 using MacroTools: isexpr,postwalk, prewalk, @capture

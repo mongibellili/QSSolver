@@ -1,21 +1,35 @@
 
       
 
-function nmisCycle_and_simulUpdate(::Val{2},index::Int,j::Int,prevStepVal::Float64,direction::Vector{Float64}, x::Vector{Taylor0},q::Vector{Taylor0}, quantum::Vector{Float64},a::Vector{Vector{Float64}},u::Vector{Vector{MVector{O,Float64}}},qaux::Vector{MVector{O,Float64}},olddx::Vector{MVector{O,Float64}},olddxSpec::Vector{MVector{O,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64,qminus::Vector{Float64})where{O}
-  # @timeit "inside nmisCycle block1" begin
- #=  aii=getA(Val(Sparsity),cacheA,a,index,index,map);ajj=getA(Val(Sparsity),cacheA,a,j,j,map);aij=getA(Val(Sparsity),cacheA,a,index,j,map);aji=getA(Val(Sparsity),cacheA,a,j,index,map) =#
-   aii=a[index][index];ajj=a[j][j];aij=a[index][j];aji=a[j][index]
+function nmisCycle_and_simulUpdate(::Val{2},index::Int,j::Int,dirI::Float64,prevStepVal::Float64, x::Vector{Taylor0},q::Vector{Taylor0}, quantum::Vector{Float64},exacteA::Function,cacheA::MVector{1,Float64},dxaux::Vector{MVector{2,Float64}},qaux::Vector{MVector{2,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64)
+  
+
+   exacteA(q,cacheA,index,index)
+   aii=cacheA[1]
+   exacteA(q,cacheA,j,j)
+   ajj=cacheA[1]
+   exacteA(q,cacheA,index,j)
+   aij=cacheA[1]
+   exacteA(q,cacheA,j,index)
+   aji=cacheA[1]
+
+   uii=dxaux[index][1]-aii*qaux[index][1]
+
+   ui2=dxaux[index][2]-aii*qaux[index][2]
+
+
+
   xi=x[index][0];xj=x[j][0];qi=q[index][0];qj=q[j][0];qi1=q[index][1];qj1=q[j][1];xi1=x[index][1];xi2=2*x[index][2];xj1=x[j][1];xj2=2*x[j][2]
-  uii=u[index][index][1];ujj=u[j][j][1]#;uij=u[index][j][1];uji=u[j][index][1]#;uji2=u[j][index][2]
+  #uii=u[index][index][1];ujj=u[j][j][1]#;uij=u[index][j][1];uji=u[j][index][1]#;uji2=u[j][index][2]
   quanj=quantum[j];quani=quantum[index];
   e1 = simt - tx[j];e2 = simt - tq[j];#= e3=simt - tu[j];tu[j]=simt;  =#
   x[j][0]= x[j](e1);xjaux=x[j][0];tx[j]=simt
-  qminus[j]=qj
+
   qj=qj+e2*qj1  ;qaux[j][1]=qj;tq[j] = simt    ;q[j][0]=qj  
 
-  xj1=x[j][1]+e1*xj2;olddxSpec[j][1]=xj1;olddx[j][1]=xj1
+  xj1=x[j][1]+e1*xj2;
   newDiff=(xjaux-prevStepVal)
-  dirj=direction[j]
+  #= dirj=direction[j]
   if newDiff*dirj <0.0
     dirj=-dirj 
   elseif newDiff==0 && dirj!=0.0
@@ -24,33 +38,33 @@ function nmisCycle_and_simulUpdate(::Val{2},index::Int,j::Int,prevStepVal::Float
     dirj=newDiff
   else
   end          
-  direction[j]=dirj
+  direction[j]=dirj =#
   #ujj=ujj+e1*u[j][j][2]  
   ujj=xj1-ajj*qj
-  u[j][j][1]=ujj
-  u[j][index][1]=ujj-aji*qaux[index][1]# 
-  uji=u[j][index][1]
-  u[j][j][2]=xj2-ajj*qj1###################################################-----------------------
-  u[j][index][2]=u[j][j][2]-aji*qaux[index][2]#
+  #u[j][j][1]=ujj
+  uji=ujj-aji*qaux[index][1]# 
+  #uji=u[j][index][1]
+  uj2=xj2-ajj*qj1###################################################-----------------------
+  uji2=uj2-aji*qaux[index][2]#
  #u[j][index][2]=u[j][j][2]-ajj*qaux[index][1] # from article p20 line25 more cycles ...shaky with no bumps
-  uji2=u[j][index][2] 
+ # uji2=u[j][index][2] 
   dxj=aji*qi+ajj*qaux[j][1]+uji
   ddxj=aji*qi1+ajj*qj1+uji2
   iscycle=false
     qjplus=xjaux-sign(ddxj)*quanj
     h=sqrt(2*quanj/abs(ddxj))#2*quantum funny oscillating graph; xj2 vibrating
     dqjplus=(aji*(qi+h*qi1)+ajj*qjplus+uji+h*uji2)/(1-h*ajj)
-    if (abs(dxj-xj1)>(abs(dxj+xj1)/2) || abs(ddxj-xj2)>(abs(ddxj+xj2)/2))  || (dqjplus)*dirj<0.0 #(dqjplus*qj1)<=0.0 with dir is better since when dir =0 we do not enter
+    if (abs(dxj-xj1)>(abs(dxj+xj1)/2) || abs(ddxj-xj2)>(abs(ddxj+xj2)/2))  || (dqjplus)*newDiff<0.0 #(dqjplus*qj1)<=0.0 with dir is better since when dir =0 we do not enter
       #β=dxi+sqrt(abs(ddxi)*quani/2)
       #h2=sqrt(2*quani/abs(ddxi))
-      u[index][j][1]=uii-aij*qaux[j][1]
-      uij=u[index][j][1]
-      u[index][j][2]=u[index][index][2]-aij*qj1#########qaux[j][2] updated in normal Qupdate..ft=20 slightly shifts up
-      uij2=u[index][j][2]
+      uij=uii-aij*qaux[j][1]
+     # uij=u[index][j][1]
+      uij2=ui2-aij*qj1#########qaux[j][2] updated in normal Qupdate..ft=20 slightly shifts up
+      #uij2=u[index][j][2]
       dxi=aii*qi+aij*qjplus+uij
       ddxi=aii*qi1+aij*dqjplus+uij2
       βidir=dxi+sqrt(2*quani/abs(ddxi))*ddxi/2
-      if (abs(dxi-xi1)>(abs(dxi+xi1)/2) || abs(ddxi-xi2)>(abs(ddxi+xi2)/2)) || βidir*direction[index]<0.0
+      if (abs(dxi-xi1)>(abs(dxi+xi1)/2) || abs(ddxi-xi2)>(abs(ddxi+xi2)/2)) || βidir*dirI<0.0
         iscycle=true
         h = ft-simt
         qi,qj,Δ1=simulQ(aii,aij,aji,ajj,h,xi,xjaux,uij,uij2,uji,uji2)
@@ -116,11 +130,21 @@ end
 
 ####################################nliqss################################################################
 
-function nisCycle_and_simulUpdate(::Val{2},index::Int,j::Int#= ,prevStepVal::Float64 =#,direction::Vector{Float64}, x::Vector{Taylor0},q::Vector{Taylor0}, quantum::Vector{Float64},a::Vector{Vector{Float64}},dxaux::Vector{MVector{O,Float64}},qaux::Vector{MVector{O,Float64}},olddx::Vector{MVector{O,Float64}},olddxSpec::Vector{MVector{O,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64,qminus::Vector{Float64})where{O}
+function nisCycle_and_simulUpdate(::Val{2},index::Int,j::Int#= ,prevStepVal::Float64 =#,direction::Vector{Float64}, x::Vector{Taylor0},q::Vector{Taylor0}, quantum::Vector{Float64},map::Function,cacheA::MVector{1,Float64},dxaux::Vector{MVector{O,Float64}},qaux::Vector{MVector{O,Float64}},olddx::Vector{MVector{O,Float64}},olddxSpec::Vector{MVector{O,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64,qminus::Vector{Float64})where{O}
   # @timeit "inside nmisCycle block1" begin
    #aii=getA(Val(Sparsity),cacheA,a,index,index,map);ajj=getA(Val(Sparsity),cacheA,a,j,j,map);aij=getA(Val(Sparsity),cacheA,a,index,j,map);aji=getA(Val(Sparsity),cacheA,a,j,index,map)
    
-   aii=a[index][index];ajj=a[j][j];aij=a[index][j];aji=a[j][index]
+   #aii=a[index][index];ajj=a[j][j];aij=a[index][j];aji=a[j][index]
+
+   map(q,cacheA,index,index)
+   aii=cacheA[1]
+   map(q,cacheA,j,j)
+    ajj=cacheA[1]
+    map(q,cacheA,index,j)
+    aij=cacheA[1]
+    map(q,cacheA,j,index)
+    aji=cacheA[1]
+
   xi=x[index][0];xj=x[j][0];qi=q[index][0];qj=q[j][0];qi1=q[index][1];qj1=q[j][1];xi1=x[index][1];xi2=2*x[index][2];xj1=x[j][1];xj2=2*x[j][2]
   # uii=u[index][index][1];#ujj=u[j][j][1]#;uij=u[index][j][1];uji=u[j][index][1]#;uji2=u[j][index][2]
    uii=dxaux[index][1]-aii*qaux[index][1]
@@ -483,3 +507,107 @@ function isCycle_and_simulUpdate(::Val{2},index::Int,j::Int,#= direction::Vector
     end # end outer dependency check
   return iscycle
 end
+#= 
+function updateQ(::Val{2},i::Int, xv::Vector{Taylor0},qv::Vector{Taylor0}, quantum::Vector{Float64}#= ,av::Vector{Vector{Float64}} =#,exacteA::Function,cacheA::MVector{1,Float64},dxaux::Vector{MVector{O,Float64}},qaux::Vector{MVector{O,Float64}},olddx::Vector{MVector{O,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64, nextTime::Vector{Float64})where{O}
+      #a=getA(Val(Sparsity),cacheA,av,i,i,map)
+      #a=av[i][i]
+      
+      exacteA(qv,cacheA,i,i)
+    
+        a=cacheA[1]
+    # @show a,i
+      q=qv[i][0] ;q1=qv[i][1]; x=xv[i][0];  x1=xv[i][1]; x2=xv[i][2]*2; #u1=uv[i][i][1]; u2=uv[i][i][2]
+      qaux[i][1]=q#+(simt-tq[i])*q1#appears only here...updated here and used in updateApprox and in updateQevent later
+      qaux[i][2]=q1                     #appears only here...updated here and used in updateQevent
+      olddx[i][1]=x1#appears only here...updated here and used in updateApprox   
+      olddx[i][2]=x2
+      #u1=u1+(simt-tu[i])*u2 # for order 2: u=u+tu*deru  this is necessary deleting causes scheduler error
+      u1=x1-a*qaux[i][1]
+      # uv[i][i][1]=u1
+      dxaux[i][1]=x1
+      dxaux[i][2]=x2
+      u2=x2-a*q1
+      # uv[i][i][2]= u2
+      # tu[i]=simt  
+        # olddx[i][2]=2*x2# 
+        ddx=x2
+        quan=quantum[i]
+        h=0.0
+        if a!=0.0
+            if ddx ==0.0
+                ddx=a*a*q+a*u1 +u2
+                if ddx==0.0 
+                    ddx=1e-40# changing -40 to -6 nothing changed
+                  # println("ddx=0")
+                end
+            end
+            h = ft-simt
+            #tempH1=h
+            #q = ((x + h * u1 + h * h / 2 * u2) * (1 - h * a) + (h * h / 2 * a - h) * (u1 + h * u2)) /(1 - h * a + h * h * a * a / 2)
+                    q=(x-h*a*x-h*h*(a*u1+u2)/2)/(1 - h * a + h * h * a * a / 2)
+                  
+            
+            if (abs(q - x) > 2* quan) # removing this did nothing...check @btime later
+              h = sqrt(abs(2*quan / ddx)) # sqrt highly recommended...removing it leads to many sim steps..//2* is necessary in 2*quan when using ddx
+              q = ((x + h * u1 + h * h / 2 * u2) * (1 - h * a) + (h * h / 2 * a - h) * (u1 + h * u2)) /
+                      (1 - h * a + h * h * a * a / 2)
+
+              #  q = (x-h*a*x-h*h*(a*u1+u2)/2)/(1 - h * a + h * h * a * a / 2)
+                    
+            end
+            maxIter=1000
+          # tempH=h
+        #=   if  (abs(q - x) >2*  quan)
+          coef=@SVector [quan, a*quan,-(a*a*(x-quan)+a*u1+u2)/2]#
+              h1= minPosRoot(coef, Val(2))
+            coef=@SVector [-quan, -a*quan,-(a*a*(x+quan)+a*u1+u2)/2]#
+              h2= minPosRoot(coef, Val(2))
+
+            if h1<h2
+                h=h1;q=x-quan
+            else
+                h=h2;q=x+quan
+            end
+
+        end =#
+
+            while (abs(q - x) >2*  quan) && (maxIter>0) && (h>0)
+                
+              h = h *sqrt(quan / abs(q - x))
+              q = ((x + h * u1 + h * h / 2 * u2) * (1 - h * a) + (h * h / 2 * a - h) * (u1 + h * u2)) /
+                      (1 - h * a + h * h * a * a / 2)
+                    #  q = (x-h*a*x-h*h*(a*u1+u2)/2)/(1 - h * a + h * h * a * a / 2)       
+              maxIter-=1
+            end
+        
+            q1=(a*q+u1+h*u2)/(1-h*a)  #later investigate 1=h*a
+
+
+        else
+            if x2!=0.0
+              
+              h=sqrt(abs(2*quan/x2))   #sqrt necessary with u2
+              q=x-h*h*x2/2
+              q1=x1+h*x2
+            else
+              # println("x2==0")
+                if x1!=0.0
+                    h=abs(quan/x1)
+                    q=x+h*x1
+                    q1=x1
+                else
+                    h=Inf
+                    q=x
+                    q1=x1
+                end
+            end 
+
+        end
+
+        qv[i][0]=q
+        qv[i][1]=q1  
+      nextTime[i]=simt+h
+
+        return nothing
+ 
+end =#

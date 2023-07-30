@@ -14,6 +14,7 @@ function custom_Solve(prob::NLODEProblem{PRTYPE,T,Z,Y,CS},::Type{Val{Solver}},::
     commonQSSdata=createCommonData(prob,Val(T),Val(Z),Val(Order),sizehint,finalTime,saveat, initialTime,dQmin,dQrel,maxErr)
     jac=getClosure(prob.jac)::Function
     SD=getClosure(prob.SD)::Function
+    
     if Solver==:qss
         QSS_integrate(commonQSSdata,prob,prob.eqs,jac,SD,prob.map)
     else
@@ -141,7 +142,7 @@ end
 
 
 function createSpecialLiqssData(::Val{T})where{T}
-    cacheA=zeros(MVector{1,Int})
+    cacheA=zeros(MVector{1,Float64})
     direction= zeros(T)
     qminus= zeros(T)
     buddySimul=zeros(MVector{2,Int})

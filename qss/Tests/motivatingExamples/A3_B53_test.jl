@@ -1,8 +1,9 @@
 
 
-using formalqss
-using XLSX
+using qss
+#using XLSX
 using BenchmarkTools
+#using TimerOutputs
 #include("/home/unknown/formalqss/models/BProblem.jl")
 #= function B53(j::Int, q::Vector{Taylor0{Float64}}, t::Taylor0{Float64}, cache::Vector{Taylor0{Float64}})
     if j == 1
@@ -15,6 +16,7 @@ using BenchmarkTools
 end
  =#
 function test53()
+    #reset_timer!()
      odeprob = @NLodeProblem begin
          #sys b53
          name=(sysb53,)
@@ -36,15 +38,15 @@ function test53()
      relTol=1e-3
 
    #  solqss2=QSS_Solve(odeprob,qss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0)
-    # solliqss2=QSS_Solve(odeprob,liqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0)
+  #   solliqss2=QSS_Solve(odeprob,liqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0)
    # solmliqss2=QSS_Solve(odeprob,mliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0)
    #  solnliqss2=QSS_Solve(odeprob,nliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0)
-   solnmliqss2=QSS_Solve(odeprob,nmliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0)
-
-display(solnmliqss2(2,1.0))
-display(solnmliqss2(2,10.0))
-display(solnmliqss2(2,20.0))
-display(solnmliqss2(2,30.0))
+   solnmliqss2=QSS_Solve(odeprob,nmliqss1(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0)
+@show solnmliqss2.totalSteps,solnmliqss2.simulStepCount
+#= display(solnliqss2(2,1.0))
+display(solnliqss2(2,10.0))
+display(solnliqss2(2,20.0))
+display(solnliqss2(2,30.0)) =#
   #=    solqss2Interp=solInterpolated(solqss2,0.01)
      er1=getError(solqss2Interp,1,x1)  
      er2=getError(solqss2Interp,2,x2) 
@@ -52,35 +54,35 @@ display(solnmliqss2(2,30.0))
      resqss= ("$(solqss2.algName)",(er1+er2)/2,solqss2.totalSteps,solqss2.simulStepCount,timeqss)
      @show resqss =#
 
- #=     solliqss2Interp=solInterpolated(solliqss2,0.01)
+    #=  solliqss2Interp=solInterpolated(solliqss2,0.01)
      er1=getError(solliqss2Interp,1,x1)  
      er2=getError(solliqss2Interp,2,x2) 
-     timeliqss=@belapsed QSS_Solve($odeprob,qss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0)
+     timeliqss=@belapsed QSS_Solve($odeprob,liqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0)
      resliqss= ("$(solliqss2.algName)",(er1+er2)/2,solliqss2.totalSteps,solliqss2.simulStepCount,timeliqss)
-     @show resliqss
+     @show resliqss =#
 
-     solmliqss2Interp=solInterpolated(solmliqss2,0.01)
+   #=   solmliqss2Interp=solInterpolated(solmliqss2,0.01)
      er1=getError(solmliqss2Interp,1,x1)  
      er2=getError(solmliqss2Interp,2,x2) 
      timemliqss=@belapsed QSS_Solve($odeprob,mliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0)
      resmliqss= ("$(solmliqss2.algName)",(er1+er2)/2,solmliqss2.totalSteps,solmliqss2.simulStepCount,timemliqss)
-     @show resmliqss
+     @show resmliqss =#
 
-     solnliqss2Interp=solInterpolated(solnliqss2,0.01)
+    #=  solnliqss2Interp=solInterpolated(solnliqss2,0.01)
      er1=getError(solnliqss2Interp,1,x1)  
      er2=getError(solnliqss2Interp,2,x2) 
      timenliqss=@belapsed QSS_Solve($odeprob,nliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0)
      resnliqss= ("$(solnliqss2.algName)",(er1+er2)/2,solnliqss2.totalSteps,solnliqss2.simulStepCount,timenliqss)
-     @show resnliqss
+     @show resnliqss =#
 
-     solnmliqss2Interp=solInterpolated(solnmliqss2,0.01)
+   #=   solnmliqss2Interp=solInterpolated(solnmliqss2,0.01)
      er1=getError(solnmliqss2Interp,1,x1)  
      er2=getError(solnmliqss2Interp,2,x2) 
      timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0)
      resnmliqss= ("$(solnmliqss2.algName)",(er1+er2)/2,solnmliqss2.totalSteps,solnmliqss2.simulStepCount,timenmliqss)
-     @show resnmliqss
+     @show resnmliqss =#
 
-     XLSX.openxlsx("sys53 all solvers_$(relTol)_$(absTol).xlsx", mode="w") do xf
+  #=    XLSX.openxlsx("sys53 all solvers_$(relTol)_$(absTol).xlsx", mode="w") do xf
         sheet = xf[1]
         sheet["A1"] = "sys53 all solvers__$(relTol)_$(absTol)"
         sheet["A4"] = collect(("solver","error","totalSteps","simul_steps","time"))
@@ -90,7 +92,7 @@ display(solnmliqss2(2,30.0))
         sheet["A8"] = collect(resnmliqss)
      end =#
 
-  
+ #    print_timer()
 end
 
 test53()

@@ -16,10 +16,11 @@ end
 
 
 # to create NLODEContProblem above
-function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{0},::Val{0}, initConditions::Vector{Float64} ,du::Symbol)where {T}
+function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{0},::Val{0}, initConditions::Vector{Float64} ,du::Symbol,symDict::Dict{Symbol,Expr})where {T}
     if verbose println("nlodeprobfun  T= $T") end
     equs=Dict{Union{Int,Expr},Expr}()
     jac = Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}()# set used because do not want to insert an existing varNum
+    exacteJacExpr = Dict{Expr,Union{Float64,Int,Symbol,Expr}}()
     # NO need to constrcut SD...SDVect will be extracted from Jac
     num_cache_equs=1#initial cachesize::will hold the number of caches (vectors) of the longest equation
     for argI in odeExprs.args
@@ -30,10 +31,10 @@ function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{0},::Val{0}, initConditi
             if rhs isa Number # rhs of equ =number  
                 equs[varNum]=:($((transformFSimplecase(:($(rhs)))))) #change rhs from N to cache=taylor0=[[N,0,0],2] for order 2 for exple
             elseif rhs.head==:ref #rhs is only one var
-                extractJacDepNormal(varNum,rhs,jac  ) #extract jacobian and SD dependencies from normal equation
+                extractJacDepNormal(varNum,rhs,jac,exacteJacExpr ,symDict ) #extract jacobian and SD dependencies from normal equation
                 equs[varNum ]=:($((transformFSimplecase(:($(rhs))))))#change rhs from q[i] to cache=q[i] ...just put taylor var in cache
             else #rhs head==call...to be tested later for  math functions and other possible scenarios or user erros                 
-                extractJacDepNormal(varNum,rhs,jac ) 
+                extractJacDepNormal(varNum,rhs,jac,exacteJacExpr,symDict ) 
                 temp=(transformF(:($(rhs),1))).args[2]  #temp=number of caches distibuted...rhs already changed inside
                 if num_cache_equs<temp 
                         num_cache_equs=temp
@@ -42,7 +43,7 @@ function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{0},::Val{0}, initConditi
             end 
         elseif @capture(argI, for counter_ in b_:niter_ loopbody__ end) #case where diff equation is an expr in for loop
              specRHS=loopbody[1].args[2]
-             extractJacDepLoop(b,niter,specRHS,jac  )  #extract jacobian and SD dependencies from loop 
+             extractJacDepLoop(b,niter,specRHS,jac,exacteJacExpr,symDict  )  #extract jacobian and SD dependencies from loop 
              temp=(transformF(:($(specRHS),1))).args[2]
                 if num_cache_equs<temp 
                     num_cache_equs=temp
@@ -59,16 +60,24 @@ function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{0},::Val{0}, initConditi
         fname= odeExprs.args[1].args[2].args[1]
         #path=odeExprs.args[1].args[2].args[2]
     end
+   # @show exacteJacExpr
+   # @show jac
+    #@show equs
+    exacteJacfunction=createexacteJacFun(exacteJacExpr,fname)
+    
+    exacteJacfunctionF=@RuntimeGeneratedFunction(exacteJacfunction)
+    #@show exacteJacfunctionF
    
     diffEqfunction=createContEqFun(equs,fname)# diff equations before this are stored in a dict:: now we have a giant function that holds all diff equations
     jacVect=createJacVect(jac,Val(T)) #jacobian dependency
     SDVect=createSDVect(jac,Val(T))  # state derivative dependency
-    mapFun=createMapFun(jac,fname)  # for sparsity
+   # mapFun=createMapFun(jac,fname)  # for sparsity
     jacDimFunction=createJacDimensionFun(jac,fname) #for sparsity
     diffEqfunctionF=@RuntimeGeneratedFunction(diffEqfunction) # @RuntimeGeneratedFunction changes a fun expression to actual fun without running into world age problems
-    mapFunF=@RuntimeGeneratedFunction(mapFun)
+   # mapFunF=@RuntimeGeneratedFunction(mapFun)
     jacDimFunctionF=@RuntimeGeneratedFunction(jacDimFunction)
-    prob=NLODEContProblem(fname,Val(1),Val(T),Val(0),Val(0),Val(num_cache_equs),initConditions,diffEqfunctionF,jacVect,SDVect,mapFunF,jacDimFunctionF)# prtype type 1...prob not saved and struct contains vects
+    prob=NLODEContProblem(fname,Val(1),Val(T),Val(0),Val(0),Val(num_cache_equs),initConditions,diffEqfunctionF,jacVect,SDVect,exacteJacfunctionF,jacDimFunctionF)# prtype type 1...prob not saved and struct contains vects
+
 end
 
 
@@ -172,7 +181,62 @@ function createMapFun(jac:: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},fu
     functioncode1=combinedef(def1)
 end
 
+function createexacteJacFun(jac:: Dict{Expr,Union{Float64,Int,Symbol,Expr}},funName::Symbol)
+    ss="if i==0 return nothing\n"
+    for dictElement in jac
+        if dictElement[1].args[1] isa Int
+            ss*="elseif i==$(dictElement[1].args[1]) && j==$(dictElement[1].args[2]) \n"
+          
+            ss*="cache[1]=$(dictElement[2]) \n"
+            ss*=" return nothing \n"
+           
+        elseif dictElement[1].args[1] isa Expr
+            ss*="elseif $(dictElement[1].args[1].args[1])<=i<=$(dictElement[1].args[1].args[2]) && j==$(dictElement[1].args[2]) \n"
+           
+            ss*="cache[1]=$(dictElement[2]) \n"
+            ss*=" return nothing \n"
+           
+        end     
+    end
+    ss*=" end \n"         
+    myex1=Meta.parse(ss)
+    Base.remove_linenums!(myex1)
+    def1=Dict{Symbol,Any}() #any changeto Union{expr,Symbol}  ????
+    def1[:head] = :function
+    def1[:name] = Symbol(:map,funName)  
+    def1[:args] = [:(q::Vector{Taylor0}),:(cache::MVector{1,Float64}),:(i::Int),:(j::Int)]
+    def1[:body] = myex1
+    functioncode1=combinedef(def1)
+end
 
+
+#= function createexacteJacFun(jac:: Dict{Expr,Union{Float64,Int,Symbol,Expr}},funName::Symbol)
+    ss="if i==0 return nothing\n"
+    for dictElement in jac
+        if dictElement[1].args[1] isa Int
+            ss*="elseif i==$(dictElement[1].args[1]) && j==$(dictElement[1].args[2]) \n"
+          
+            ss*="cache[1]=$(dictElement[2]) \n"
+            ss*=" return nothing \n"
+           
+        elseif dictElement[1].args[1] isa Expr
+            ss*="elseif $(dictElement[1].args[1].args[1])<=i<=$(dictElement[1].args[1].args[2]) && j==$(dictElement[1].args[2]) \n"
+           
+            ss*="cache[1]=$(dictElement[2]) \n"
+            ss*=" return nothing \n"
+           
+        end     
+    end
+    ss*=" end \n"         
+    myex1=Meta.parse(ss)
+    Base.remove_linenums!(myex1)
+    def1=Dict{Symbol,Any}() #any changeto Union{expr,Symbol}  ????
+    def1[:head] = :function
+    def1[:name] = Symbol(:map,funName)  
+    def1[:args] = [:(q::Vector{Taylor0{Float64}}),:(cache::MVector{1,Float64}),:(i::Int),:(j::Int)]
+    def1[:body] = myex1
+    functioncode1=combinedef(def1)
+end =#
 
 function createJacVect(jac:: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},::Val{T}) where{T}# 
     jacVect = Vector{Vector{Int}}(undef, T)

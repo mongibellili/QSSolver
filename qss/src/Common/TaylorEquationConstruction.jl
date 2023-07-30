@@ -1,17 +1,5 @@
 
-function changeExprToFirstValue(ex::Expr)##
-    newEx=postwalk(ex) do a  # change u[1] to u[1][0]
-        if a isa Expr && a.head == :ref && a.args[1]==:q
-             outerRef=Expr(:ref)
-            push!(outerRef.args,a)
-            push!(outerRef.args,:(0))
-            a=outerRef
-        end
-        return a
-    end
-  
-    newEx
-    end
+
   
   
   function transformFSimplecase(ex)#  it s easier and healthier to leave the big case alone in one prewalk (below) when returning the size of the distributed cahce

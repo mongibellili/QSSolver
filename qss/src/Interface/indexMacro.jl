@@ -8,6 +8,7 @@ macro NLodeProblem(odeExprs)
     discSize=probHelper.discreteSize
     zcSize=probHelper.numZC
     initConds=probHelper.initConditions # vector
+    symDict=probHelper.symDict
     du=probHelper.du
     if length(initConds)==0  #user chose shortcuts...initcond saved in a dict
         initConds=zeros(probSize)# vector of init conds to be created
@@ -23,7 +24,7 @@ macro NLodeProblem(odeExprs)
         end
     end
 
-    NLodeProblemFunc(odeExprs,Val(probSize),Val(discSize),Val(zcSize),initConds,du)     #returns continuours prob   
+    NLodeProblemFunc(odeExprs,Val(probSize),Val(discSize),Val(zcSize),initConds,du,symDict)     #returns continuours prob   
 end
 
 #= macro saveNLodeProblem(odeExprs) # recommended for large cont problems to save first
@@ -51,9 +52,11 @@ struct probHelper #helper struct to return stuff from arrangeprob
     savedInitCond::Dict{Union{Int,Expr},Float64}
     initConditions::Vector{Float64}
     du::Symbol
+    symDict::Dict{Symbol,Expr}
 end
 function arrangeProb(x::Expr) # replace symbols and params , extract info about size,symbols,initconds
     param=Dict{Symbol,Number}()
+    symDict=Dict{Symbol,Expr}()
     stateVarName=:q
     du=:nothing #default anything 
     problemSize=0
@@ -91,10 +94,10 @@ function arrangeProb(x::Expr) # replace symbols and params , extract info about 
                     discreteSize = length(rhs.args)  
                 end    
             elseif y isa Expr && y.head == :ref && rhs isa Expr && rhs.head !=:vect#&& rhs.head==:call # a diff equa not in a loop
-                argI.args[2]=changeVarNames_params(rhs,stateVarName,:nothing,param)
+                argI.args[2]=changeVarNames_params(rhs,stateVarName,:nothing,param,symDict)
             end
         elseif @capture(argI, for var_ in b_:niter_ loopbody__ end)
-            argI.args[2]=changeVarNames_params(loopbody[1],stateVarName,var,param)
+            argI.args[2]=changeVarNames_params(loopbody[1],stateVarName,var,param,symDict)
         elseif argI isa Expr && argI.head==:if
             numZC+=1
             (length(argI.args)!=3 && length(argI.args)!=2) && error("use format if A>0 B else C or if A>0 B")
@@ -110,7 +113,7 @@ function arrangeProb(x::Expr) # replace symbols and params , extract info about 
               end
         end#end cases of argI
     end#end for argI in args
-    p=probHelper(problemSize,discreteSize,numZC,savedInitCond,initConditions,du)
+    p=probHelper(problemSize,discreteSize,numZC,savedInitCond,initConditions,du,symDict)
 end#end function
 
 

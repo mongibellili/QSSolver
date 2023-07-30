@@ -1,12 +1,12 @@
 
 
-using formalqss
+using qss
 using XLSX
 using BenchmarkTools
 using BSON
 
 function test53()
-  BSON.@load "formalqss/ref_bson/solVectAdvection_Tyson_Rodas5Pe-12.bson" solRodas5PVectorTyson
+  BSON.@load "qss/ref_bson/solVectAdvection_Tyson_Rodas5Pe-12.bson" solRodas5PVectorTyson
      odeprob = @NLodeProblem begin
          name=(tyson,)
          u = [0.0,0.75,0.25,0.0,0.0,0.0]
@@ -21,43 +21,44 @@ function test53()
   
      println("start solving")
 
-     absTol=1e-5
-     relTol=1e-2
+     absTol=1e-6
+     relTol=1e-3
 
    
 
-     solliqss2=QSS_Solve(odeprob,nliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0)
+   #  solliqss2=QSS_Solve(odeprob,liqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0)
+    # save_Sol(solliqss2)
    # solmliqss2=QSS_Solve(odeprob,mliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0)
   #   solnliqss2=QSS_Solve(odeprob,nliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0)
- #  solnmliqss2=QSS_Solve(odeprob,nmliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0)
+   solnmliqss2=QSS_Solve(odeprob,nmliqss1(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0)
 
 
 
-    solliqss2Interp=solInterpolated(solliqss2,0.01)
+   #=  solliqss2Interp=solInterpolated(solliqss2,0.01)
     err1=getAverageErrorByRefs(solRodas5PVectorTyson,solliqss2Interp)
-    timeliqss=@belapsed QSS_Solve($odeprob,nliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0)
-    resliqss= ("liqss",err1,solliqss2.totalSteps,solliqss2.simulStepCount,timeliqss)
+    #timeliqss=@belapsed QSS_Solve($odeprob,liqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0)
+    resliqss= ("liqss",err1,solliqss2.totalSteps,solliqss2.simulStepCount,0.0)
     @show resliqss
-    @btime QSS_Solve($odeprob,nliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0)
+    @btime QSS_Solve($odeprob,liqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0)  =#
    #=  solmliqss2Interp=solInterpolated(solmliqss2,0.01)
     err2=getAverageErrorByRefs(solRodas5PVectorTyson,solmliqss2Interp)
     timeliqss=@belapsed QSS_Solve($odeprob,liqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0)
     resmliqss= ("mliqss",err2,solmliqss2.totalSteps,solmliqss2.simulStepCount,timeliqss)
-    @show resmliqss =#
-
-#=     solnliqss2Interp=solInterpolated(solnliqss2,0.01)
+    @show resmliqss
+=#
+    #= solnliqss2Interp=solInterpolated(solnliqss2,0.01)
     err2=getAverageErrorByRefs(solRodas5PVectorTyson,solnliqss2Interp)
     timenliqss=@belapsed QSS_Solve($odeprob,nliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0)
     resnliqss= ("nliqss",err2,solnliqss2.totalSteps,solnliqss2.simulStepCount,timenliqss)
-    @show resnliqss
-
+    @show resnliqss =#
+    timenmliqss=0.0
     solnmliqss2Interp=solInterpolated(solnmliqss2,0.01)
     err3=getAverageErrorByRefs(solRodas5PVectorTyson,solnmliqss2Interp)
-    timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0)
+    #timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0)
     resnmliqss= ("nmliqss",err3,solnmliqss2.totalSteps,solnmliqss2.simulStepCount,timenmliqss)
     @show resnmliqss
 
-    XLSX.openxlsx("Tyson all solvers_$(relTol)_$(absTol).xlsx", mode="w") do xf
+  #=   XLSX.openxlsx("Tyson all solvers_$(relTol)_$(absTol).xlsx", mode="w") do xf
       sheet = xf[1]
       sheet["A1"] = "Tyson all solvers__$(relTol)_$(absTol)"
       sheet["A4"] = collect(("solver","error","totalSteps","simul_steps","time"))

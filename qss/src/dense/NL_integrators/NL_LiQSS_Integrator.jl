@@ -1,18 +1,20 @@
  #using TimerOutputs
  #using InteractiveUtils
-function LiQSS_integrate(CommonqssData::CommonQSS_data{O,0},liqssdata::LiQSS_data{O,false},specialLiqssData::SpecialLiqssQSS_data, odep::NLODEProblem{PRTYPE,T,0,0,CS},f::Function,jac::Function,SD::Function,map::Function) where {PRTYPE,CS,O,T}
-  #cacheA=specialLiqssData.cacheA
+ function LiQSS_integrate(CommonqssData::CommonQSS_data{O,0},liqssdata::LiQSS_data{O,false},specialLiqssData::SpecialLiqssQSS_data, odep::NLODEProblem{PRTYPE,T,0,0,CS},f::Function,jac::Function,SD::Function,exacteA::Function ) where {PRTYPE,CS,O,T}
+  cacheA=specialLiqssData.cacheA
   ft = CommonqssData.finalTime;initTime = CommonqssData.initialTime;relQ = CommonqssData.dQrel;absQ = CommonqssData.dQmin;maxErr=CommonqssData.maxErr;
   savetimeincrement=CommonqssData.savetimeincrement;savetime = savetimeincrement
   quantum = CommonqssData.quantum;nextStateTime = CommonqssData.nextStateTime;nextEventTime = CommonqssData.nextEventTime;nextInputTime = CommonqssData.nextInputTime
   tx = CommonqssData.tx;tq = CommonqssData.tq;x = CommonqssData.x;q = CommonqssData.q;t=CommonqssData.t
    savedVars=CommonqssData.savedVars;
   savedTimes=CommonqssData.savedTimes;integratorCache=CommonqssData.integratorCache;taylorOpsCache=CommonqssData.taylorOpsCache;#Val(CS)=odep.Val(CS)
-  a=liqssdata.a
-  u=liqssdata.u;
+  #a=liqssdata.a
+  #u=liqssdata.u;
   #***************************************************************  
-  qaux=liqssdata.qaux;olddx=liqssdata.olddx;olddxSpec=liqssdata.olddxSpec
+  qaux=liqssdata.qaux;olddx=liqssdata.olddx;dxaux=liqssdata.dxaux;olddxSpec=liqssdata.olddxSpec
   numSteps = Vector{Int}(undef, T)
+
+  exacteA(q,cacheA,1,1)
    #######################################compute initial values##################################################
   n=1
   for k = 1:O # compute initial derivatives for x and q (similar to a recursive way )
@@ -27,7 +29,7 @@ function LiQSS_integrate(CommonqssData::CommonQSS_data{O,0},liqssdata::LiQSS_dat
       end
   end
   for i = 1:T
-    p=1
+   #=  p=1
     for k=1:O
       p=p*k
       m=p/k
@@ -38,17 +40,19 @@ function LiQSS_integrate(CommonqssData::CommonQSS_data{O,0},liqssdata::LiQSS_dat
           u[i][j][k]=p*x[i][k]-a[i][i]*m*q[i][k-1]
         end
       end
-    end
+    end =#
     numSteps[i]=0
      push!(savedVars[i],x[i][0])
      push!(savedTimes[i],0.0)
      quantum[i] = relQ * abs(x[i].coeffs[1]) ;quantum[i]=quantum[i] < absQ ? absQ : quantum[i];quantum[i]=quantum[i] > maxErr ? maxErr : quantum[i] 
-     nupdateQ(Val(O),i,x,q,quantum,a,u,qaux,olddx,tx,tq,initTime,ft,nextStateTime) 
+    # exacteA(q,cacheA,i,i)
+      updateQ(Val(O),i,x,q,quantum#= ,exacteA =#,exacteA,cacheA,dxaux,qaux,olddx,tx,tq,initTime,ft,nextStateTime)
+     #display(@code_warntype updateQ(Val(O),i,x,q,quantum,exacteA,cacheA,dxaux,qaux,olddx,tx,tq,initTime,ft,nextStateTime))
   end
   for i = 1:T
     clearCache(taylorOpsCache,Val(CS),Val(O));f(i,q,t,taylorOpsCache);
     computeDerivative(Val(O), x[i], taylorOpsCache[1]#= ,0.0 =#)#0.0 used to be elapsed...even down below not neeeded anymore
-    Liqss_reComputeNextTime(Val(O), i, initTime, nextStateTime, x, q, quantum,a)
+    Liqss_reComputeNextTime(Val(O), i, initTime, nextStateTime, x, q, quantum)
     computeNextInputTime(Val(O), i, initTime, 0.1,taylorOpsCache[1] , nextInputTime, x,  quantum)#                                                      not complete, currently elapsed=0.1 is temp until fixed
   end
 
@@ -61,7 +65,7 @@ function LiQSS_integrate(CommonqssData::CommonQSS_data{O,0},liqssdata::LiQSS_dat
  
   simul=false
 
-  
+ 
   while simt < ft && totalSteps < 200000000
     sch = updateScheduler(Val(T),nextStateTime,nextEventTime, nextInputTime)
     simt = sch[2];index = sch[1]
@@ -71,10 +75,15 @@ function LiQSS_integrate(CommonqssData::CommonQSS_data{O,0},liqssdata::LiQSS_dat
      if sch[3] == :ST_STATE
         elapsed = simt - tx[index];
         integrateState(Val(O),x[index],elapsed)
-        
+      
         tx[index] = simt 
         quantum[index] = relQ * abs(x[index].coeffs[1]) ;quantum[index]=quantum[index] < absQ ? absQ : quantum[index];#quantum[index]=quantum[index] > maxErr ? maxErr : quantum[index] 
-        updateQ(Val(O),index,x,q,quantum,a,u,qaux,olddx,tx,tq,simt,ft,nextStateTime) ;tq[index] = simt   
+        elapsedq = simt - tq[index]
+        integrateState(Val(O-1),q[index],elapsedq)
+        #= @timeit "exacteA" =# #exacteA(q,cacheA,index,index)
+   
+       # a=cacheA[1]
+       @timeit "updateQ" updateQ(Val(O),index,x,q,quantum, exacteA,cacheA,dxaux,qaux,olddx,tx,tq,simt,ft,nextStateTime) ;tq[index] = simt   
        for j in SD(index)
            elapsedx = simt - tx[j]
            if elapsedx > 0
@@ -88,11 +97,12 @@ function LiQSS_integrate(CommonqssData::CommonQSS_data{O,0},liqssdata::LiQSS_dat
               elapsedq = simt - tq[b]
               if elapsedq>0 integrateState(Val(O-1),q[b],elapsedq);tq[b]=simt  end
            end
-            clearCache(taylorOpsCache,Val(CS),Val(O));f(j,q,t,taylorOpsCache)
+            clearCache(taylorOpsCache,Val(CS),Val(O));
+            #= @timeit "f" =# f(j,q,t,taylorOpsCache)
             computeDerivative(Val(O), x[j], taylorOpsCache[1]#= ,elapsed =#)
-            Liqss_reComputeNextTime(Val(O), j, simt, nextStateTime, x, q, quantum,a)
+            Liqss_reComputeNextTime(Val(O), j, simt, nextStateTime, x, q, quantum)
        end#end for SD
-       updateLinearApprox(index,x,q,a,qaux,olddx)#
+      # updateLinearApprox(index,x,q,a,qaux,olddx)#
        ##################################input########################################
      elseif sch[3] == :ST_INPUT  # time of change has come to a state var that does not depend on anything...no one will give you a chance to change but yourself    
       @show 55
@@ -127,3 +137,23 @@ end#end while
  createSol(Val(T),Val(O),savedTimes,savedVars, "liqss$O",string(odep.prname),absQ,totalSteps,simulStepCount,numSteps,ft)
 end#end integrate
  
+
+#= function exacteA(q, cache, i, j)
+  if i == 0
+    return nothing
+  elseif i == 1 && j == 1
+    cache[1] = -20.0
+    return nothing
+  elseif i == 2 && j == 2
+    cache[1] = -0.01
+    return nothing
+  elseif i == 1 && j == 2
+    cache[1] = -80.0
+    return nothing
+  elseif i == 2 && j == 1
+    cache[1] = 1.24
+    return nothing
+  end
+end =#
+
+

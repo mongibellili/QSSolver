@@ -1,10 +1,10 @@
-using formalqss
-using BSON
-using BenchmarkTools
-using XLSX
+using qss
+#using BSON
+#using BenchmarkTools
+#using XLSX
 
 function test()
- BSON.@load "formalqss/ref_bson/solVectAdvection_N10d1_Feagin14e-12.bson" solFeagin14VectorN10d1
+ #BSON.@load "formalqss/ref_bson/solVectAdvection_N10d1_Feagin14e-12.bson" solFeagin14VectorN10d1
   prob=@NLodeProblem begin
     name=(adrN10d01,)
     u[1:3]=1.0

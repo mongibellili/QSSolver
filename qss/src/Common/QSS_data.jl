@@ -44,7 +44,7 @@ end
 end =#
 
 struct SpecialLiQSS_data<:SpecialLiqssQSS_data
-    cacheA::MVector{1,Int}
+    cacheA::MVector{1,Float64}
     direction::Vector{Float64}
     qminus::Vector{Float64}
     buddySimul::MVector{2,Int}

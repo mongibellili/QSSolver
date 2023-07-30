@@ -80,6 +80,9 @@ symDict=Dict{Symbol,Expr}()
 changeVarNames_params(ex,symDict)
 #@show symDict
 test(symarg,ex,symDict)
+for i in jac[1]
+  @show i
+end
 
 #= 
 symarg=:(i-1)

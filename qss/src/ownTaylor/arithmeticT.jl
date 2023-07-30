@@ -351,6 +351,11 @@ function clearCache(cache::Vector{Taylor0},::Val{CS},::Val{2}) where {CS}
 
   end
 end
+function clearCache(cache::Vector{Taylor0},::Val{CS},::Val{1}) where {CS}
+  for i=1:CS
+    cache[i][1]=0.0
+  end
+end
 #= function clearCache(cache::Vector{Taylor0}) #where {T<:Number}
   for i=1:length(cache)
     cache[i].coeffs.=0.0
