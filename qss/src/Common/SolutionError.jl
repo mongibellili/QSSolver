@@ -85,7 +85,11 @@ function getAverageErrorByRefs(solRef::Vector{Any},solmliqss::Sol{T,O})where{T,O
           sumDiffSqr+=(Ns-ts)*(Ns-ts)
           sumTrueSqr+=ts*ts
       end
+      if sumDiffSqr!=0.0 && sumTrueSqr!=0.0
       relerror=sqrt(sumDiffSqr/sumTrueSqr)
+      else
+        relerror=0.0
+      end
       
       allErrors+= relerror
   end

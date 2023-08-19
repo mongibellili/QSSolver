@@ -32,17 +32,19 @@ function test53()
      x1(t)=c1*u1*exp(λ1*t)+c2*u2*exp(λ2*t)+xp1
      x2(t)=c1*exp(λ1*t)+c2*exp(λ2*t)+xp2
   
-
+     timenmliqss=0.0
 
      absTol=1e-6
      relTol=1e-3
-
+     ft=10.0
    #  solqss2=QSS_Solve(odeprob,qss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0)
   #   solliqss2=QSS_Solve(odeprob,liqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0)
    # solmliqss2=QSS_Solve(odeprob,mliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0)
    #  solnliqss2=QSS_Solve(odeprob,nliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0)
-   solnmliqss2=QSS_Solve(odeprob,nmliqss1(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0)
-@show solnmliqss2.totalSteps,solnmliqss2.simulStepCount
+  solnmliqss2=QSS_Solve(odeprob,nmliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=ft)
+  #save_Sol(solnmliqss2)
+ # save_SimulSol(solnmliqss2,"ft$ft",1,2;xlims=(0.0,10.0),ylims=(-0.5,50.0))
+#@show solnmliqss2.totalSteps,solnmliqss2.simulStepCount
 #= display(solnliqss2(2,1.0))
 display(solnliqss2(2,10.0))
 display(solnliqss2(2,20.0))
@@ -75,12 +77,12 @@ display(solnliqss2(2,30.0)) =#
      resnliqss= ("$(solnliqss2.algName)",(er1+er2)/2,solnliqss2.totalSteps,solnliqss2.simulStepCount,timenliqss)
      @show resnliqss =#
 
-   #=   solnmliqss2Interp=solInterpolated(solnmliqss2,0.01)
+     solnmliqss2Interp=solInterpolated(solnmliqss2,0.01)
      er1=getError(solnmliqss2Interp,1,x1)  
      er2=getError(solnmliqss2Interp,2,x2) 
-     timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0)
+    # timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss1(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0)
      resnmliqss= ("$(solnmliqss2.algName)",(er1+er2)/2,solnmliqss2.totalSteps,solnmliqss2.simulStepCount,timenmliqss)
-     @show resnmliqss =#
+     @show resnmliqss
 
   #=    XLSX.openxlsx("sys53 all solvers_$(relTol)_$(absTol).xlsx", mode="w") do xf
         sheet = xf[1]

@@ -37,6 +37,9 @@ struct LightSol{T,O}<:Sol{T,O}
   hvs::Vector{Array{Float64}} =#
   numSteps ::Vector{Int}
   ft::Float64
+ #=  simulStepsVals :: Vector{Vector{Float64}}
+  simulStepsDers :: Vector{Vector{Float64}}
+  simulStepsTimes :: Vector{Vector{Float64}} =#
 end
 
 
@@ -45,9 +48,9 @@ end
   sol=HeavySol(Val(T),Val(O),savedTimes, savedVars,solver,nameof_F,absQ,totalSteps,simulStepCount,numSteps,ft)
 end =#
 
-@inline function createSol(::Val{T},::Val{O}, savedTimes:: Vector{Vector{Float64}},savedVars :: Vector{Vector{Float64}},solver::String,nameof_F::String,absQ::Float64,totalSteps::Int,simulStepCount::Int,numSteps ::Vector{Int},ft::Float64)where {T,O}
+@inline function createSol(::Val{T},::Val{O}, savedTimes:: Vector{Vector{Float64}},savedVars :: Vector{Vector{Float64}},solver::String,nameof_F::String,absQ::Float64,totalSteps::Int,simulStepCount::Int,numSteps ::Vector{Int},ft::Float64#= ,simulStepsVals :: Vector{Vector{Float64}},  simulStepsDers :: Vector{Vector{Float64}}  ,simulStepsTimes :: Vector{Vector{Float64}} =#)where {T,O}
  # println("light")
-  sol=LightSol(Val(T),Val(O),savedTimes, savedVars,solver,nameof_F,absQ,totalSteps,simulStepCount,numSteps,ft)
+  sol=LightSol(Val(T),Val(O),savedTimes, savedVars,solver,nameof_F,absQ,totalSteps,simulStepCount,numSteps,ft#= ,simulStepsVals,simulStepsDers,simulStepsTimes =#)
 end
 
 
@@ -156,7 +159,7 @@ function solInterpolated(sol::Sol{T,O},step::Float64)where {T,O}
           allInterpTimes[index]=interpTimes
   end
   #(interpTimes,interpValues)
-  createSol(Val(T),Val(O),allInterpTimes, interpValues,sol.algName,sol.sysName,sol.absQ,sol.totalSteps,sol.simulStepCount,sol.numSteps,sol.ft)
+  createSol(Val(T),Val(O),allInterpTimes, interpValues,sol.algName,sol.sysName,sol.absQ,sol.totalSteps,sol.simulStepCount,sol.numSteps,sol.ft#= ,sol.simulStepsVals,sol.simulStepsDers,sol.simulStepsVals =#)
 end
 
 function evaluateSimpleSol(sol::Sol,index::Int,t::Float64)

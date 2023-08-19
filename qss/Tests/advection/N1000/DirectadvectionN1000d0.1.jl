@@ -40,13 +40,19 @@ end
     resnliqss_1= ("nliqss",err3,solnliqss2.totalSteps,solnliqss2.simulStepCount,ttnliqss)
     @show resnliqss_1 =#
     
-    solnmliqss2=QSS_Solve(prob,nmliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=10.0)#
-    solnmliqss2Interp=solInterpolated(solnmliqss2,0.01)
-    err4=getAverageErrorByRefs(solFeagin14VectorN1000d01,solnmliqss2Interp)
-   # ttnmliqss=@belapsed QSS_Solve($prob,nmliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=10.0)
-    resnmliqss_1= ("nmliqss",err4,solnmliqss2.totalSteps,solnmliqss2.simulStepCount,ttnmliqss)
-    @show resnmliqss_1
-
+    solnmliqss2=QSS_Solve(prob,nmliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=1.0)#
+                                                                              solnmliqss2Interp=solInterpolated(solnmliqss2,0.01)
+                                                                              err4=getAverageErrorByRefs(solFeagin14VectorN1000d01,solnmliqss2Interp)
+                                                                            # ttnmliqss=@belapsed QSS_Solve($prob,nmliqss1(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=10.0)
+                                                                              resnmliqss_1= ("nmliqss",err4,solnmliqss2.totalSteps,solnmliqss2.simulStepCount,ttnmliqss)
+                                                                              @show resnmliqss_1
+                                    #=     solnmliqss2=QSS_Solve(prob,nmliqss1(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=10.0)#
+                                        solnmliqss2Interp=solInterpolated(solnmliqss2,0.01)
+                                        err4=getAverageErrorByRefs(solFeagin14VectorN1000d01,solnmliqss2Interp)
+                                      # ttnmliqss=@belapsed QSS_Solve($prob,nmliqss1(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=10.0)
+                                        resnmliqss_1= ("nmliqss",err4,solnmliqss2.totalSteps,solnmliqss2.simulStepCount,ttnmliqss)
+                                        @show resnmliqss_1
+ =#
    #=  solqss2=QSS_Solve(prob,qss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=10.0)#
     solqss2Interp=solInterpolated(solqss2,0.01)
     err4=getAverageErrorByRefs(solFeagin14VectorN1000d01,solqss2Interp)

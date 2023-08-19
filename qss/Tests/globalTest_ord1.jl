@@ -22,74 +22,74 @@ function test53(case)
      
      absTol=1e-5
      relTol=1e-2   
-    #=  solnmliqss=QSS_Solve(odeprob,nmliqss1(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0,maxErr=10*relTol)
+     solnmliqss=QSS_Solve(odeprob,nmliqss1(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0,maxErr=100*relTol)
      solnmliqssInterp=solInterpolated(solnmliqss,0.01)
      er1=getError(solnmliqssInterp,1,x1)  
      er2=getError(solnmliqssInterp,2,x2) 
-     timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss1(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0,maxErr=10*$relTol)
+     #timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss1(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0,maxErr=100*$relTol)
      resnmliqss1E_2= ("$(solnmliqss.algName)",relTol,(er1+er2)/2,solnmliqss.totalSteps,solnmliqss.simulStepCount,timenmliqss)
-     @show resnmliqss1E_2 =#
+     @show resnmliqss1E_2
 
-     solnmliqss=QSS_Solve(odeprob,nmliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0,maxErr=10*relTol)
+    #=  solnmliqss=QSS_Solve(odeprob,nmliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0,maxErr=100*relTol)
      solnmliqssInterp=solInterpolated(solnmliqss,0.01)
      er1=getError(solnmliqssInterp,1,x1)  
      er2=getError(solnmliqssInterp,2,x2) 
-     timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0,maxErr=10*$relTol)
+     timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0,maxErr=100*$relTol)
      resnmliqss2E_2= ("$(solnmliqss.algName)",relTol,(er1+er2)/2,solnmliqss.totalSteps,solnmliqss.simulStepCount,timenmliqss)
-     @show resnmliqss2E_2
+     @show resnmliqss2E_2 =#
 
    
      absTol=1e-6
      relTol=1e-3   
-  #=    solnmliqss=QSS_Solve(odeprob,nmliqss1(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0,maxErr=10*relTol)
+     solnmliqss=QSS_Solve(odeprob,nmliqss1(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0,maxErr=100*relTol)
      solnmliqssInterp=solInterpolated(solnmliqss,0.01)
      er1=getError(solnmliqssInterp,1,x1)  
      er2=getError(solnmliqssInterp,2,x2) 
-     timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss1(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0,maxErr=10*$relTol)
+     #timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss1(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0,maxErr=100*$relTol)
      resnmliqss1E_3= ("$(solnmliqss.algName)",relTol,(er1+er2)/2,solnmliqss.totalSteps,solnmliqss.simulStepCount,timenmliqss)
-     @show resnmliqss1E_3 =#
+     @show resnmliqss1E_3
 
-     solnmliqss=QSS_Solve(odeprob,nmliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0,maxErr=10*relTol)
+    #=  solnmliqss=QSS_Solve(odeprob,nmliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0,maxErr=100*relTol)
      solnmliqssInterp=solInterpolated(solnmliqss,0.01)
      er1=getError(solnmliqssInterp,1,x1)  
      er2=getError(solnmliqssInterp,2,x2) 
-     timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0,maxErr=10*$relTol)
+     timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0,maxErr=100*$relTol)
      resnmliqss2E_3= ("$(solnmliqss.algName)",relTol,(er1+er2)/2,solnmliqss.totalSteps,solnmliqss.simulStepCount,timenmliqss)
-     @show resnmliqss2E_3
+     @show resnmliqss2E_3 =#
 
      absTol=1e-7
      relTol=1e-4   
-    #=  solnmliqss=QSS_Solve(odeprob,nmliqss1(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0,maxErr=10*relTol)
+     solnmliqss=QSS_Solve(odeprob,nmliqss1(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0,maxErr=100*relTol)
      solnmliqssInterp=solInterpolated(solnmliqss,0.01)
      er1=getError(solnmliqssInterp,1,x1)  
      er2=getError(solnmliqssInterp,2,x2) 
-     timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss1(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0,maxErr=10*$relTol)
+     #timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss1(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0,maxErr=100*$relTol)
      resnmliqss1E_4= ("$(solnmliqss.algName)",relTol,(er1+er2)/2,solnmliqss.totalSteps,solnmliqss.simulStepCount,timenmliqss)
-     @show resnmliqss1E_4 =#
+     @show resnmliqss1E_4
 
-     solnmliqss=QSS_Solve(odeprob,nmliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0,maxErr=10*relTol)
+     #= solnmliqss=QSS_Solve(odeprob,nmliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0,maxErr=100*relTol)
      solnmliqssInterp=solInterpolated(solnmliqss,0.01)
      er1=getError(solnmliqssInterp,1,x1)  
      er2=getError(solnmliqssInterp,2,x2) 
-     timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0,maxErr=10*$relTol)
+     timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0,maxErr=100*$relTol)
      resnmliqss2E_4= ("$(solnmliqss.algName)",relTol,(er1+er2)/2,solnmliqss.totalSteps,solnmliqss.simulStepCount,timenmliqss)
-     @show resnmliqss2E_4
+     @show resnmliqss2E_4 =#
 
-     XLSX.openxlsx("sys53 2 solvers_$case.xlsx", mode="w") do xf
+     XLSX.openxlsx("sys53 _$case.xlsx", mode="w") do xf
         sheet = xf[1]
-        sheet["A1"] = "sys53 2 solvers__$case)"
+        sheet["A1"] = "sys53 __$case)"
         sheet["A4"] = collect(("solver","Tolerance","error","totalSteps","simul_steps","time"))
-       #=  sheet["A5"] = collect(resnmliqss1E_2)
+        sheet["A5"] = collect(resnmliqss1E_2)
         sheet["A6"] = collect(resnmliqss1E_3)
-        sheet["A7"] = collect(resnmliqss1E_4) =#
+        sheet["A7"] = collect(resnmliqss1E_4)
 
-        sheet["A8"] = collect(resnmliqss2E_2)
+       #=  sheet["A8"] = collect(resnmliqss2E_2)
         sheet["A9"] = collect(resnmliqss2E_3)
-        sheet["A10"] = collect(resnmliqss2E_4)
+        sheet["A10"] = collect(resnmliqss2E_4) =#
      end
 end
 function tyson(case)
-    BSON.@load "qss/ref_bson/solVectAdvection_Tyson_Rodas5Pe-12.bson" solRodas5PVectorTyson
+    BSON.@load "qss/ref_bson/solVect_Tyson_Rodas5Pe-12.bson" solRodas5PVectorTyson
        odeprob = @NLodeProblem begin
            name=(tyson,)
            u = [0.0,0.75,0.25,0.0,0.0,0.0]
@@ -108,69 +108,69 @@ function tyson(case)
        absTol=1e-5
        relTol=1e-2
      
-     #=  solnmliqss=QSS_Solve(odeprob,nmliqss1(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0,maxErr=10*relTol)
+      solnmliqss=QSS_Solve(odeprob,nmliqss1(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0,maxErr=100*relTol)
       solnmliqssInterp=solInterpolated(solnmliqss,0.01)
       err3=getAverageErrorByRefs(solRodas5PVectorTyson,solnmliqssInterp)
-      timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss1(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0,maxErr=10*$relTol)
+      #timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss1(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0,maxErr=100*$relTol)
       resnmliqss1E_2= ("$(solnmliqss.algName)",relTol,err3,solnmliqss.totalSteps,solnmliqss.simulStepCount,timenmliqss)
-      @show resnmliqss1E_2 =#
+      @show resnmliqss1E_2
 
-      solnmliqss=QSS_Solve(odeprob,nmliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0,maxErr=10*relTol)
+     #=  solnmliqss=QSS_Solve(odeprob,nmliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0,maxErr=100*relTol)
       solnmliqssInterp=solInterpolated(solnmliqss,0.01)
       err3=getAverageErrorByRefs(solRodas5PVectorTyson,solnmliqssInterp)
-      timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0,maxErr=10*$relTol)
+      timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0,maxErr=100*$relTol)
       resnmliqss2E_2= ("$(solnmliqss.algName)",relTol,err3,solnmliqss.totalSteps,solnmliqss.simulStepCount,timenmliqss)
-      @show resnmliqss2E_2
+      @show resnmliqss2E_2 =#
   
      
       absTol=1e-6
        relTol=1e-3
      
-     #=  solnmliqss=QSS_Solve(odeprob,nmliqss1(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0,maxErr=10*relTol)
+      solnmliqss=QSS_Solve(odeprob,nmliqss1(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0,maxErr=100*relTol)
       solnmliqssInterp=solInterpolated(solnmliqss,0.01)
       err3=getAverageErrorByRefs(solRodas5PVectorTyson,solnmliqssInterp)
-      timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss1(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0,maxErr=10*$relTol)
+      #timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss1(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0,maxErr=100*$relTol)
       resnmliqss1E_3= ("$(solnmliqss.algName)",relTol,err3,solnmliqss.totalSteps,solnmliqss.simulStepCount,timenmliqss)
-      @show resnmliqss1E_3 =#
+      @show resnmliqss1E_3
 
-      solnmliqss=QSS_Solve(odeprob,nmliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0,maxErr=10*relTol)
+     #=  solnmliqss=QSS_Solve(odeprob,nmliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0,maxErr=100*relTol)
       solnmliqssInterp=solInterpolated(solnmliqss,0.01)
       err3=getAverageErrorByRefs(solRodas5PVectorTyson,solnmliqssInterp)
-      timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0,maxErr=10*$relTol)
+      timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0,maxErr=100*$relTol)
       resnmliqss2E_3= ("$(solnmliqss.algName)",relTol,err3,solnmliqss.totalSteps,solnmliqss.simulStepCount,timenmliqss)
-      @show resnmliqss2E_3
+      @show resnmliqss2E_3 =#
   
   
       absTol=1e-7
       relTol=1e-4
     
-   #=   solnmliqss=QSS_Solve(odeprob,nmliqss1(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0,maxErr=10*relTol)
+     solnmliqss=QSS_Solve(odeprob,nmliqss1(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0,maxErr=100*relTol)
      solnmliqssInterp=solInterpolated(solnmliqss,0.01)
      err3=getAverageErrorByRefs(solRodas5PVectorTyson,solnmliqssInterp)
-     timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss1(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0,maxErr=10*$relTol)
+     #timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss1(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0,maxErr=100*$relTol)
      resnmliqss1E_4= ("$(solnmliqss.algName)",relTol,err3,solnmliqss.totalSteps,solnmliqss.simulStepCount,timenmliqss)
-     @show resnmliqss1E_4 =#
+     @show resnmliqss1E_4
 
-     solnmliqss=QSS_Solve(odeprob,nmliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0,maxErr=10*relTol)
+    #=  solnmliqss=QSS_Solve(odeprob,nmliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=100.0,maxErr=100*relTol)
      solnmliqssInterp=solInterpolated(solnmliqss,0.01)
      err3=getAverageErrorByRefs(solRodas5PVectorTyson,solnmliqssInterp)
-     timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0,maxErr=10*$relTol)
+     timenmliqss=@belapsed QSS_Solve($odeprob,nmliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=100.0,maxErr=100*$relTol)
      resnmliqss2E_4= ("$(solnmliqss.algName)",relTol,err3,solnmliqss.totalSteps,solnmliqss.simulStepCount,timenmliqss)
-     @show resnmliqss2E_4
+     @show resnmliqss2E_4 =#
 
 
   
-      XLSX.openxlsx("Tyson 2 solvers_$case.xlsx", mode="w") do xf
+      XLSX.openxlsx("Tyson _$case.xlsx", mode="w") do xf
         sheet = xf[1]
-        sheet["A1"] = "Tyson 2 solvers__$case"
+        sheet["A1"] = "Tyson __$case"
         sheet["A4"] = collect(("solver","Tolerance","error","totalSteps","simul_steps","time"))
-      #=   sheet["A5"] = collect(resnmliqss1E_2)
+        sheet["A5"] = collect(resnmliqss1E_2)
         sheet["A6"] = collect(resnmliqss1E_3)
         sheet["A7"] = collect(resnmliqss1E_4)
- =#
-        sheet["A8"] = collect(resnmliqss2E_2)
+
+        #= sheet["A8"] = collect(resnmliqss2E_2)
         sheet["A9"] = collect(resnmliqss2E_3)
-        sheet["A10"] = collect(resnmliqss2E_4)
+        sheet["A10"] = collect(resnmliqss2E_4) =#
      end
     
 end
@@ -196,60 +196,60 @@ function adr(case)
 
     absTol=1e-5
     relTol=1e-2
-   #=  solnmliqss=QSS_Solve(prob,nmliqss1(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=10.0)#
+    solnmliqss=QSS_Solve(prob,nmliqss1(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=10.0)#
     solnmliqssInterp=solInterpolated(solnmliqss,0.01)
     err4=getAverageErrorByRefs(solFeagin14VectorN1000d01,solnmliqssInterp)
     #ttnmliqss=@belapsed QSS_Solve($prob,nmliqss1(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=10.0)
     resnmliqss1E_2= ("$(solnmliqss.algName)",relTol,err4,solnmliqss.totalSteps,solnmliqss.simulStepCount,ttnmliqss)
-    @show resnmliqss1E_2 =#
-    solnmliqss=QSS_Solve(prob,nmliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=10.0)#
+    @show resnmliqss1E_2
+    #= solnmliqss=QSS_Solve(prob,nmliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=10.0)#
     solnmliqssInterp=solInterpolated(solnmliqss,0.01)
     err4=getAverageErrorByRefs(solFeagin14VectorN1000d01,solnmliqssInterp)
    ttnmliqss=@belapsed QSS_Solve($prob,nmliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=10.0)
     resnmliqss2E_2= ("$(solnmliqss.algName)",relTol,err4,solnmliqss.totalSteps,solnmliqss.simulStepCount,ttnmliqss)
-    @show resnmliqss2E_2
+    @show resnmliqss2E_2 =#
    
     absTol=1e-6
     relTol=1e-3
-   #=  solnmliqss=QSS_Solve(prob,nmliqss1(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=10.0)#
+    solnmliqss=QSS_Solve(prob,nmliqss1(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=10.0)#
     solnmliqssInterp=solInterpolated(solnmliqss,0.01)
     err4=getAverageErrorByRefs(solFeagin14VectorN1000d01,solnmliqssInterp)
     #ttnmliqss=@belapsed QSS_Solve($prob,nmliqss1(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=10.0)
     resnmliqss1E_3= ("$(solnmliqss.algName)",relTol,err4,solnmliqss.totalSteps,solnmliqss.simulStepCount,ttnmliqss)
-    @show resnmliqss1E_3 =#
-    solnmliqss=QSS_Solve(prob,nmliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=10.0)#
+    @show resnmliqss1E_3
+   #=  solnmliqss=QSS_Solve(prob,nmliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=10.0)#
     solnmliqssInterp=solInterpolated(solnmliqss,0.01)
     err4=getAverageErrorByRefs(solFeagin14VectorN1000d01,solnmliqssInterp)
     ttnmliqss=@belapsed QSS_Solve($prob,nmliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=10.0)
     resnmliqss2E_3= ("$(solnmliqss.algName)",relTol,err4,solnmliqss.totalSteps,solnmliqss.simulStepCount,ttnmliqss)
-    @show resnmliqss2E_3
+    @show resnmliqss2E_3 =#
 
     absTol=1e-7
     relTol=1e-4
-    #= solnmliqss=QSS_Solve(prob,nmliqss1(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=10.0)#
+    solnmliqss=QSS_Solve(prob,nmliqss1(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=10.0)#
     solnmliqssInterp=solInterpolated(solnmliqss,0.01)
     err4=getAverageErrorByRefs(solFeagin14VectorN1000d01,solnmliqssInterp)
     #ttnmliqss=@belapsed QSS_Solve($prob,nmliqss1(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=10.0)
     resnmliqss1E_4= ("$(solnmliqss.algName)",relTol,err4,solnmliqss.totalSteps,solnmliqss.simulStepCount,ttnmliqss)
-    @show resnmliqss1E_4 =#
-    solnmliqss=QSS_Solve(prob,nmliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=10.0)#
+    @show resnmliqss1E_4
+    #= solnmliqss=QSS_Solve(prob,nmliqss2(),dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=10.0)#
     solnmliqssInterp=solInterpolated(solnmliqss,0.01)
     err4=getAverageErrorByRefs(solFeagin14VectorN1000d01,solnmliqssInterp)
    ttnmliqss=@belapsed QSS_Solve($prob,nmliqss2(),dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=10.0)
     resnmliqss2E_4= ("$(solnmliqss.algName)",relTol,err4,solnmliqss.totalSteps,solnmliqss.simulStepCount,ttnmliqss)
-    @show resnmliqss2E_4
+    @show resnmliqss2E_4 =#
   
-    XLSX.openxlsx("ADR N1000d01_$case.xlsx", mode="w") do xf
+    XLSX.openxlsx("ADR N1000d01__$case.xlsx", mode="w") do xf
       sheet = xf[1]
-      sheet["A1"] = "ADR_N1000d01 $case"
+      sheet["A1"] = "ADR_N1000d01_ $case"
       sheet["A4"] = collect(("solver","Tolerance","error","totalSteps","simul_steps","time"))
-     #=  sheet["A5"] = collect(resnmliqss1E_2)
+      sheet["A5"] = collect(resnmliqss1E_2)
       sheet["A6"] = collect(resnmliqss1E_3)
-      sheet["A7"] = collect(resnmliqss1E_4) =#
+      sheet["A7"] = collect(resnmliqss1E_4)
 
-      sheet["A8"] = collect(resnmliqss2E_2)
+      #= sheet["A8"] = collect(resnmliqss2E_2)
       sheet["A9"] = collect(resnmliqss2E_3)
-      sheet["A10"] = collect(resnmliqss2E_4)
+      sheet["A10"] = collect(resnmliqss2E_4) =#
     end
  
   
@@ -257,7 +257,7 @@ function adr(case)
    
 end
 
-case="both_exacteA_iters1.5Delta&IF_order2"
+case="order1_exacteA_analytic_only1Delta"
 test53(case)
 tyson(case)
 adr(case)

@@ -1,3 +1,5 @@
+
+using StaticArrays
 @inline function smallest(args::NTuple{N,F}) where {N, F <: AbstractFloat}
 	@inbounds m = args[1]
 	for i in 2:N
@@ -178,3 +180,11 @@ a=1.021243315770821e8
 @show smallestpositiverootintervalnewtonregulafalsi((a, b, c, 1e-6))  =#
 #@show smallestpositiverootintervalnewtonregulafalsi((1e-6, c, b, a),pp)
 #@show smallestpositiverootintervalnewtonregulafalsi((0.0, -0.2906652780025, -8938.3815305787700, -5.144241008311048e7),pp)
+
+#= coeffs=NTuple{3,Float64}((29160.956861496, 67.56376290717117, 0.014452560693316113))
+#coeffs2=NTuple{3,Float64}((201011.0777843986, 106.4755863000737, 0.014452560693316113))
+coeffs2=NTuple{4,Float64}((1.021243315770821e8, -3914.116824448214, -0.040323840000000166,1e-6))
+pp=pointer(Vector{NTuple{2,Float64}}(undef, 11))
+res1 = pointer(Vector{Float64}(undef, 3))
+res2 = pointer(Vector{Float64}(undef, 3))
+@show smallestpositiverootintervalnewtonregulafalsi(coeffs2) =#

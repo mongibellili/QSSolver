@@ -21,16 +21,15 @@ function nmLiQSS_integrate(CommonqssData::CommonQSS_data{O,0},liqssdata::LiQSS_d
   qaux=liqssdata.qaux;dxaux=liqssdata.dxaux#= olddx=liqssdata.olddx; ; olddxSpec=liqssdata.olddxSpec =#
 
   numSteps = Vector{Int}(undef, T)
-  pp=pointer(Vector{NTuple{2,Float64}}(undef, 7))
-                                    
-  respp = pointer(Vector{Float64}(undef, 2))
-  temporaryhelper = Vector{Int}(undef, 1)
-  temporaryhelper[1]=0
-  cacherealPosi=Vector{Vector{Float64}}(undef,3);cacherealPosj=Vector{Vector{Float64}}(undef,3);
-for i =1:3
-  cacherealPosi[i]=zeros(2)
-  cacherealPosj[i]=zeros(2)
-end
+  simulStepsVals = Vector{Vector{Float64}}(undef, T)
+  simulStepsDers = Vector{Vector{Float64}}(undef, T)
+  simulStepsTimes = Vector{Vector{Float64}}(undef, T)
+  simulHTimes=Vector{Float64}()
+    simulHVals=Vector{Float64}()
+    simulqxiVals=Vector{Float64}()
+    simulqxjVals=Vector{Float64}()
+    simuldeltaiVals=Vector{Float64}()
+    simuldeltajVals=Vector{Float64}()
   exacteA(q,cacheA,1,1)  # this 'unnecessary call' 'compiles' the function and it helps remove allocations when used after !!!
 
   #@show exacteA
@@ -51,6 +50,9 @@ end
  
    for i = 1:T
     numSteps[i]=0
+    simulStepsTimes[i]=Vector{Float64}()
+    simulStepsVals[i]=Vector{Float64}()
+    simulStepsDers[i]=Vector{Float64}()
     #= @timeit "savevars" =# push!(savedVars[i],x[i][0])
      push!(savedTimes[i],0.0)
      quantum[i] = relQ * abs(x[i].coeffs[1]) ;quantum[i]=quantum[i] < absQ ? absQ : quantum[i];quantum[i]=quantum[i] > maxErr ? maxErr : quantum[i] 
@@ -73,27 +75,32 @@ end
   simt = initTime ;simulStepCount=0;totalSteps=0;
  
   #simul=false
-
+breakcounter=3
 
   while simt < ft && totalSteps < 300000000
     sch = updateScheduler(Val(T),nextStateTime,nextEventTime, nextInputTime)
     simt = sch[2];index = sch[1]
-    if simt>ft
+    if simt>=ft# this is needed so that interpolated solution be defined...can rewrite 'interpolated' and remove this check. also in updateQ: divide by 1-ha 
       #simt=ft
+      break
+    end
+    if breakcounter<0
       break
     end
     numSteps[index]+=1;totalSteps+=1
     t[0]=simt
     ##########################################state########################################
     if sch[3] == :ST_STATE
+      xitemp=x[index][0]
         elapsed = simt - tx[index];integrateState(Val(O),x[index],elapsed);tx[index] = simt 
         quantum[index] = relQ * abs(x[index].coeffs[1]) ;quantum[index]=quantum[index] < absQ ? absQ : quantum[index];quantum[index]=quantum[index] > maxErr ? maxErr : quantum[index] 
-        dirI=x[index][0]-savedVars[index][end]  
+       # dirI=x[index][0]-savedVars[index][end]  
+        dirI=x[index][0]-xitemp
         for b in (jac(index)  )    # update Qb : to be used to calculate exacte Aindexb
           elapsedq = simt - tq[b] ;
           if elapsedq>0 integrateState(Val(O-1),q[b],elapsedq);tq[b]=simt end
         end
-        updateQ(Val(O),index,x,q,quantum,exacteA,cacheA,dxaux,qaux,tx,tq,simt,ft,nextStateTime) ;tq[index] = simt   
+        firstguessH=updateQ(Val(O),index,x,q,quantum,exacteA,cacheA,dxaux,qaux,tx,tq,simt,ft,nextStateTime) ;tq[index] = simt   
         #----------------------------------------------------check dependecy cycles---------------------------------------------                
         for j in SD(index)
           for b in (jac(j)  )    # update Qb: to be used to calculate exacte Ajb
@@ -102,18 +109,23 @@ end
           end
           exacteA(q,cacheA,index,j);aij=cacheA[1]
           exacteA(q,cacheA,j,index);aji=cacheA[1]
+          exacteA(q,cacheA,index,index);aii=cacheA[1]
+          exacteA(q,cacheA,j,j);ajj=cacheA[1]
          #=  exacteA(x,cacheA,index,j);aij=cacheA[1]
           exacteA(x,cacheA,j,index);aji=cacheA[1] =#
         
         
-          if j!=index && aij*aji!=0.0
-              prvStepValj= savedVars[j][end]#getPrevStepVal(prevStepVal,j) 
-              for i =1:3
-                cacherealPosi[i][1]=0.0; cacherealPosi[i][2]=0.0
-                cacherealPosj[i][1]=0.0; cacherealPosj[i][2]=0.0
-              end 
-              if nmisCycle_and_simulUpdate(cacherealPosi,cacherealPosj,respp,pp,temporaryhelper,Val(O),index,j,dirI,prvStepValj,x,q,quantum,exacteA,cacheA,dxaux,qaux,tx,tq,simt,ft)
+          if j!=index && aij*aji!=0.0 #= && 1.2*abs(aij*aji)>abs(aii*ajj) =#
+              #prvStepValj= #getPrevStepVal(prevStepVal,j)  
+              if nmisCycle_and_simulUpdate(simuldeltaiVals,simuldeltajVals, simulqxiVals,simulqxjVals,  simulHTimes,simulHVals,Val(O),index,j,dirI,firstguessH,x,q,quantum,exacteA,cacheA,dxaux,qaux,tx,tq,simt,ft)
                 simulStepCount+=1
+                push!(simulStepsTimes[index],simt)
+                push!(simulStepsVals[index],x[index][0])
+                push!(simulStepsDers[index],x[index][1])
+                push!(simulStepsTimes[j],simt)
+                push!(simulStepsVals[j],x[j][0])
+                push!(simulStepsDers[j],x[j][1])
+               # breakcounter-=1
                 clearCache(taylorOpsCache,Val(CS),Val(O));f(index,q,t,taylorOpsCache);computeDerivative(Val(O), x[index], taylorOpsCache[1])
               #  clearCache(taylorOpsCache,Val(CS),Val(O));f(j,q,t,taylorOpsCache);computeDerivative(Val(O), x[j], taylorOpsCache[1])
                 Liqss_reComputeNextTime(Val(O), index, simt, nextStateTime, x, q, quantum)
@@ -198,10 +210,30 @@ end
     push!(savedVars[index],x[index][0])
     push!(savedTimes[index],simt)
   end#end while
+ #=  p1=plot(simulHTimes,simulHVals,marker=(:circle),markersize=2,ylims=(0.0,0.2))
+  savefig(p1, "_tyson___H01bothanaly_v0205.png") =#
+ #=  p1i=plot()
+  p1i=plot!(p1i,simulHTimes,simulqxiVals,marker=(:circle),markersize=2,ylims=(0.0,0.01),label="|x-q|")
+  p1i=plot!(p1i,simulHTimes,simuldeltaiVals,marker=(:star),markersize=2,linestyle=:dash,ylims=(0.0,0.01),label="delta")
+  savefig(p1i, "_tyson___qxiitertotalv0201.png")
+  p1j=plot()
+  p1j=plot!(p1j,simulHTimes,simulqxjVals,marker=(:circle),markersize=2,ylims=(0.0,0.01),label="|x-q|")
+  p1j=plot!(p1j,simulHTimes,simuldeltajVals,marker=(:star),markersize=2,linestyle=:dash,ylims=(0.0,0.01),label="delta")
+  savefig(p1j, "_tyson___qxjitertotalv0201.png") =#
 
-#@show temporaryhelper
+ #=  p1i=plot()
+  p1i=plot!(p1i,simulHTimes,simulqxiVals,marker=(:circle),markersize=2,ylims=(0.0,2*1e-5),label="|x-q|")
+  p1i=plot!(p1i,simulHTimes,simuldeltaiVals,marker=(:star),markersize=2,linestyle=:dash,ylims=(0.0,2*1e-5),label="delta")
+  savefig(p1i, "_tyson___qxiibothanaly_v021e_6.png")
+  p1j=plot()
+  p1j=plot!(p1j,simulHTimes,simulqxjVals,marker=(:circle),markersize=2,ylims=(0.0,2*1e-5),label="|x-q|")
+  p1j=plot!(p1j,simulHTimes,simuldeltajVals,marker=(:star),markersize=2,linestyle=:dash,ylims=(0.0,2*1e-5),label="delta")
+  savefig(p1j, "_tyson___qxjibothanaly_v021e_6.png") =#
+ #=  readline()
+  println("press keyboard") =#
+
  #= @timeit "createSol" =# 
- createSol(Val(T),Val(O),savedTimes,savedVars, "nmliqss$O",string(odep.prname),absQ,totalSteps,simulStepCount,numSteps,ft)
+ createSol(Val(T),Val(O),savedTimes,savedVars, "nmliqss$O",string(odep.prname),absQ,totalSteps,simulStepCount,numSteps,ft,simulStepsVals,simulStepsDers,simulStepsTimes)
      # change this to function /constrcutor...remember it is bad to access structs (objects) directly
   
 end

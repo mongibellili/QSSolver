@@ -1,5 +1,5 @@
 
- function updateScheduler(::Val{T},nextStateTime::Vector{Float64},nextEventTime :: MVector{Z,Float64},nextInputTime :: Vector{Float64} )where{T,Z}   #later MVect for nextInput
+ function updateScheduler(::Val{T},nextStateTime::Vector{Float64},nextEventTime :: MVector{Z,Float64},nextInputTime :: Vector{Float64})where{T,Z}   #later MVect for nextInput
     minStateTime=Inf
     minState_index=0  # what if all nextstateTime= Inf ...especially at begining????? min_index stays 0!!!
     minEventTime=Inf
@@ -39,10 +39,10 @@
         end
     end
     if returnedVar[1]==0
-        println("scheduler *******nextEventTime= ",nextEventTime)
+       #=  println("scheduler *******nextEventTime= ",nextEventTime)
         println("scheduler *******nextInputTime= ",nextInputTime)
-        println("scheduler *******nextstateTime= ",nextStateTime)
-        println("also the whole system may be static! developer: fill last point(at ft) or remaing points with interpolated values and exit!")
+        println("scheduler *******nextstateTime= ",nextStateTime) =#
+      #  println("also the whole system may be static! developer: fill last point(at ft) or remaing points with interpolated values and exit!")
         #example:
         #= u = [1.0, 0.0]
         discrete = [0.0]

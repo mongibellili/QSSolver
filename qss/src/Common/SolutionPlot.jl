@@ -71,6 +71,29 @@ function save_Sol(sol::Sol{T,O},note::String,xvars::Int...;xlims::Tuple{Float64,
   savefig(p1, "plot_$(sol.sysName)_$(sol.algName)_$(sol.absQ)_$(note)_$(timestamp).png")
 end
 
+function save_SimulSol(sol::Sol{T,O},note::String,xvars::Int...;xlims::Tuple{Float64, Float64},ylims::Tuple{Float64, Float64}) where{T,O}
+  p1=plot()
+  mydate=now()
+  timestamp=(string(year(mydate),"_",month(mydate),"_",day(mydate),"_",hour(mydate),"_",minute(mydate),"_",second(mydate)))
+  if xvars[1]!=-1
+    for k in xvars
+      p1=plot!(p1,sol.savedTimes[k], sol.savedVars[k],marker=(:circle),markersize=2,label="x$k $(sol.numSteps[k])")
+      p1=plot!(p1,sol.simulStepsTimes[k], sol.simulStepsVals[k],marker=(:circle),markersize=4,label="x$k ")
+    end
+  else
+    for k=1:T
+      p1=plot!(p1,sol.savedTimes[k], sol.savedVars[k],marker=(:circle),markersize=2,label="x$k $(sol.numSteps[k])")
+      p1=plot!(p1,sol.simulStepsTimes[k], sol.simulStepsVals[k],marker=(:circle),markersize=4,label="x$k ")
+    end
+  end
+  if xlims!=(0.0,0.0) 
+    p1=plot!(p1,title="$(sol.sysName)_$(sol.algName)_$(sol.absQ)_$(sol.totalSteps)_$(sol.simulStepCount) \n $note", xlims=xlims ,ylims=ylims)
+  else
+    p1=plot!(p1, title="$(sol.sysName)_$(sol.algName)_$(sol.absQ)_$(sol.totalSteps)_$(sol.simulStepCount) \n $note")
+  end
+  savefig(p1, "plot_$(sol.sysName)_$(sol.algName)_$(sol.absQ)_$(note)_$(timestamp).png")
+end
+
 
 function save_Sol(sol::Sol{T,O},note::String;xlims::Tuple{Float64, Float64},ylims::Tuple{Float64, Float64}) where{T,O}
   save_Sol(sol,note,-1;xlims=xlims,ylims=ylims)

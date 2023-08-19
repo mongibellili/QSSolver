@@ -5,6 +5,17 @@ function updateQ(::Val{1},i::Int, xv::Vector{Taylor0},qv::Vector{Taylor0}, quant
     
      a=cacheA[1]
  
+
+  #=    if i==1
+        if abs(a+1.1)>1e-3
+            @show i,a
+        end
+    else
+        if abs(a+20.0)>1e-3
+            @show i,a
+        end
+    end =#
+
      q=qv[i][0];x=xv[i][0];x1=xv[i][1];
      qaux[i][1]=q
     #=  olddx[i][1]=x1 =#
@@ -13,6 +24,7 @@ function updateQ(::Val{1},i::Int, xv::Vector{Taylor0},qv::Vector{Taylor0}, quant
      dx=x1
      dxaux[i][1]=x1
      h=0.0
+     Δ=quantum[i]
      if a !=0.0
          if dx==0.0
              dx=u+(q)*a
@@ -20,29 +32,74 @@ function updateQ(::Val{1},i::Int, xv::Vector{Taylor0},qv::Vector{Taylor0}, quant
                  dx=1e-26
              end
          end
-     #for order1 finding h is easy but for higher orders iterations are cheaper than finding exact h using a quadratic,cubic...
-     #exacte for order1: h=-2Δ/(u+xa-2aΔ) or h=2Δ/(u+xa+2aΔ)
-         h = ft-simt
-         q = (x + h * u) /(1 - h * a)
-        #=  if (abs(q - x) >  2*quantum[i]) # removing this did nothing...check @btime later
-           h = (abs( quantum[i] / dx));
-           q= (x + h * u) /(1 - h * a)
-         end =#
-        #=  while (abs(q - x) >  2*quantum[i]) 
-           h = h * 1.98*(quantum[i] / abs(q - x));
-           q= (x + h * u) /(1 - h * a)
-         end =#
-         coefQ=1
-         if (abs(q - x) >  coefQ*quantum[i])
-            h=coefQ*quantum[i]/(a*(x+coefQ*quantum[i])+u)
-            
-            if h<0
-                h=-coefQ*quantum[i]/(a*(x-coefQ*quantum[i])+u)
-                q=x-coefQ*quantum[i]
+         α=-(a*x+u)/a
+         h1denom=a*(x+Δ)+u;h2denom=a*(x-Δ)+u
+         if h1denom==0.0 h1denom=1e-26 end
+         if h2denom==0.0 h2denom=1e-26 end
+         h1=Δ/h1denom
+         h2=-Δ/h2denom
+         if a<0
+            if α>Δ
+                h=h1;q=x+Δ
+            elseif α<-Δ
+                h=h2;q=x-Δ
             else
-                q=x+coefQ*quantum[i]
+               #=  h=Inf
+                if a*x+u>0
+                    q=x+α
+                else
+                    q=x+α
+                end =#
+                
+                
+                   #=  h=-1/a
+                    q=(x+h*u)/(1-h*a) =#
+                
+
+                h=max(ft-simt,-1/a)
+                q=(x+h*u)/(1-h*a)#1-h*a non neg because h > -1/a > 1/a
             end
-         end
+        else #a>0
+            if α>Δ
+                h=h2;q=x-Δ
+            elseif α<-Δ
+                h=h1;q=x+Δ
+            else
+               #=  h=Inf
+                if a*x+u>0
+                    q=x+α
+                else
+                    q=x+α
+                end =#
+                
+                #= if a*x+u>0
+                    h=h2;q=x-Δ
+                else
+                    h=h1;q=x+Δ
+                end =#
+               #=  h=1/a+ft-simt # i have if simt>=ft break in intgrator
+                q=(x+h*u)/(1-h*a) =#
+               #=  if abs(α)<Δ/2
+                    h=2/a
+                    q=x+2α
+                else
+                    h=3/a
+                    q=(x+h*u)/(1-h*a)
+                end =#
+                if a*x+u>0
+                    h=max(ft-simt,-(a*x+u+a*Δ)/(a*(a*x+u-a*Δ)))# midpoint between asymptote and delta
+                else
+                    h=max(ft-simt,-(a*x+u-a*Δ)/(a*(a*x+u+a*Δ)))
+                end
+                q=(x+h*u)/(1-h*a)#1-h*a non neg because values of h from graph show that h >1/a
+
+            end
+        end
+           
+           
+      
+        
+    
 
      else
          dx=u
@@ -60,22 +117,27 @@ function updateQ(::Val{1},i::Int, xv::Vector{Taylor0},qv::Vector{Taylor0}, quant
      qv[i][0]=q
     # println("inside single updateQ: q & qaux[$i][1]= ",q," ; ",qaux[i][1])
     nextTime[i]=simt+h
-     return nothing
- end
-#= function updateQ(::Val{1},i::Int, xv::Vector{Taylor0},qv::Vector{Taylor0}, quantum::Vector{Float64}#= ,av::Vector{Vector{Float64}} =#,exacteA::Function,cacheA::MVector{1,Float64},dxaux::Vector{MVector{1,Float64}},qaux::Vector{MVector{1,Float64}},olddx::Vector{MVector{1,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64, nextTime::Vector{Float64})
+     return h
+end   
+
+
+
+
+
+#=  function updateQ(::Val{1},i::Int, xv::Vector{Taylor0},qv::Vector{Taylor0}, quantum::Vector{Float64}#= ,av::Vector{Vector{Float64}} =#,exacteA::Function,cacheA::MVector{1,Float64},dxaux::Vector{MVector{1,Float64}},qaux::Vector{MVector{1,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64, nextTime::Vector{Float64})
     
    # a=av[i][i]
     exacteA(qv,cacheA,i,i)
    
     a=cacheA[1]
-quan=quantum[i]
+   quan=quantum[i]
     q=qv[i][0];x=xv[i][0];x1=xv[i][1];
     qaux[i][1]=q
-    olddx[i][1]=x1
+   # olddx[i][1]=x1
     u=x1-a*q
     #uv[i][i][1]=u
     dx=x1
-    #dxaux[i][1]=x1
+    dxaux[i][1]=x1
     h=0.0
     if a !=0.0
         if dx==0.0
@@ -88,12 +150,12 @@ quan=quantum[i]
     #exacte for order1: h=-2Δ/(u+xa-2aΔ) or h=2Δ/(u+xa+2aΔ)
         h = ft-simt
         q = (x + h * u) /(1 - h * a)
-        if (abs(q - x) >  2*quan) # removing this did nothing...check @btime later
+        if (abs(q - x) >  1*quan) # removing this did nothing...check @btime later
           h = (abs( quan / dx));
           q= (x + h * u) /(1 - h * a)
         end
-        while (abs(q - x) >  2*quan) 
-          h = h * 1.98*(quan / abs(q - x));
+        while (abs(q - x) >  1*quan) 
+          h = h * 0.99*(quan / abs(q - x));
           q= (x + h * u) /(1 - h * a)
         end
  
@@ -113,10 +175,11 @@ quan=quantum[i]
     qv[i][0]=q
    # println("inside single updateQ: q & qaux[$i][1]= ",q," ; ",qaux[i][1])
    nextTime[i]=simt+h
-    return nothing
-end =#
+    return h
+end  =# 
 function updateQ(::Val{2},i::Int, xv::Vector{Taylor0},qv::Vector{Taylor0}, quantum::Vector{Float64},exacteA::Function,cacheA::MVector{1,Float64},dxaux::Vector{MVector{2,Float64}},qaux::Vector{MVector{2,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64, nextTime::Vector{Float64})
     exacteA(qv,cacheA,i,i);a=cacheA[1]
+   # exacteA(xv,cacheA,i,i);a=cacheA[1]
     q=qv[i][0] ;q1=qv[i][1]; x=xv[i][0];  x1=xv[i][1]; x2=xv[i][2]*2; #u1=uv[i][i][1]; u2=uv[i][i][2]
     qaux[i][1]=q+(simt-tq[i])*q1#appears only here...updated here and used in updateApprox and in updateQevent later
     qaux[i][2]=q1                     #appears only here...updated here and used in updateQevent
@@ -140,26 +203,29 @@ function updateQ(::Val{2},i::Int, xv::Vector{Taylor0},qv::Vector{Taylor0}, quant
         h = ft-simt; q=(x-h*a*x-h*h*(a*u1+u2)/2)/(1 - h * a + h * h * a * a / 2)
                
         
-        if (abs(q - x) > 1.5* quan) # removing this did nothing...check @btime later
+        if (abs(q - x) > 2.0* quan) # removing this did nothing...check @btime later
           h = sqrt(abs(2*quan / ddx)) # sqrt highly recommended...removing it leads to many sim steps..//2* is necessary in 2*quan when using ddx
           #= q = ((x + h * u1 + h * h / 2 * u2) * (1 - h * a) + (h * h / 2 * a - h) * (u1 + h * u2)) /
                    (1 - h * a + h * h * a * a / 2) =#
                    q=(x-h*a*x-h*h*(a*u1+u2)/2)/(1 - h * a + h * h * a * a / 2)
                  
         end
-        maxIter=1000
+        maxIter=10000
        # tempH=h
-        while (abs(q - x) >1.5*  quan) && (maxIter>0) && (h>0)
+        while (abs(q - x) >2.0*  quan) && (maxIter>0) && (h>0)
             
           h = h *sqrt(quan / abs(q - x))
+        #  h = h *0.98*(quan / abs(q - x))
           #= q = ((x + h * u1 + h * h / 2 * u2) * (1 - h * a) + (h * h / 2 * a - h) * (u1 + h * u2)) /
                    (1 - h * a + h * h * a * a / 2) =#
                    q=(x-h*a*x-h*h*(a*u1+u2)/2)/(1 - h * a + h * h * a * a / 2)
                   
           maxIter-=1
         end
-     
-       #=  if  (abs(q - x) > 2* quan)
+        if maxIter==0
+            println("maxIterReached")
+        end
+      #=   if  (abs(q - x) > 2* quan)
             coef=@SVector [quan, -a*quan,(a*a*(x+quan)+a*u1+u2)/2]#
                 h1= minPosRoot(coef, Val(2))
               coef=@SVector [-quan, a*quan,(a*a*(x-quan)+a*u1+u2)/2]#
@@ -183,14 +249,68 @@ function updateQ(::Val{2},i::Int, xv::Vector{Taylor0},qv::Vector{Taylor0}, quant
               end
 
 
-          end 
- =#
-        q1=(a*q+u1+h*u2)/(1-h*a)  #later investigate 1=h*a
+          end  =#
+         #= 
+                                                                                        if  (abs(q - x) > 2* quan)
+
+                                                                                        # if x2<0.0  #x2 might changed direction...I should use ddx but again ddx=aq+u and q in unknown the sign is unknown
+                                                                                              #=   pertQuan=quan-1e-13  #
+                                                                                                q=x+pertQuan      # guess q to be thrown up         
+                                                                                                coef=@SVector [pertQuan, -a*pertQuan,(a*a*(x+pertQuan)+a*u1+u2)/2]#
+                                                                                                h= minPosRoot(coef, Val(2))
+                                                                                               pertQuan=quan+1e-13         
+                                                                                                coef=@SVector [pertQuan, -a*pertQuan,(a*a*(x+pertQuan)+a*u1+u2)/2]#
+                                                                                                h2= minPosRoot(coef, Val(2))
+                                                                                                if h2<h
+                                                                                                    q=x+pertQuan 
+                                                                                                    h=h2
+                                                                                                end
+                                                                                                ########### q to be thrown down
+                                                                                             pertQuan=quan-1e-13
+                                                                                                coef=@SVector [-pertQuan, a*pertQuan,(a*a*(x-pertQuan)+a*u1+u2)/2]#
+                                                                                                h2= minPosRoot(coef, Val(2))
+                                                                                                if h2<h
+                                                                                                    q=x-pertQuan 
+                                                                                                    h=h2
+                                                                                                end
+                                                                                                pertQuan=quan+1e-13
+                                                                                                coef=@SVector [-pertQuan, a*pertQuan,(a*a*(x-pertQuan)+a*u1+u2)/2]#
+                                                                                                h2= minPosRoot(coef, Val(2))
+                                                                                                if h2<h
+                                                                                                    q=x-pertQuan 
+                                                                                                    h=h2
+                                                                                                end =#
+                                                                                             pertQuan=quan
+                                                                                                coef=@SVector [-pertQuan, a*pertQuan,(a*a*(x-pertQuan)+a*u1+u2)/2]#
+                                                                                                h= minPosRoot(coef, Val(2))
+                                                                                                q=x-pertQuan
+                                                                                               #=  if h2<h
+                                                                                                    q=x-pertQuan 
+                                                                                                    h=h2
+                                                                                                end =#
+                                                                                                coef=@SVector [pertQuan, -a*pertQuan,(a*a*(x+pertQuan)+a*u1+u2)/2]#
+                                                                                                h2= minPosRoot(coef, Val(2))
+                                                                                                if h2<h
+                                                                                                    q=x+pertQuan 
+                                                                                                    h=h2
+                                                                                                end
+                                                                                        # end 
+                                                                                        end =#
+                                                                                
+             
+
+         
+
+         α1=1-h*a
+        if abs(α1)==0.0
+            α1=1e-30*sign(α1)
+        end
+        q1=(a*q+u1+h*u2)/α1  #later investigate 1=h*a
 
 
     else
-        if x2!=0.0
-          
+        println("a==0")
+        if x2!=0.0  
            h=sqrt(abs(2*quan/x2))   #sqrt necessary with u2
            q=x-h*h*x2/2
            q1=x1+h*x2
@@ -553,7 +673,8 @@ function Liqss_reComputeNextTime(::Val{1}, i::Int, currentTime::Float64, nextTim
                 nextTime[i]=currentTime+(q-x-2*quantum[i])/xv[i][1]
             end
         else#q=x equilibruim point reached or other var met its q
-            nextTime[i]=currentTime+1e-19#Inf# 
+            nextTime[i]=currentTime+Inf# 
+           # nextTime[i]=currentTime+1e-19#Inf# 
            # println("dt==0")
         end
     else
@@ -565,9 +686,39 @@ end
 
 
 function Liqss_reComputeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTime::Vector{Float64}, xv::Vector{Taylor0},qv::Vector{Taylor0}, quantum::Vector{Float64}#= ,a::Vector{Vector{Float64}} =#)
-    q=qv[i][0];x=xv[i][0];q1=qv[i][1];x1=xv[i][1];x2=xv[i][2]
-    coef=@SVector [q-x, q1-x1,-x2]#
-        nextTime[i]=currentTime + minPosRoot(coef, Val(2))
+    q=qv[i][0];x=xv[i][0];q1=qv[i][1];x1=xv[i][1];x2=xv[i][2];quani=quantum[i]
+    β=0
+    coef=@SVector [q-x#= -1e-13 =#, q1-x1,-x2]#
+
+           #=  nextTime[i]=currentTime + minPosRoot(coef, Val(2))
+            #= coef=setindex(coef, q-x-1e-13,1)
+            timetemp = currentTime + minPosRoot(coef, Val(2))
+            if timetemp < nextTime[i] 
+                nextTime[i]=timetemp
+            end =#
+            coef=setindex(coef, q-x+1e-13,1)
+            timetemp = currentTime + minPosRoot(coef, Val(2))
+            if timetemp < nextTime[i] 
+                nextTime[i]=timetemp
+            end
+            coef=setindex(coef, q-x,1) =#
+            timetemp = currentTime + minPosRoot(coef, Val(2))
+            if timetemp < nextTime[i] 
+                nextTime[i]=timetemp
+            end
+          #=   h=sqrt(abs((q-x)/x2))#2delta/2 x2
+            α=q-x+(q1-x1)*h-x2*h*h
+            maxIter=500
+            while abs(α)>1e-13 && maxIter>0
+                maxIter-=1
+                h=h*0.96*1e-13/abs(α)
+                α=q-x+(q1-x1)*h-x2*h*h
+            end
+            if maxIter>0
+                nextTime[i]=currentTime+h
+            else
+                nextTime[i]=Inf
+            end =#
         if q-x >0.0#1e-9
             coef=setindex(coef, q-x-2*quantum[i],1)
             timetemp = currentTime + minPosRoot(coef, Val(2))
@@ -575,6 +726,48 @@ function Liqss_reComputeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTim
                 nextTime[i]=timetemp
             end
         elseif  q-x <0.0#-1e-9
+            coef=setindex(coef, q-x+2*quantum[i],1)
+            timetemp = currentTime + minPosRoot(coef, Val(2))
+            if timetemp < nextTime[i] 
+                nextTime[i]=timetemp
+            end
+        else
+          #  nextTime[i]=currentTime+Inf#1e-19
+            #nextTime[i]=currentTime+1e-19
+          #=  if q-x==0.0
+            nextTime[i]=currentTime+Inf#1e-19 #
+           else
+            nextTime[i]=currentTime+1e-12#Inf#1e-19 #
+           end =#
+        end
+end
+ 
+
+#=  function Liqss_reComputeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTime::Vector{Float64}, xv::Vector{Taylor0},qv::Vector{Taylor0}, quantum::Vector{Float64}#= ,a::Vector{Vector{Float64}} =#)
+    q=qv[i][0];x=xv[i][0];q1=qv[i][1];x1=xv[i][1];x2=xv[i][2];quani=quantum[i]
+    β=0
+    coef=@SVector [q-x, q1-x1,-x2]#
+    nextTime[i]=currentTime + minPosRoot(coef, Val(2))
+        
+        
+        if q-x >0.0#1e-9
+           
+            coef=setindex(coef, q-x-1e-13,1)
+            timetemp = currentTime + minPosRoot(coef, Val(2))
+            if timetemp < nextTime[i] 
+                nextTime[i]=timetemp
+            end
+            coef=setindex(coef, q-x-2*quantum[i],1)
+            timetemp = currentTime + minPosRoot(coef, Val(2))
+            if timetemp < nextTime[i] 
+                nextTime[i]=timetemp
+            end
+        elseif  q-x <0.0#-1e-9
+            coef=setindex(coef, q-x+1e-13,1)
+            timetemp = currentTime + minPosRoot(coef, Val(2))
+            if timetemp < nextTime[i] 
+                nextTime[i]=timetemp
+            end
             coef=setindex(coef, q-x+2*quantum[i],1)
             timetemp = currentTime + minPosRoot(coef, Val(2))
             if timetemp < nextTime[i] 
@@ -589,9 +782,7 @@ function Liqss_reComputeNextTime(::Val{2}, i::Int, currentTime::Float64, nextTim
             nextTime[i]=currentTime+1e-12#Inf#1e-19 #
            end =#
         end
-end
-
-
+end =#
 
 
 function Liqss_reComputeNextTime(::Val{3}, i::Int, currentTime::Float64, nextTime::Vector{Float64}, xv::Vector{Taylor0},qv::Vector{Taylor0}, quantum::Vector{Float64}#= ,a::Vector{Vector{Float64}} =#)
@@ -663,3 +854,101 @@ function updateOtherApprox(k::Int,j::Int,x::Vector{Taylor0},q::Vector{Taylor0},a
     end
     return nothing
   end
+
+
+
+  #= function updateQ(::Val{1},i::Int, xv::Vector{Taylor0},qv::Vector{Taylor0}, quantum::Vector{Float64}#= ,av::Vector{Vector{Float64}} =#,exacteA::Function,cacheA::MVector{1,Float64},dxaux::Vector{MVector{1,Float64}},qaux::Vector{MVector{1,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64, nextTime::Vector{Float64})
+    
+    # a=av[i][i]
+     exacteA(qv,cacheA,i,i)
+    
+     a=cacheA[1]
+ 
+
+  #=    if i==1
+        if abs(a+1.1)>1e-3
+            @show i,a
+        end
+    else
+        if abs(a+20.0)>1e-3
+            @show i,a
+        end
+    end =#
+
+     q=qv[i][0];x=xv[i][0];x1=xv[i][1];
+     qaux[i][1]=q
+    #=  olddx[i][1]=x1 =#
+     u=x1-a*q
+     #uv[i][i][1]=u
+     dx=x1
+     dxaux[i][1]=x1
+     h=0.0
+     if a !=0.0
+         if dx==0.0
+             dx=u+(q)*a
+             if dx==0.0
+                 dx=1e-26
+             end
+         end
+     #for order1 finding h is easy but for higher orders iterations are cheaper than finding exact h using a quadratic,cubic...
+     #exacte for order1: h=-2Δ/(u+xa-2aΔ) or h=2Δ/(u+xa+2aΔ)
+        #=  h = (ft+100.0-simt)
+         q = (x + h * u) /(1 - h * a)
+         if (abs(q - x) >  quantum[i]) =#
+            h1=-1.0
+            h0 = (ft-simt)
+            q0 = (x + h0 * u) /(1 - h0 * a)
+            if (abs(q - x) <  quantum[i])
+                h1=h0
+            end
+        # end
+        #=  if (abs(q - x) >  2*quantum[i]) # removing this did nothing...check @btime later
+           h = (abs( quantum[i] / dx));
+           q= (x + h * u) /(1 - h * a)
+         end =#
+        #=  while (abs(q - x) >  2*quantum[i]) 
+           h = h * 1.98*(quantum[i] / abs(q - x));
+           q= (x + h * u) /(1 - h * a)
+         end =#
+         coefQ=1
+         #if (abs(q - x) >  coefQ*quantum[i])
+            h2=coefQ*quantum[i]/(a*(x+coefQ*quantum[i])+u)
+            
+            if h2<0
+                h2=-coefQ*quantum[i]/(a*(x-coefQ*quantum[i])+u)
+                q=x-coefQ*quantum[i]
+            else
+                q=x+coefQ*quantum[i]
+            end
+           
+         #end
+        if h2<0
+            h=Inf
+        end
+        h=max(h1,h2)
+       #=   if h==ft+100.0-simt
+            @show i,simt,x,x1,q,a*q+u
+            
+         end =#
+
+     else
+         dx=u
+         if dx>0.0
+             q=x+quantum[i]# 
+         else
+             q=x-quantum[i]
+         end
+         if dx!=0
+         h=(abs(quantum[i]/dx))
+         else
+             h=Inf
+         end
+     end
+     qv[i][0]=q
+    # println("inside single updateQ: q & qaux[$i][1]= ",q," ; ",qaux[i][1])
+    nextTime[i]=simt+h
+     return nothing
+end  
+=#
+ 
+    
