@@ -1,25 +1,13 @@
 
-      
 
-function nmisCycle_and_simulUpdate(::Val{2},index::Int,j::Int,dirI::Float64,firstguessH::Float64, x::Vector{Taylor0},q::Vector{Taylor0}, quantum::Vector{Float64},exacteA::Function,cacheA::MVector{1,Float64},dxaux::Vector{MVector{2,Float64}},qaux::Vector{MVector{2,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64)
+function nmisCycle_and_simulUpdate(cacherealPosi,cacherealPosj,aij,aji,respp::Ptr{Float64}, pp::Ptr{NTuple{2,Float64}},trackSimul,::Val{2},index::Int,j::Int,dirI::Float64,firstguessH::Float64, x::Vector{Taylor0},q::Vector{Taylor0}, quantum::Vector{Float64},exacteA::Function,cacheA::MVector{1,Float64},dxaux::Vector{MVector{2,Float64}},qaux::Vector{MVector{2,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64)
   
 
    exacteA(q,cacheA,index,index)
    aii=cacheA[1]
    exacteA(q,cacheA,j,j)
    ajj=cacheA[1]
-   exacteA(q,cacheA,index,j)
-   aij=cacheA[1]
-   exacteA(q,cacheA,j,index)
-   aji=cacheA[1]
- #=   exacteA(x,cacheA,index,index)
-   aii=cacheA[1]
-   exacteA(x,cacheA,j,j)
-   ajj=cacheA[1]
-   exacteA(x,cacheA,index,j)
-   aij=cacheA[1]
-   exacteA(x,cacheA,j,index)
-   aji=cacheA[1] =#
+
 
    uii=dxaux[index][1]-aii*qaux[index][1]
 
@@ -72,26 +60,110 @@ function nmisCycle_and_simulUpdate(::Val{2},index::Int,j::Int,dirI::Float64,firs
       @show α1
     end
     dqjplus=(aji*(qi+h*qi1)+ajj*qjplus+uji+h*uji2)/α1
-    if (abs(dxj-xj1)>(abs(dxj+xj1)/2) || abs(ddxj-xj2)>(abs(ddxj+xj2)/2))  || dqjplus*newDiff<0.0 #= || (dqjplus==0.0 && newDiff!=0.0)  =##(dqjplus*qj1)<=0.0 with dir is better since when dir =0 we do not enter
-      #β=dxi+sqrt(abs(ddxi)*quani/2)
+    uij=uii-aij*qaux[j][1]
+    # uij=u[index][j][1]
+     uij2=ui2-aij*qj1#########qaux[j][2] updated in normal Qupdate..ft=20 slightly shifts up
+       #β=dxi+sqrt(abs(ddxi)*quani/2)
       #h2=sqrt(2*quani/abs(ddxi))
-      uij=uii-aij*qaux[j][1]
-     # uij=u[index][j][1]
-      uij2=ui2-aij*qj1#########qaux[j][2] updated in normal Qupdate..ft=20 slightly shifts up
+    
       #uij2=u[index][j][2]
+      dxithrow=aii*qi+aij*qj+uij
+      ddxithrow=aii*qi1+aij*qj1+uij2
       dxi=aii*qi+aij*qjplus+uij
       ddxi=aii*qi1+aij*dqjplus+uij2
       if abs(ddxi)==0.0
         ddxi=1e-30
         @show ddxi
       end
-      βidir=dxi+sqrt(2*quani/abs(ddxi))*ddxi/2
+      hi=sqrt(2*quani/abs(ddxi))
+      βidir=dxi+hi*ddxi/2
+      βjdir=dxj+h*ddxj/2
+      βidth=dxithrow+hi*ddxithrow/2
+      βj=xj1+h*xj2/2
+########condition:Union 
+  #=   if (abs(dxj-xj1)>(abs(dxj+xj1)/2) || abs(ddxj-xj2)>(abs(ddxj+xj2)/2))  || dqjplus*newDiff<0.0 #(dqjplus*qj1)<=0.0 with dir is better since when dir =0 we do not enter
+    
       if (abs(dxi-xi1)>(abs(dxi+xi1)/2) || abs(ddxi-xi2)>(abs(ddxi+xi2)/2)) || βidir*dirI<0.0
         iscycle=true
+      end
+    end =#
+ ########condition:Union i
+  #=   if (abs(dxj-xj1)>(abs(dxj+xj1)/2) || abs(ddxj-xj2)>(abs(ddxj+xj2)/2))  || dqjplus*newDiff<0.0 #(dqjplus*qj1)<=0.0 with dir is better since when dir =0 we do not enter
+    
+      if (abs(dxi-dxithrow)>(abs(dxi+dxithrow)/2) || abs(ddxi-ddxithrow)>(abs(ddxi+ddxithrow)/2)) || βidir*dirI<0.0
+        iscycle=true
+      end
+    end =#
+ ########condition:combineDer Union i
+ if abs(βjdir-βj)>(abs(βjdir+βj)/2)  || dqjplus*newDiff<0.0 
+    
+  if abs(βidir-βidth)>(abs(βidir+βidth)/2)  || βidir*dirI<0.0
+    iscycle=true
+  end
+end
+
+########condition:kinda signif alone i
+  #=   if (abs(dxj-xj1)>(abs(dxj+xj1)/2) || abs(ddxj-xj2)>(abs(ddxj+xj2)/2)) # || dqjplus*newDiff<0.0 
+    
+      if (abs(dxi-dxithrow)>(abs(dxi+dxithrow)/2) || abs(ddxi-ddxithrow)>(abs(ddxi+ddxithrow)/2)) #|| βidir*dirI<0.0
+        iscycle=true
+      end
+    end =#
+
+     ########condition:cond1 
+  #=    if  dqjplus*newDiff<0.0 #= || (dqjplus==0.0 && newDiff!=0.0)  =##(dqjplus*qj1)<=0.0 with dir is better since when dir =0 we do not enter
+    
+      if βidir*dirI<0.0
+        iscycle=true
+      end
+    end
+
+    if  dqjplus*newDiff<0.0 #= || (dqjplus==0.0 && newDiff!=0.0)  =##(dqjplus*qj1)<=0.0 with dir is better since when dir =0 we do not enter
+    
+      if (abs(dxi-xi1)>(abs(dxi+xi1)/2) || abs(ddxi-xi2)>(abs(ddxi+xi2)/2)) 
+        iscycle=true
+      end
+    end
+
+    if (abs(dxj-xj1)>(abs(dxj+xj1)/2) || abs(ddxj-xj2)>(abs(ddxj+xj2)/2))   #= || (dqjplus==0.0 && newDiff!=0.0)  =##(dqjplus*qj1)<=0.0 with dir is better since when dir =0 we do not enter
+    
+      if  βidir*dirI<0.0
+        iscycle=true
+      end
+    end =#
+ 
+
+
+     ########condition:cond1 i
+ #=     if  dqjplus*newDiff<0.0 #= || (dqjplus==0.0 && newDiff!=0.0)  =##(dqjplus*qj1)<=0.0 with dir is better since when dir =0 we do not enter
+    
+      if βidir*dirI<0.0
+        iscycle=true
+      end
+    end
+
+    if  dqjplus*newDiff<0.0 #= || (dqjplus==0.0 && newDiff!=0.0)  =##(dqjplus*qj1)<=0.0 with dir is better since when dir =0 we do not enter
+    
+      if (abs(dxi-dxithrow)>(abs(dxi+dxithrow)/2) || abs(ddxi-ddxithrow)>(abs(ddxi+ddxithrow)/2)) 
+        iscycle=true
+      end
+    end
+
+    if (abs(dxj-xj1)>(abs(dxj+xj1)/2) || abs(ddxj-xj2)>(abs(ddxj+xj2)/2))   #= || (dqjplus==0.0 && newDiff!=0.0)  =##(dqjplus*qj1)<=0.0 with dir is better since when dir =0 we do not enter
+    
+      if  βidir*dirI<0.0
+        iscycle=true
+      end
+    end =#
+
+   #=  if index==1 && j==4 && 0.1<simt<1.1
+      iscycle=true
+    end =#
+     if iscycle
         h = ft-simt
       
         qi,qj,Δ1=simulQ(aii,aij,aji,ajj,h,xi,xjaux,uij,uij2,uji,uji2)
-        if (abs(qi - xi) > 2*quani || abs(qj - xjaux) > 2*quanj) 
+        if (abs(qi - xi) > 2.0*quani || abs(qj - xjaux) > 2.0*quanj) 
           h1 = sqrt(abs(2*quani/xi2));h2 = sqrt(abs(2*quanj/xj2));   #later add derderX =1e-12 when x2==0
          # h1 = sqrt(abs(2*quani/ddxi));h2 = sqrt(abs(2*quanj/ddxj)); 
         #=  if xi2==0.0
@@ -106,13 +178,13 @@ function nmisCycle_and_simulUpdate(::Val{2},index::Int,j::Int,dirI::Float64,firs
           h=min(h1,h2)
           qi,qj,Δ1=simulQ(aii,aij,aji,ajj,h,xi,xjaux,uij,uij2,uji,uji2)
         end
-        maxIter=6000
-        while (abs(qi - xi) > 2*quani || abs(qj - xjaux) > 2*quanj) && (maxIter>0)
+        maxIter=10000
+        while (abs(qi - xi) > 2.0*quani || abs(qj - xjaux) > 2.0*quanj) && (maxIter>0)
           maxIter-=1
           h1 = h * sqrt(quani / abs(qi - xi));
           h2 = h * sqrt(quanj / abs(qj - xjaux));
-          #=  h1 = h * (0.98*quani / abs(qi - xi));
-          h2 = h * (0.98*quanj / abs(qj - xjaux)); =#
+         #=   h1 = h * (0.99*1.8*quani / abs(qi - xi));
+          h2 = h * (0.99*1.8*quanj / abs(qj - xjaux)); =#
           h=min(h1,h2)
           qi,qj,Δ1=simulQ(aii,aij,aji,ajj,h,xi,xjaux,uij,uij2,uji,uji2)
         end
@@ -120,27 +192,27 @@ function nmisCycle_and_simulUpdate(::Val{2},index::Int,j::Int,dirI::Float64,firs
           println("simulstep failed maxiter")
           return false
         end
-       #=  if  h<1e-30  #ie simul step failed
+        if  h<1e-30  #ie simul step failed
           println("simulstep failed small h=",h)
           @show simt,maxIter
           return false
-        end =#
+        end
         q[index][0]=qi# store back helper vars
         q[j][0]=qj     
         q1parti=aii*qi+aij*qj+uij+h*uij2
         q1partj=aji*qi+ajj*qj+uji+h*uji2
         if abs(q1parti)==0.0
           q1parti=1e-30*sign(q1parti)
-          @show q1parti
+          @show q1parti,simt
         end
         if abs(q1partj)==0.0
           q1partj=1e-30
-          @show q1partj
+          @show q1partj,simt
         end
         q[index][1]=((1-h*ajj)/Δ1)*q1parti+(h*aij/Δ1)*q1partj# store back helper vars
         q[j][1]=(h*aji/Δ1)*q1parti+((1-h*aii)/Δ1)*q1partj
-      end #end second dependecy check
-    end # end outer dependency check
+      end #end if iscycle
+   
   return iscycle
 end
 

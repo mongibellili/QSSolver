@@ -12,6 +12,10 @@ function QSS_integrate(CommonqssData::CommonQSS_data{O,0}, odep::NLODEProblem{PR
     #********************************helper values*******************************  
  # qaux=CommonqssData.qaux;olddx=CommonqssData.olddx;olddxSpec = zeros(MVector{T,MVector{O,Float64}}) # later can only care about 1st der
  numSteps = Vector{Int}(undef, T)
+ savedVarsQ = Vector{Vector{Float64}}(undef, T)  
+ for i=1:T
+  savedVarsQ[i]=Vector{Float64}()     
+end
   #######################################compute initial values##################################################
 n=1
 for k = 1:O # compute initial derivatives for x and q (similar to a recursive way )
@@ -26,6 +30,7 @@ end
 
 for i = 1:T
   numSteps[i]=0
+  push!(savedVarsQ[i],q[i][0])
   push!(savedVars[i],x[i][0])
      push!(savedTimes[i],0.0)
   quantum[i] = relQ * abs(x[i].coeffs[1]) ;quantum[i]=quantum[i] < absQ ? absQ : quantum[i];quantum[i]=quantum[i] > maxErr ? maxErr : quantum[i] 
@@ -121,8 +126,21 @@ simt = initTime ;totalSteps=0;prevStepTime=initTime
     end
   end
   prevStepTime=simt =#
-    #= @timeit "savevars2" =# push!(savedVars[index],x[index][0])
-    #= @timeit "push" =#  push!(savedTimes[index],simt)
+   #=   push!(savedVars[index],x[index][0])
+    push!(savedTimes[index],simt)
+    push!(savedVarsQ[index],q[index][0]) =#
+
+
+
+    for i=1:T
+      push!(savedVars[i],x[i][0])
+      push!(savedTimes[i],simt)
+      push!(savedVarsQ[i],q[i][0])
+    end
+
+
+
+
 end#end while
 
 #= for i=1:T# throw away empty points
@@ -130,6 +148,6 @@ end#end while
 end
 resize!(savedTimes,saveVarsHelper[1]) =#
 
-createSol(Val(T),Val(O),savedTimes,savedVars, "qss$O",string(odep.prname),absQ,totalSteps,0,numSteps,ft)
+createSol(Val(T),Val(O),savedTimes,savedVars,savedVarsQ, "qss$O",string(odep.prname),absQ,totalSteps,0,numSteps,ft)
 end#end integrate
 

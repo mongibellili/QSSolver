@@ -65,8 +65,13 @@ function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{0},::Val{0}, initConditi
     #@show equs
     exacteJacfunction=createexacteJacFun(exacteJacExpr,fname)
     
+   #=  open("./temp.jl", "a") do io    
+        println(io,string(exacteJacfunction)) 
+
+    end =#
+
     exacteJacfunctionF=@RuntimeGeneratedFunction(exacteJacfunction)
-    #@show exacteJacfunctionF
+    
    
     diffEqfunction=createContEqFun(equs,fname)# diff equations before this are stored in a dict:: now we have a giant function that holds all diff equations
     jacVect=createJacVect(jac,Val(T)) #jacobian dependency
@@ -203,7 +208,7 @@ function createexacteJacFun(jac:: Dict{Expr,Union{Float64,Int,Symbol,Expr}},funN
     Base.remove_linenums!(myex1)
     def1=Dict{Symbol,Any}() #any changeto Union{expr,Symbol}  ????
     def1[:head] = :function
-    def1[:name] = Symbol(:map,funName)  
+    def1[:name] = Symbol(:exactJac,funName)  
     def1[:args] = [:(q::Vector{Taylor0}),:(cache::MVector{1,Float64}),:(i::Int),:(j::Int)]
     def1[:body] = myex1
     functioncode1=combinedef(def1)

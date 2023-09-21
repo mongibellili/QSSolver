@@ -262,36 +262,33 @@ end
 
 
 
-function minPosRoot(coeff::NTuple{3,Float64}, ::Val{2}) # credit goes to github.com/CIFASIS/qss-solver
-    mpr=() #
+function classicRoot(coeff::NTuple{3,Float64}) # credit goes to github.com/CIFASIS/qss-solver
+    mpr=(-1.0,-1.0) #
 	a=coeff[1];b=coeff[2];c=coeff[3]
-    if a == 0 #|| (10000 * abs(a)) < abs(b)# coef3 is the coef of t^2
-        if b != 0
-			if -c / b>0
-			 mpr = (-c / b,)
+    if a == 0.0 #|| (10000 * abs(a)) < abs(b)# coef3 is the coef of t^2
+        if b != 0.0
+			if -c / b>0.0
+			 mpr = (-c / b,-1.0)
 			end
 		  end
        
     else 
        #double disc;
-        disc = b * b - 4 * a * c#b^2-4ac
-        if disc > 0 # no real roots
+        disc = b * b - 4.0 * a * c#b^2-4ac
+        if disc > 0.0 # no real roots
          
         
           #double sd, r1;
           sd = sqrt(disc);
-		  r1 = (-b + sd) / (2 * a);
+		  r1 = (-b + sd) / (2.0 * a);
        
-          r2 = (-b - sd) / (2 * a);
+          r2 = (-b - sd) / (2.0 * a);
 
-
-          if ((r1 > 0) && (r2 >0)) 
 			mpr = (r1,r2)
-		  elseif ((r1 > 0) && (r2 <=0)) 
-			mpr = (r1,)
-		  elseif ((r1 < 0) && (r2 >0)) 
-			mpr = (r2,)
-		  end
+		
+		elseif disc == 0.0
+			r1 = (-b ) / (2.0 * a);
+			mpr = (r1,-1.0)
 		end
         
     end
@@ -299,68 +296,127 @@ function minPosRoot(coeff::NTuple{3,Float64}, ::Val{2}) # credit goes to github.
 end
 
 
-function PosRoot(coeff::NTuple{3,Float64}, ::Val{2}) # 
-	mpr=() #coef1=c, coef2=b, coef3=a
+function quadRootv2(coeff::NTuple{3,Float64}) # 
+	mpr=(-1.0,-1.0) #size 2 to use mpr[2] in quantizer
 	a=coeff[1];b=coeff[2];c=coeff[3]
-	if a == 0 #|| (10000 * abs(a)) < abs(b)# coef3 is the coef of t^2
-		if b != 0
-		  if -c / b>0
-		   mpr = (-c / b,)
+	if a == 0.0 #|| (10000 * abs(a)) < abs(b)# coef3 is the coef of t^2
+		if b != 0.0
+		  if -c / b>0.0
+		   mpr = (-c / b,-1.0)
 		  end
 		end
+	elseif b==0.0
+		if -c/a>0
+		mpr = (sqrt(-c / a),-1.0)
+		end
+	elseif c==0.0
+		mpr=(-1.0,-b/a)
 	else 
 	   #double disc;
-	   Δ = 1.0 - 4c*a / (b*b)
-		  if Δ >0
-			q = -0.5*(1.0+sign(b)*sqrt(Δ))*b
+	   Δ = 1.0 - 4.0*c*a / (b*b)
+		if Δ >0.0
+			#= q = -0.5*(1.0+sign(b)*sqrt(Δ))*b
 			r1 = q / a
 		   
-			r2=c / q
-		   
+			r2=c / q =#
+			sq=sqrt(Δ)
+			r1=-0.5*(1.0+sq)*b/a
+			r2=-0.5*(1.0-sq)*b/a
 		 
-		  #@show r1,r2
-		  if ((r1 > 0) && (r2 >0)) 
 			mpr = (r1,r2)
-		  elseif ((r1 > 0) && (r2 <=0)) 
-			mpr = (r1,)
-		  elseif ((r1 < 0) && (r2 >0)) 
-			mpr = (r2,)
-		  end
+		elseif Δ ==0.0
+			r1=-0.5*b/a
+			mpr = (r1,r1-1e-12)
 		end
 	end
 	return mpr
   end
 
 
-#coeffs2=NTuple{3,Float64}((201011.0777843986, 106.4755863000737, 0.014452560693316113))
-						#= function iter(res1::Ptr{Float64}, pp::Ptr{NTuple{2,Float64}})
-							coeffs2=NTuple{3,Float64}((1.0, -2.0, -1.06))
-						#= 
-						pp=pointer(Vector{NTuple{2,Float64}}(undef, 7))
-						res1 = pointer(Vector{Float64}(undef, 2)) =#
-						unsafe_store!(res1, -1.0, 1);unsafe_store!(res1, -1.0, 2)
-						allrealrootintervalnewtonregulafalsi(coeffs2,res1,pp)
-						resTup=(unsafe_load(res1,1),unsafe_load(res1,2))
-						#@show resTup
-						resfilterd=filter((x) -> x >0.0 , resTup)
-						#= 
-						display(resfilterd) =#
+
+  function mprv2(coeff::NTuple{3,Float64}) # 
+	mpr=Inf
+	a=coeff[1];b=coeff[2];c=coeff[3]
+	if a == 0.0 #|| (10000 * abs(a)) < abs(b)# coef3 is the coef of t^2
+		if b != 0.0
+		  if -c / b>0.0
+		   mpr = -c / b
+		  end
+		end
+	elseif b==0.0
+		if -c/a>0
+		mpr = sqrt(-c / a)
+		end
+	elseif c==0.0
+		if -b/a>0.0
+			mpr = -b/a
+		end
+		
+	else 
+	   #double disc;
+	   Δ = 1.0 - 4.0*c*a / (b*b)
+		if Δ >0.0
+			#= q = -0.5*(1.0+sign(b)*sqrt(Δ))*b
+			r1 = q / a
+		   
+			r2=c / q =#
+			sq=sqrt(Δ)
+			r1=-0.5*(1.0+sq)*b/a
+			if r1 > 0 
+				mpr = r1;
+			end
+			r1=-0.5*(1.0-sq)*b/a
+
+			if ((r1 > 0) && (r1 < mpr)) 
+				mpr = r1;
+			  end
+		elseif Δ ==0.0
+			r1=-0.5*b/a
+			if r1 > 0 
+				mpr = r1;
+			end
+		end
+	end
+	
+
+	return mpr
+  end
+
+
+  
+				#= coeffs2=NTuple{3,Float64}((14.691504647354595,-747452.6968034876,1.0e-6))
+						function iter(res1::Ptr{Float64}, pp::Ptr{NTuple{2,Float64}},coeffs2::NTuple{3,Float64})
+											#coeffs2=NTuple{3,Float64}((1.0, -2.0, -1.06))
+										
+										pp=pointer(Vector{NTuple{2,Float64}}(undef, 7))
+										res1 = pointer(Vector{Float64}(undef, 2))
+										unsafe_store!(res1, -1.0, 1);unsafe_store!(res1, -1.0, 2)
+										allrealrootintervalnewtonregulafalsi(coeffs2,res1,pp)
+										resTup=(unsafe_load(res1,1),unsafe_load(res1,2))
+										#@show resTup
+										resfilterd=filter((x) -> x >0.0 , resTup)
+										
+									#	display(resfilterd)
 						end
-						function  anal1()
-							coeffs2=NTuple{3,Float64}((1.0, -2.0, -1.06))
-						minPosRoot(coeffs2,Val(2))
+						function  anal1(coeffs2::NTuple{3,Float64})
+							#coeffs2=NTuple{3,Float64}((1.0, -2.0, -1.06))
+						    classicRoot(coeffs2)
 						end
-						function  anal2()
-							coeffs2=NTuple{3,Float64}((1.0, -2.0, -1.06))
-						PosRoot(coeffs2,Val(2))
+						function  anal2(coeffs2::NTuple{3,Float64})
+							#coeffs2=NTuple{3,Float64}((1.0, -2.0, -1.06))
+						    quadRootv2(coeffs2)
 						end
 
 						pp=pointer(Vector{NTuple{2,Float64}}(undef, 7))
 						res1 = pointer(Vector{Float64}(undef, 2))
-						@btime iter(res1,pp)
-						#= @btime anal1()
-						@btime anal2() =#
- =#
+						@show iter(res1,pp,coeffs2)
+						@show anal1(coeffs2)
+						@show anal2(coeffs2)  =#
+
+#= @btime iter(res1,pp)
+@btime anal1()
+@btime anal2() =#
+
 
 #= coeffs=NTuple{3,Float64}((29160.956861496, 67.56376290717117, 0.014452560693316113))
 #coeffs2=NTuple{3,Float64}((201011.0777843986, 106.4755863000737, 0.014452560693316113))

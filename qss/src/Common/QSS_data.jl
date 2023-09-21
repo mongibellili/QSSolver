@@ -20,6 +20,7 @@ struct CommonQSS_data{O,Z}
     maxErr ::Float64  
     savedTimes :: Vector{Vector{Float64}}
     savedVars:: Vector{Vector{Float64}}
+    
 end
 struct LiQSS_data{O,Sparsity}
    vs::Val{Sparsity}

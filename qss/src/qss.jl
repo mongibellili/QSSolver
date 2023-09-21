@@ -8,18 +8,19 @@ const global verbose=false
 using RuntimeGeneratedFunctions
 using StaticArrays
 using SymEngine
-using Reexport
-@reexport using StaticArrays
+#using Reexport
+#@reexport using StaticArrays
 #@reexport using ResumableFunctions
 #using SymEngine##########might not need
 using ExprTools  #combineddef
-using MacroTools: isexpr,postwalk, prewalk, @capture
+using MacroTools: postwalk,prewalk, @capture#, isexpr,
 #= import Base.:-
 import Base.:+
 import Base.:* =#
+
 using Plots: plot!,plot,savefig
 using Dates: now,year,month,day,hour,minute,second #fortimestamp
-using TimerOutputs########################################################temporary
+#using TimerOutputs########################################################temporary
 #using Profile################################################################temporary
 RuntimeGeneratedFunctions.init(@__MODULE__)
 
@@ -49,7 +50,7 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
     
     export plotRelativeError#,stackplotRelativeError,plot_save_RelativeError,stackplot_save_RelativeError,saveRelativeError,stacksaveRelativeError
     export plotAbsoluteError#,stackplotAbsoluteError,plot_save_AbsoluteError,stackplot_save_AbsoluteError,saveAbsoluteError,stacksaveAbsoluteError
-    export getError,getPlot#,plotCumulativeSquaredRelativeError,plotMSE,getIntervalError,plotElapsed
+    export getError,getPlot,getPlot!#,plotCumulativeSquaredRelativeError,plotMSE,getIntervalError,plotElapsed
 
     export  @NLodeProblem,@saveNLodeProblem,QSS_Solve,save_prob_to_model,QSS_Solve_from_model,solInterpolated
     export Sol,getErrorByRodas,getAllErrorsByRefs,getAverageErrorByRefs
@@ -101,7 +102,7 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
     include("dense/NL_integrators/NL_QSS_Integrator.jl")
    # include("dense/NL_integrators/NL_QSS_discreteIntegrator.jl")
     # implicit integrator when large entries on the main diagonal of the jacobian
-    include("dense/NL_integrators/NL_LiQSS_Integrator.jl")
+  #  include("dense/NL_integrators/NL_LiQSS_Integrator.jl")
    # include("dense/NL_integrators/NL_LiQSS_discreteIntegrator.jl")
     # implicit integrator when large entries NOT on the main diagonal of the jacobian
 
@@ -111,7 +112,7 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
 
    #implicit intgrators used to show improvement of modifications
     include("dense/NL_integrators/NL_mLiQSS_Integrator.jl")
-   include("dense/NL_integrators/NL_nLiQSS_Integrator.jl")
+ #  include("dense/NL_integrators/NL_nLiQSS_Integrator.jl")
     
    include("dense/Quantizers/Quantizer_Common.jl")
    include("dense/Quantizers/QSS_quantizer.jl")
@@ -120,32 +121,9 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
     include("dense/Quantizers/mLiQSS_quantizer2.jl")
     include("dense/Quantizers/mLiQSS_quantizer3.jl")
 
- # integrator
+
   
 
-
-#=  include("sparse/NL_integrators/sparsity_Common.jl")
-   # include("sparse/NL_integrators/NL_QSS_Integrator.jl")
-   # include("sparse/NL_integrators/NL_QSS_discreteIntegrator.jl")
-    # implicit integrator when large entries on the main diagonal of the jacobian
-    include("sparse/NL_integrators/NL_LiQSS_Integrator.jl")
-   # include("sparse/NL_integrators/NL_LiQSS_discreteIntegrator.jl")
-    # implicit integrator when large entries NOT on the main diagonal of the jacobian
-
-    include("sparse/NL_integrators/NL_nmLiQSS_Integrator.jl")
-  #  include("sparse/NL_integrators/NL_nmLiQSS_discreteIntegrator.jl")
-   
-
-   #implicit intgrators used to show improvement of modifications
-  #  include("sparse/NL_integrators/NL_mLiQSS_Integrator.jl")
-   include("sparse/NL_integrators/NL_nLiQSS_Integrator.jl")
-    
-   include("sparse/Quantizers/Quantizer_Common.jl")
-   include("sparse/Quantizers/QSS_quantizer.jl")
-    include("sparse/Quantizers/LiQSS_quantizer.jl")
-    include("sparse/Quantizers/mLiQSS_quantizer1.jl")
-    include("sparse/Quantizers/mLiQSS_quantizer2.jl")
-    include("sparse/Quantizers/mLiQSS_quantizer3.jl") =#
 
    #main entrance/ Interface
    include("Interface/indexMacro.jl")

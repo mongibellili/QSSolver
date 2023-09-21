@@ -22,18 +22,23 @@ function nmLiQSS_integrate(CommonqssData::CommonQSS_data{O,0},liqssdata::LiQSS_d
 
   numSteps = Vector{Int}(undef, T)
   pp=pointer(Vector{NTuple{2,Float64}}(undef, 7))
-                                    
+ # savedVarsQ = Vector{Vector{Float64}}(undef, T)  
+
+                            
   respp = pointer(Vector{Float64}(undef, 2))
-  temporaryhelper = Vector{Int}(undef, 1)
-  temporaryhelper[1]=0
+  trackSimul = Vector{Int}(undef, 1)
+ # cacheRatio=zeros(5);cacheQ=zeros(5)
   cacherealPosi=Vector{Vector{Float64}}(undef,3);cacherealPosj=Vector{Vector{Float64}}(undef,3);
+ #=  for i=1:T
+    savedVarsQ[i]=Vector{Float64}()     
+  end =#
 for i =1:3
   cacherealPosi[i]=zeros(2)
   cacherealPosj[i]=zeros(2)
 end
   exacteA(q,cacheA,1,1)  # this 'unnecessary call' 'compiles' the function and it helps remove allocations when used after !!!
 
-  #@show exacteA
+ #@show exacteA
    #######################################compute initial values##################################################
   n=1
   for k = 1:O # compute initial derivatives for x and q (similar to a recursive way )
@@ -52,6 +57,7 @@ end
    for i = 1:T
     numSteps[i]=0
     #= @timeit "savevars" =# push!(savedVars[i],x[i][0])
+    #push!(savedVarsQ[i],q[i][0])
      push!(savedTimes[i],0.0)
      quantum[i] = relQ * abs(x[i].coeffs[1]) ;quantum[i]=quantum[i] < absQ ? absQ : quantum[i];quantum[i]=quantum[i] > maxErr ? maxErr : quantum[i] 
     updateQ(Val(O),i,x,q,quantum,exacteA,cacheA,dxaux,qaux,tx,tq,initTime,ft,nextStateTime) 
@@ -71,52 +77,58 @@ end
   ###################################################################################################################################################################
   #################################################################################################################################################################### 
   simt = initTime ;simulStepCount=0;totalSteps=0;
- 
+
   #simul=false
 
 
-  while simt < ft && totalSteps < 300000000
+  while simt < ft && totalSteps < 3000000
     sch = updateScheduler(Val(T),nextStateTime,nextEventTime, nextInputTime)
     simt = sch[2];index = sch[1]
     if simt>ft
-      #simt=ft
-      break
+      break # simt=120 for simulation of ft=100 terminates while it adds some steps for ft=500, because dx is really small but not zero.
     end
     numSteps[index]+=1;totalSteps+=1
+
+   
     t[0]=simt
     ##########################################state########################################
     if sch[3] == :ST_STATE
+        xitemp=x[index][0]
         elapsed = simt - tx[index];integrateState(Val(O),x[index],elapsed);tx[index] = simt 
         quantum[index] = relQ * abs(x[index].coeffs[1]) ;quantum[index]=quantum[index] < absQ ? absQ : quantum[index];quantum[index]=quantum[index] > maxErr ? maxErr : quantum[index] 
-        dirI=x[index][0]-savedVars[index][end]  
+        #dirI=x[index][0]-savedVars[index][end]  
+        dirI=x[index][0]-xitemp
         for b in (jac(index)  )    # update Qb : to be used to calculate exacte Aindexb
           elapsedq = simt - tq[b] ;
           if elapsedq>0 integrateState(Val(O-1),q[b],elapsedq);tq[b]=simt end
         end
-        updateQ(Val(O),index,x,q,quantum,exacteA,cacheA,dxaux,qaux,tx,tq,simt,ft,nextStateTime) ;tq[index] = simt   
-        #----------------------------------------------------check dependecy cycles---------------------------------------------                
+        firstguess=updateQ(Val(O),index,x,q,quantum,exacteA,cacheA,dxaux,qaux,tx,tq,simt,ft,nextStateTime) ;tq[index] = simt   
+        #----------------------------------------------------check dependecy cycles---------------------------------------------   
+        trackSimul[1]=0 
+        #= for i =1:5
+          cacheRatio[i]=0.0; cacheQ[i]=0.0; 
+        end       =#       
         for j in SD(index)
           for b in (jac(j)  )    # update Qb: to be used to calculate exacte Ajb
             elapsedq = simt - tq[b] ;
             if elapsedq>0  integrateState(Val(O-1),q[b],elapsedq); tq[b]=simt  end
           end
-          exacteA(q,cacheA,index,j);aij=cacheA[1]
+          exacteA(q,cacheA,index,j);aij=cacheA[1]# can be passed to simul so that i dont call exactfunc again
           exacteA(q,cacheA,j,index);aji=cacheA[1]
-         #=  exacteA(x,cacheA,index,j);aij=cacheA[1]
-          exacteA(x,cacheA,j,index);aji=cacheA[1] =#
+         
         
         
           if j!=index && aij*aji!=0.0
-              prvStepValj= savedVars[j][end]#getPrevStepVal(prevStepVal,j) 
+              #prvStepValj= savedVars[j][end]#getPrevStepVal(prevStepVal,j) 
               for i =1:3
                 cacherealPosi[i][1]=0.0; cacherealPosi[i][2]=0.0
                 cacherealPosj[i][1]=0.0; cacherealPosj[i][2]=0.0
               end 
-              if nmisCycle_and_simulUpdate(cacherealPosi,cacherealPosj,respp,pp,temporaryhelper,Val(O),index,j,dirI,prvStepValj,x,q,quantum,exacteA,cacheA,dxaux,qaux,tx,tq,simt,ft)
+              if nmisCycle_and_simulUpdate(cacherealPosi,cacherealPosj,aij,aji,respp,pp,trackSimul,Val(O),index,j,dirI,firstguess,x,q,quantum,exacteA,cacheA,dxaux,qaux,tx,tq,simt,ft)
                 simulStepCount+=1
-                clearCache(taylorOpsCache,Val(CS),Val(O));f(index,q,t,taylorOpsCache);computeDerivative(Val(O), x[index], taylorOpsCache[1])
+               clearCache(taylorOpsCache,Val(CS),Val(O));f(index,q,t,taylorOpsCache);computeDerivative(Val(O), x[index], taylorOpsCache[1])
               #  clearCache(taylorOpsCache,Val(CS),Val(O));f(j,q,t,taylorOpsCache);computeDerivative(Val(O), x[j], taylorOpsCache[1])
-                Liqss_reComputeNextTime(Val(O), index, simt, nextStateTime, x, q, quantum)
+              # Liqss_reComputeNextTime(Val(O), index, simt, nextStateTime, x, q, quantum)
               #  Liqss_reComputeNextTime(Val(O), j, simt, nextStateTime, x, q, quantum)
    
                 for k in SD(j)  #j influences k
@@ -136,12 +148,23 @@ end
           end#end if j!=0
         end#end FOR_cycle check
             
+
+      if trackSimul[1]!=0  #qi changed after throw
+       # clearCache(taylorOpsCache,Val(CS),Val(O));f(index,q,t,taylorOpsCache);computeDerivative(Val(O), x[index], taylorOpsCache[1])
+        Liqss_reComputeNextTime(Val(O), index, simt, nextStateTime, x, q, quantum)
+      end
+
       #-------------------------------------------------------------------------------------
       #---------------------------------normal liqss: proceed--------------------------------
       #-------------------------------------------------------------------------------------
 
         for c in SD(index)   #index influences c       
-          elapsedx = simt - tx[c] ;if elapsedx>0 x[c].coeffs[1] = x[c](elapsedx);tx[c] = simt end # 
+          elapsedx = simt - tx[c] ;
+          if elapsedx>0 
+            x[c].coeffs[1] = x[c](elapsedx);
+            tx[c] = simt
+
+           end # 
           elapsedq = simt - tq[c];if elapsedq > 0 ;integrateState(Val(O-1),q[c],elapsedq);tq[c] = simt    end   # c never been visited 
           #= for b in (jac(c)  )    # update other influences
               elapsedq = simt - tq[b] ;if elapsedq>0 integrateState(Val(O-1),q[b],elapsedq);tq[b]=simt  end
@@ -150,7 +173,7 @@ end
           Liqss_reComputeNextTime(Val(O), c, simt, nextStateTime, x, q, quantum)
         end#end for SD
           
-     
+  
       ##################################input########################################
     elseif sch[3] == :ST_INPUT  # time of change has come to a state var that does not depend on anything...no one will give you a chance to change but yourself    
      @show index
@@ -195,13 +218,57 @@ end
       end =#
     #################################################################event########################################
     end#end state/input/event
-    push!(savedVars[index],x[index][0])
-    push!(savedTimes[index],simt)
+ 
+        #push!(savedVars[index],x[index][0])
+        push!(savedVars[index],(x[index][0]+q[index][0])/2)
+        push!(savedTimes[index],simt)
+       # push!(savedVarsQ[index],q[index][0])
+      
+      #=   for i=1:T
+          push!(savedVars[i],x[i][0])
+          push!(savedTimes[i],simt)
+          push!(savedVarsQ[i],q[i][0])
+        end =#
+#=   if index==1 && 0.042<simt<0.043
+    @show x
+    @show q
+
+  end =#
   end#end while
 
-#@show temporaryhelper
+  #@show cacheQ
+#@show trackSimul
  #= @timeit "createSol" =# 
+ #createSol(Val(T),Val(O),savedTimes,savedVars, "nmliqss$O",string(odep.prname),absQ,simulStepCount,numSteps,ft)
+ #createSol(Val(T),Val(O),savedTimes,savedVars, "nmliqss$O",string(odep.prname),absQ,totalSteps,simulStepCount,numSteps,ft)
  createSol(Val(T),Val(O),savedTimes,savedVars, "nmliqss$O",string(odep.prname),absQ,totalSteps,simulStepCount,numSteps,ft)
      # change this to function /constrcutor...remember it is bad to access structs (objects) directly
   
+end
+
+function  exacteAa(q,cache,i,j)
+if i == 0
+  return nothing
+elseif i == 1 && j == 1
+  cache[1] = -2100.0 + 1000.0 * (q[1])[0] * (1.0 - (q[1])[0])
+  return nothing
+elseif 2 <= i <= 999 && j == i - 1
+  cache[1] = 1100.0 
+  return nothing
+elseif 2 <= i <= 999 && j == i
+  cache[1] = -2100.0 + 1000.0 * (q[i])[0] * (1.0 - (q[i])[0])
+  return nothing
+elseif i == 1000 && j == 1000
+  cache[1] = -2100.0 + 1000.0 * (q[1000])[0] * (1.0 - (q[1000])[0])
+  return nothing
+elseif i == 1000 && j == 999
+  cache[1] = 2100.0 
+  return nothing
+elseif i == 1 && j == 2
+  cache[1] = 1000.0 
+  return nothing
+elseif 2 <= i <= 999 && j == i + 1
+  cache[1] = 1000.0 
+  return nothing
+end
 end

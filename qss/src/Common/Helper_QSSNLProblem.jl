@@ -109,8 +109,18 @@ function extractJacDepNormal(varNum::Int,rhs::Union{Int,Expr},jac :: Dict{Union{
     #@show basi
     #createdSym=symbols("u$(a.args[2])")
     #@show createdSym
+  #=   coef1 = diff(basi, symarg)#df
+    coef2 = diff(coef1, symarg)#ddf
+    coefstr=string(coef1,-,"(",coef2,")*",symarg,*,0.5) =#
+
     coef = diff(basi, symarg)
     coefstr=string(coef)
+
+   # coefstr=string("(",basi,")/",symarg) 
+
+
+   # @show coefstr
+    
     coefExpr=Meta.parse(coefstr)
     #dump(coefExpr)
     jacEntry=restoreRef(coefExpr,symDict)
@@ -119,6 +129,8 @@ function extractJacDepNormal(varNum::Int,rhs::Union{Int,Expr},jac :: Dict{Union{
   end
   if length(jacSet)>0 jac[varNum]=jacSet end # jac={1->(2,5)}
 end
+
+
 
 
 function extractJacDepLoop(b::Int,niter::Int,rhs::Union{Int,Expr},jac :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}} ,exacteJacExpr :: Dict{Expr,Union{Float64,Int,Symbol,Expr}},symDict::Dict{Symbol,Expr}) 
@@ -132,17 +144,20 @@ function extractJacDepLoop(b::Int,niter::Int,rhs::Union{Int,Expr},jac :: Dict{Un
   end
   basi = convert(Basic, m)
   for i in jacSet
-    symarg=eliminateRef2(i)
-    
-    #@show basi
-    #createdSym=symbols("u$(a.args[2])")
-    #@show createdSym
+    symarg=eliminateRef2(i);
+
     coef = diff(basi, symarg)
-    coefstr=string(coef)
+    coefstr=string(coef);
+
+    #= coef1 = diff(basi, symarg)#df
+    coef2 = diff(coef1, symarg)#ddf
+    coefstr=string(coef1,-,"(",coef2,")*",symarg,*,0.5) =#
+
+   
+   # coefstr=string("(",basi,")/",symarg) 
+
     coefExpr=Meta.parse(coefstr)
-    #dump(coefExpr)
     jacEntry=restoreRef(coefExpr,symDict)
-   # @show jacEntry
     exacteJacExpr[:((($b,$niter),$i))]=jacEntry
   end
   if length(jacSet)>0 jac[:(($b,$niter))]=jacSet end
