@@ -5,16 +5,36 @@ function save_Sol(sol::Sol{T,O},xvars::Int...;note=" "::String,xlims=(0.0,0.0)::
   p1=plot()
   mydate=now()
   timestamp=(string(year(mydate),"_",month(mydate),"_",day(mydate),"_",hour(mydate),"_",minute(mydate),"_",second(mydate)))
-  if sol.algName=="nmliqss1"
+  #= if sol.algName=="nmliqss1"
     mycolor=:green
+    stle=:dash
   else
     mycolor=:blue
-  end
+  end =#
   if xvars!=()
     for k in xvars
-     
+      if k==1
+        stle=:dash
+        sze=2
+      elseif k==2
+        stle=:solid
+        sze=4
+      elseif k==3
+        stle=:dot
+        sze=3
+      elseif k==4
+        stle=:dashdot
+        sze=2
+      elseif k==5
+        stle=:dashdotdot
+        sze=2
+      else
+        sze=1
+        stle=:solid
+      end
      # p1=plot!(p1,sol.savedTimes[k], sol.savedVarsQ[k],line=(1,mycolor,:dash),marker=(:star),label="q$k $(sol.algName)")
-      p1=plot!(p1,sol.savedTimes[k], sol.savedVars[k],marker=(:circle),markersize=2,label="x$k $(sol.numSteps[k])")
+     # p1=plot!(p1,sol.savedTimes[k], sol.savedVars[k]#= ,marker=(:circle) =#,markersize=2,label="x$k ",legend=:bottomright)
+      p1=plot!(p1,sol.savedTimes[k], sol.savedVars[k],line=(sze,stle),label="x$k ",legend=:right)
     end
   else
     for k=1:T
@@ -24,7 +44,7 @@ function save_Sol(sol::Sol{T,O},xvars::Int...;note=" "::String,xlims=(0.0,0.0)::
         mycolor=:purple
       end
      # p1=plot!(p1,sol.savedTimes[k], sol.savedVarsQ[k],line=(1,mycolor,:dash),marker=(:star),label="q$k $(sol.algName)")
-      p1=plot!(p1,sol.savedTimes[k], sol.savedVars[k],marker=(:circle),markersize=2,label="x$k $(sol.numSteps[k])")
+      p1=plot!(p1,sol.savedTimes[k], sol.savedVars[k],marker=(:circle),markersize=2,label="x$k $(sol.numSteps[k])"#= ,legend=:false =#)
     end
   end
   if xlims!=(0.0,0.0) && ylims!=(0.0,0.0) 

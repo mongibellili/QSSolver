@@ -1,5 +1,5 @@
 #using TimerOutputs
-function QSS_integrate(CommonqssData::CommonQSS_data{O,Z}, odep::NLODEProblem{PRTYPE,T,Z,Y,CS},f::Function,jac::Function,SD::Function,map::Function) where {PRTYPE,O,T,Z,Y,CS}
+function QSS_integrate(CommonqssData::CommonQSS_data{O,T,Z}, odep::NLODEProblem{PRTYPE,T,Z,Y},f::Function,jac::Function,SD::Function,map::Function) where {PRTYPE,O,T,Z,Y}
   
   ft = CommonqssData.finalTime;initTime = CommonqssData.initialTime;relQ = CommonqssData.dQrel;absQ = CommonqssData.dQmin;maxErr=CommonqssData.maxErr;
   savetimeincrement=CommonqssData.savetimeincrement;savetime = savetimeincrement
@@ -7,7 +7,7 @@ function QSS_integrate(CommonqssData::CommonQSS_data{O,Z}, odep::NLODEProblem{PR
   tx = CommonqssData.tx;tq = CommonqssData.tq;x = CommonqssData.x;q = CommonqssData.q;t=CommonqssData.t
    savedVars=CommonqssData.savedVars;
   savedTimes=CommonqssData.savedTimes;integratorCache=CommonqssData.integratorCache;taylorOpsCache=CommonqssData.taylorOpsCache;cacheSize=odep.cacheSize
-  #prevStepVal = specialLiqssData.prevStepVal
+  prevStepVal = specialLiqssData.prevStepVal
   #*********************************problem info*****************************************
   d = odep.discreteVars
   
@@ -19,13 +19,10 @@ function QSS_integrate(CommonqssData::CommonQSS_data{O,Z}, odep::NLODEProblem{PR
   SZ=odep.SZ
  
   evDep = odep.eventDependencies
-
- # @show HD,HZ,SZ,d
- #@show f
   #********************************helper values*******************************  
 
   oldsignValue = MMatrix{Z,2}(zeros(Z*2))  #usedto track if zc changed sign; each zc has a value and a sign 
-  numSteps = Vector{Int}(undef, T)
+
 #######################################compute initial values##################################################
 n=1
 for k = 1:O # compute initial derivatives for x and q (similar to a recursive way )
@@ -49,19 +46,15 @@ for i = 1:T
   #t[0]=initTime#initSmallAdvance
   clearCache(taylorOpsCache,Val(CS),Val(O));
   #@timeit "f" 
- 
   f(i,-1,-1,q,d,t,taylorOpsCache);#@show taylorOpsCache
- #@show taylorOpsCache
   computeNextInputTime(Val(O), i, initTime, initTime,taylorOpsCache[1] , nextInputTime, x,  quantum)
-  #assignXPrevStepVals(Val(O),prevStepVal,x,i)
-  
+  assignXPrevStepVals(Val(O),prevStepVal,x,i)
 end
 
 #@show nextStateTime,nextInputTime
 for i=1:Z
   #= clearCache(taylorOpsCache,Val(CS),Val(O));output=zcf[i](x,d,t,taylorOpsCache).coeffs[1]  =#
   clearCache(taylorOpsCache,Val(CS),Val(O));
-  #@show taylorOpsCache
   #@timeit "zcf" 
   f(-1,i,-1,x,d,t,taylorOpsCache)        
                  
@@ -77,22 +70,24 @@ end
 #---------------------------------------------------------------------------------while loop-------------------------------------------------------------------------
 ###################################################################################################################################################################
 ####################################################################################################################################################################
-simt = initTime ;totalSteps=0;prevStepTime=initTime;modifiedIndex=0
+simt = initTime ;totalSteps=0;prevStepTime=initTime
   
-while simt < ft && totalSteps < 50000000
+while simt < ft && totalSteps < 5000000
   sch = updateScheduler(Val(T),nextStateTime,nextEventTime, nextInputTime)
-  simt = sch[2];index = sch[1];stepType=sch[3]
+  simt = sch[2]
  # @timeit "saveLast" 
    if  simt>ft  
     #saveLast!(Val(T),Val(O),savedVars, savedTimes,saveVarsHelper,ft,prevStepTime, x)
     break   ###################################################break##########################################
   end
-  totalSteps+=1
+  numSteps[index]+=1;totalSteps+=1
 
   t[0]=simt
   ##########################################state######################################## 
-  if stepType == :ST_STATE
-    numSteps[index]+=1;
+  if sch[3] == :ST_STATE
+  
+
+    
     elapsed = simt - tx[index];integrateState(Val(O),x[index],elapsed);tx[index] = simt 
     quantum[index] = relQ * abs(x[index].coeffs[1]) ;quantum[index]=quantum[index] < absQ ? absQ : quantum[index];quantum[index]=quantum[index] > maxErr ? maxErr : quantum[index]   
     for k = 1:O q[index].coeffs[k] = x[index].coeffs[k] end; tq[index] = simt    
@@ -110,7 +105,8 @@ while simt < ft && totalSteps < 50000000
         integrateState(Val(O-1),q[b],elapsedq);tq[b]=simt
       end
      end
-        clearCache(taylorOpsCache,Val(CS),Val(O));f(j,-1,-1,q,d,t,taylorOpsCache);computeDerivative(Val(O), x[j], taylorOpsCache[1])  
+        clearCache(taylorOpsCache,Val(CS),Val(O));f(j,-1,-1,q,d,t,taylorOpsCache);computeDerivative(Val(O), x[j], taylorOpsCache[1])
+      
         reComputeNextTime(Val(O), j, simt, nextStateTime, x, q, quantum)
           
     end#end for SD
@@ -123,7 +119,7 @@ while simt < ft && totalSteps < 50000000
         computeNextEventTime(j,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum)
     end#end for SZ
     ##################################input########################################
-  elseif stepType == :ST_INPUT  # time of change has come to a state var that does not depend on anything...no one will give you a chance to change but yourself    
+  elseif sch[3] == :ST_INPUT  # time of change has come to a state var that does not depend on anything...no one will give you a chance to change but yourself    
     
     elapsed = simt - tx[index];integrateState(Val(O),x[index],elapsed);tx[index] = simt 
     quantum[index] = relQ * abs(x[index].coeffs[1]) ;quantum[index]=quantum[index] < absQ ? absQ : quantum[index];quantum[index]=quantum[index] > maxErr ? maxErr : quantum[index]   
@@ -166,11 +162,11 @@ while simt < ft && totalSteps < 50000000
     end
   #################################################################event########################################
   else
-         # printcounter=5
-         #=  println("x at start of event")
+          printcounter=5
+          println("x at start of event")
           @show x
           @show simt 
-          @show quantum =#
+          @show quantum
       
           for b in zc_SimpleJac[index] # elapsed update all other vars that this zc depends upon.
               
@@ -183,7 +179,7 @@ while simt < ft && totalSteps < 50000000
              elapsedq = simt - tq[b];if elapsedq>0 integrateState(Val(O-1),q[b],elapsedq);tq[b]=simt end
            
           end    
-         # modifiedIndex=0#first we have a zc happened which corresponds to nexteventtime and index (one of zc) but we want also the sign in O to know ev+ or ev- 
+          modifiedIndex=0#first we have a zc happened which corresponds to nexteventtime and index (one of zc) but we want also the sign in O to know ev+ or ev- 
          
           clearCache(taylorOpsCache,Val(CS),Val(O));f(-1,index,-1,x,d,t,taylorOpsCache)    # run ZCF-------- 
          #=  println(" just after event")
@@ -233,7 +229,7 @@ while simt < ft && totalSteps < 50000000
                   elapsedq = simt - tq[b];if elapsedq>0 integrateState(Val(O-1),q[b],elapsedq);tq[b]=simt;#= @show q[b] =# end
                 end
               end
-              clearCache(taylorOpsCache,Val(CS),Val(O));f(j,-1,-1,q,d,t,taylorOpsCache);computeDerivative(Val(O), x[j], taylorOpsCache[1])
+              clearCache(taylorOpsCache,Val(CS),Val(O));f(j,-1,-1,q,d,t,taylorOpsCache);computeDerivative(Val(O), x[j], taylorOpsCache[1]x)
               reComputeNextTime(Val(O), j, simt, nextStateTime, x, q, quantum)
               #@show j,x
            
@@ -258,21 +254,12 @@ while simt < ft && totalSteps < 50000000
          @show x 
          @show q =# 
   end#end state/input/event
-  #for i=1:T
-  if stepType != :ST_EVENT
-    push!(savedVars[index],x[index][0])
-    push!(savedTimes[index],simt)
-  else
-    for j in (HD[modifiedIndex])
-      push!(savedVars[j],x[j][0])
-      push!(savedTimes[j],simt)
-    end
-  end
+  for i=1:T
+    push!(savedVars[i],x[i][0])
+    push!(savedTimes[i],simt)
     #push!(savedVarsQ[i],q[i][0])
-# end
-end#end while
- 
-
+  end
+end
 #createSol(Val(T),Val(O),savedTimes,savedVars, "qss$O",string(nameof(f)),absQ,totalSteps,0)#0 I track simulSteps 
-createSol(Val(T),Val(O),savedTimes,savedVars, "qss$O",string(odep.prname),absQ,totalSteps,0,numSteps,ft)
+createSol(Val(T),Val(O),savedTimes,savedVars, "qss$O",string(odep.prname),absQ,totalSteps,simulStepCount,numSteps,ft)
 end#end integrate

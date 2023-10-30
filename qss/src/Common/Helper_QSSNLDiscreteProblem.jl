@@ -1,6 +1,14 @@
 
+
+struct EventDependencyStruct
+  id::Int
+  evCont::Vector{Int}
+  evDisc::Vector{Int}
+  evContRHS::Vector{Int}
+end
 # the following functions handle discrete problems
-function extractJacDepNormal(varNum::Int,rhs::Union{Int,Expr},jac :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},jacDiscr :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},SD :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},dD :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}) 
+ 
+function extractJacDepNormal(varNum::Int,rhs::Union{Symbol,Int,Expr},jac :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},jacDiscr :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},SD :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},dD :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}) 
   jacSet=Set{Union{Int,Symbol,Expr}}()
   jacDiscrSet=Set{Union{Int,Symbol,Expr}}()
   postwalk(rhs) do a   #
@@ -29,7 +37,7 @@ end
 
 
 
-function extractJacDepLoop(b::Int,niter::Int,rhs::Union{Int,Expr},jac :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},jacDiscr :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},SD :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},dD :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}) 
+function extractJacDepLoop(b::Int,niter::Int,rhs::Union{Symbol,Int,Expr},jac :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},jacDiscr :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},SD :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},dD :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}) 
   #dD is for the saving-function case
   jacSet=Set{Union{Int,Symbol,Expr}}()
   jacDiscrSet=Set{Union{Int,Symbol,Expr}}()

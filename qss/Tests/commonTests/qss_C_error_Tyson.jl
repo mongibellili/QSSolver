@@ -35,7 +35,7 @@ function Tyson()
     du[5] = 0.015-200.0*u[2]*u[5]
     du[6] =u[4]-0.6*u[6]
 end
-tspan = (0.0,10.0)
+tspan = (0.0,25.0)
 u0= [0.0,0.75,0.25,0.0,0.0,0.0]
 prob = ODEProblem(funcName,u0,tspan)
 

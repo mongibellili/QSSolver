@@ -291,6 +291,12 @@ end
   subT(mulT(a, b,cache1),c,cache1)
 end
 
+
+function divT(a::T, b::T,cache1::Taylor0) where {T<:Number}
+  cache1[0]=a/b  
+  return cache1
+end
+
 function divT(a::Taylor0, b::T,cache1::Taylor0) where {T<:Number}
   fill!(cache1.coeffs, b)
   #println("division")
@@ -350,6 +356,8 @@ function clearCache(cache::Vector{Taylor0},::Val{CS},::Val{2}) where {CS}
     cache[i][2]=0.0
 
   end
+  
+  
 end
 function clearCache(cache::Vector{Taylor0},::Val{CS},::Val{1}) where {CS}
   for i=1:CS

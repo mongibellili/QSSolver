@@ -38,7 +38,7 @@ for i =1:3
 end
   exacteA(q,cacheA,1,1)  # this 'unnecessary call' 'compiles' the function and it helps remove allocations when used after !!!
 
- #@show exacteA
+ @show f
    #######################################compute initial values##################################################
   n=1
   for k = 1:O # compute initial derivatives for x and q (similar to a recursive way )
@@ -81,7 +81,7 @@ end
   #simul=false
 
 
-  while simt < ft && totalSteps < 3000000
+  while simt < ft && totalSteps < 30000000
     sch = updateScheduler(Val(T),nextStateTime,nextEventTime, nextInputTime)
     simt = sch[2];index = sch[1]
     if simt>ft
@@ -172,7 +172,12 @@ end
           clearCache(taylorOpsCache,Val(CS),Val(O)); f(c,q,t,taylorOpsCache);computeDerivative(Val(O), x[c], taylorOpsCache[1])
           Liqss_reComputeNextTime(Val(O), c, simt, nextStateTime, x, q, quantum)
         end#end for SD
+      #=  if 8.377869511741662<=simt<=14.578335986845602 && (index==2 #= || index==5 =#) 
+          println("intgrator at simt=$simt index=$index")
+         
+          @show x[index],nextStateTime[index]
           
+         end =#
   
       ##################################input########################################
     elseif sch[3] == :ST_INPUT  # time of change has come to a state var that does not depend on anything...no one will give you a chance to change but yourself    
@@ -219,15 +224,15 @@ end
     #################################################################event########################################
     end#end state/input/event
  
-        #push!(savedVars[index],x[index][0])
+      #  push!(savedVars[index],x[index][0])
         push!(savedVars[index],(x[index][0]+q[index][0])/2)
         push!(savedTimes[index],simt)
        # push!(savedVarsQ[index],q[index][0])
       
-      #=   for i=1:T
+       #=  for i=1:T
           push!(savedVars[i],x[i][0])
           push!(savedTimes[i],simt)
-          push!(savedVarsQ[i],q[i][0])
+        #  push!(savedVarsQ[i],q[i][0])
         end =#
 #=   if index==1 && 0.042<simt<0.043
     @show x

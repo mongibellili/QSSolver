@@ -1,20 +1,21 @@
 
 #helper struct that holds dependency metadata of an event (which vars exist on which side lhs=rhs
 
-struct EventDependencyStruct
+#= struct EventDependencyStruct
     id::Int
     evCont::Vector{Int}
     evDisc::Vector{Int}
     evContRHS::Vector{Int}
-end
+end =#
 
 #struct that holds prob data 
-struct NLODEDiscProblem{PRTYPE,T,Z,Y}<: NLODEProblem{PRTYPE,T,Z,Y} 
+struct NLODEDiscProblem{PRTYPE,T,Z,Y,CS}<: NLODEProblem{PRTYPE,T,Z,Y,CS} 
+    prname::Symbol
     prtype::Val{PRTYPE}
     a::Val{T}
     b::Val{Z}
     c::Val{Y}
-    cacheSize::Int
+    cacheSize::Val{CS}
     initConditions::Vector{Float64}  
     discreteVars::Vector{Float64}   
     jac::Vector{Vector{Int}}#Jacobian dependency..I have a der and I want to know which vars affect it...opposite of SD
@@ -27,7 +28,7 @@ struct NLODEDiscProblem{PRTYPE,T,Z,Y}<: NLODEProblem{PRTYPE,T,Z,Y}
     SZ::Vector{Vector{Int}}#  I have a var and I want the ZC that are affected by it
     map::Function
 end
-struct savedNLODEDiscProblem{PRTYPE,T,Z,Y}<:  NLODEProblem{PRTYPE,T,Z,Y} 
+#= struct savedNLODEDiscProblem{PRTYPE,T,Z,Y}<:  NLODEProblem{PRTYPE,T,Z,Y} 
     prtype::Val{PRTYPE}
     cacheSize::Int
     #initConditions::SVector{T,Float64}    
@@ -45,20 +46,20 @@ struct savedNLODEDiscProblem{PRTYPE,T,Z,Y}<:  NLODEProblem{PRTYPE,T,Z,Y}
     HZ::SVector{Y,SVector{Z,Int}}#  an ev occured and I want the ZC that are affected by it
     HD::SVector{Y,SVector{T,Int}}#  an ev occured and I want the der that are affected by it
     SZ::SVector{T,SVector{Z,Int}}#  I have a var and I want the ZC that are affected by it
-end
+end =#
 
 function getInitCond(prob::NLODEDiscProblem,i::Int)
     return prob.initConditions[i]
 end
-function getInitCond(prob::savedNLODEDiscProblem,i::Int)
+#= function getInitCond(prob::savedNLODEDiscProblem,i::Int)
     return prob.initConditions(i)
-end
+end =#
 
 # receives user code and creates the problem struct
-function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{D},::Val{Z},initCond::Vector{Float64},du::Symbol)where {T,D,Z}
+function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{D},::Val{Z},initCond::Vector{Float64},du::Symbol,symDict::Dict{Symbol,Expr})where {T,D,Z}
     if verbose println("discrete nlodeprobfun  T D Z= $T $D $Z") end
     discrVars=Vector{Float64}()
-    equs=Dict{Union{Int,Expr},Expr}()
+    equs=Dict{Union{Int,Expr},Union{Int,Symbol,Expr}}()
     jac = Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}()# set used because do not want to insert an existing varNum
     SD = Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}()  # NO need to constrcut SD...SDVect will be extracted from Jac (needed for func-save case)
     jacDiscrete = Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}()# for now is similar to continous jac...if feature of d[i] not to be added then  jacDiscr=Dict{Union{Int,Expr},Set{Int}}()...later
@@ -83,13 +84,14 @@ function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{D},::Val{Z},initCond::Ve
         elseif argI isa Expr &&  argI.head == :(=)  && argI.args[1] isa Expr && argI.args[1].head == :ref && argI.args[1].args[1]==du#&& ((argI.args[2] isa Expr && (argI.args[2].head ==:ref || argI.args[2].head ==:call ))||argI.args[2] isa Number)
             y=argI.args[1];rhs=argI.args[2]
             varNum=y.args[2] # order of variable
-            if rhs isa Number # rhs of equ =number  
+            if rhs isa Number || rhs isa Symbol # rhs of equ =number  
                 equs[varNum]=:($((transformFSimplecase(:($(rhs))))))
-            elseif rhs.head==:ref #rhs is only one var
+            elseif rhs isa Expr && rhs.head==:ref #rhs is only one var
                # if rhs.args[1]==:q # check not needed
-                extractJacDepNormal(varNum,rhs,jac,jacDiscrete ,SD,dD ) 
+                extractJacDepNormal(varNum,rhs,jac,jacDiscrete,SD,dD ) 
                # end
                 equs[varNum ]=:($((transformFSimplecase(:($(rhs))))))
+            #elseif rhs isa Symbol #time t
             else #rhs head==call...to be tested later for  math functions and other possible scenarios or user erros                 
                 extractJacDepNormal(varNum,rhs,jac,jacDiscrete ,SD,dD ) 
                 temp=(transformF(:($(rhs),1))).args[2]  #number of caches distibuted   ...no need interpolation and wrap in expr....before was cuz quote....
@@ -169,23 +171,23 @@ function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{D},::Val{Z},initCond::Ve
                     end
                     return a 
                 end
-
             end
             #------------------neg Event--------------------#
             negEv_disArrLHS= Vector{Int}()#@SVector fill(NaN, D)   #...better than @SVector zeros(D), I can use NaN
             negEv_conArrLHS= Vector{Int}()#@SVector fill(NaN, T)  
             negEv_conArrRHS=Vector{Int}()#@SVector zeros(T)    #to be used inside intgrator to updateOtherQs (intgrateState) before executing the event there is no discArrRHS because d is not changing overtime to be updated      
             if negEvExp.args[1] != :nothing
+               
                 for j = 1:length(negEvExp.args)  # j coressponds the number of statements under one negEvent
-                    !(negEvExp.args[j].args  isa Expr &&  argI.head == :(=))  && error("event should be A=B")
+                    !(negEvExp.args[j]  isa Expr &&  negEvExp.args[j].head == :(=))  && error("event should be A=B")
                     neglhs=negEvExp.args[j].args[1];negrhs=negEvExp.args[j].args[1]
-                    !(neglhs  isa Expr &&  neglhs.head == :ref && (neglhs.args[1]==:q || neglhs.args[1]==:q)) && error("lhs of events must be a continuous or a discrete variable")
+                    !(neglhs  isa Expr &&  neglhs.head == :ref && (neglhs.args[1]==:q || neglhs.args[1]==:d)) && error("lhs of events must be a continuous or a discrete variable")
                     if neglhs.args[1]==:q
                         push!(negEv_conArrLHS,neglhs.args[2])
                     else # lhs is a disc var 
                         push!(negEv_disArrLHS,neglhs.args[2])
                     end
-                    negtwalk(negrhs) do a   #
+                    postwalk(negrhs) do a   #
                         if a isa Expr && a.head == :ref && a.args[1]==:q# 
                             push!(negEv_conArrRHS,  (a.args[2]))  #                    
                         end
@@ -312,13 +314,13 @@ dDVect = [[5, 2, 3, 4, 1], [5, 1]] =#
     functioncodeF=@RuntimeGeneratedFunction(functioncode)
      
     
-    myodeProblem = NLODEDiscProblem(Val(1),Val(T),Val(Z),Val(2Z),num_cache_equs,initCond, discrVars, jacVect ,ZCjac  ,functioncodeF, evsArr,SDVect,HZ,HD,SZvect,mapFunF)
+    myodeProblem = NLODEDiscProblem(:f,Val(1),Val(T),Val(Z),Val(2Z),Val(num_cache_equs),initCond, discrVars, jacVect ,ZCjac  ,functioncodeF, evsArr,SDVect,HZ,HD,SZvect,mapFunF)
   
 
 end
 
 
-function saveNLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{D},::Val{Z},initCond::Dict{Union{Int,Expr},Int},du::Symbol)where {T,D,Z}
+#= function saveNLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{D},::Val{Z},initCond::Dict{Union{Int,Expr},Int},du::Symbol)where {T,D,Z}
     prob=NLodeProblemFunc(odeExprs,Val(T),Val(D),Val(Z))
     def=splitdef(prob.eqs)
     if (odeExprs.args[1] isa Symbol) 
@@ -370,7 +372,7 @@ function saveNLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{D},::Val{Z},initCond
         println(io,string(problemcode)) 
     end
     return prob # just in case you want to solve/run while saving a problem    
-end
+end =#
 
 
 function createdDvect(dD::Dict{Union{Int64, Expr}, Set{Union{Int64, Expr, Symbol}}})

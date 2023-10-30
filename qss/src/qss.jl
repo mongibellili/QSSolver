@@ -89,9 +89,12 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
     include("Common/SolutionPlot.jl")
     include("Common/SolutionError.jl")
 
-    include("Common/QSSNLContinousProblem.jl")
-    #include("Common/QSSNLdiscrProblem.jl")
+
     include("Common/Helper_QSSNLProblem.jl")
+    include("Common/Helper_QSSNLDiscreteProblem.jl")
+    include("Common/QSSNLContinousProblem.jl")
+    include("Common/QSSNLdiscrProblem.jl")
+    
    
     include("Common/QSS_data.jl")
     include("Common/Scheduler.jl")
@@ -100,14 +103,14 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
     # integrator
   
     include("dense/NL_integrators/NL_QSS_Integrator.jl")
-   # include("dense/NL_integrators/NL_QSS_discreteIntegrator.jl")
+    include("dense/NL_integrators/NL_QSS_discreteIntegrator.jl")
     # implicit integrator when large entries on the main diagonal of the jacobian
   #  include("dense/NL_integrators/NL_LiQSS_Integrator.jl")
    # include("dense/NL_integrators/NL_LiQSS_discreteIntegrator.jl")
     # implicit integrator when large entries NOT on the main diagonal of the jacobian
 
     include("dense/NL_integrators/NL_nmLiQSS_Integrator.jl")
-  #  include("dense/NL_integrators/NL_nmLiQSS_discreteIntegrator.jl")
+    include("dense/NL_integrators/NL_nmLiQSS_discreteIntegrator.jl")
    
 
    #implicit intgrators used to show improvement of modifications

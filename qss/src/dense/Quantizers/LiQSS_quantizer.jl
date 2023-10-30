@@ -573,7 +573,7 @@ end
 
 
     else
-        println("a==0")
+        #println("a==0")
         if x2!=0.0  
            h=sqrt(abs(2*quan/x2))   #sqrt necessary with u2
            q=x-h*h*x2/2
@@ -943,6 +943,11 @@ function Liqss_reComputeNextTime(::Val{1}, i::Int, simt::Float64, nextStateTime:
     if nextStateTime[i]<simt # this is coming from the fact that a variable can reach 2quan distance when it is not its turn, then computation above gives next=simt+(p-p)/dx...p-p should be zero but it can be very small negative
         nextStateTime[i]=simt+1e-12
     end
+   #=  if 11.377869511741662<=simt<=13.578335986845602 && (i==2 || i==5) 
+        println("recomputeNext  at simt=$simt index=$i")
+        @show x1,q,x,nextStateTime[i]
+        
+       end =#
 end
 
 

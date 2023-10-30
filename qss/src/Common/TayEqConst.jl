@@ -15,7 +15,7 @@
    
     prewalk(ex) do x
       #############################minus sign#############################################
-      if x isa Expr && x.head == :call && x.args[1] == :- && length(x.args) == 3  && !(x.args[2] isa Int) && !(x.args[3] isa Int) #last 2 to avoid changing u[i-1]  #MacroTools.isexpr(x, :call) replaces the begining
+      if x isa Expr && x.head == :call && x.args[1] == :- && length(x.args) == 3  && (!(x.args[2] isa Symbol)|| x.args[2]==:t) && (typeof(x.args[3])!=Symbol || x.args[3]==:t) #last 2 to avoid changing u[i-1]  #MacroTools.isexpr(x, :call) replaces the begining
               if x.args[2] isa Expr && x.args[2].head == :call && x.args[2].args[1] == :- && length(x.args[2].args) == 3
                   push!(x.args, x.args[3])#  args[4]=c
                   x.args[3] = x.args[2].args[3]# args[3]=b
@@ -59,7 +59,7 @@
               push!(cachexpr.args,length(cachexpr_lengthtracker.args))
               push!(x.args, cachexpr)
       ############################### plus sign#######################################
-      elseif x isa Expr && x.head == :call && x.args[1] == :+ && length(x.args) == 3 && typeof(x.args[2])!=Int && typeof(x.args[3])!=Int #last 2 to avoid changing u[i+1]
+      elseif x isa Expr && x.head == :call && x.args[1] == :+ && length(x.args) == 3 && (typeof(x.args[2])!=Symbol|| x.args[2]==:t) && (typeof(x.args[3])!=Symbol|| x.args[3]==:t) #last 2 to avoid changing u[i+1]
             if x.args[2] isa Expr && x.args[2].head == :call && x.args[2].args[1] == :- && length(x.args[2].args) == 3        
                   push!(x.args, x.args[3])#  args[4]=c
                   x.args[3] = x.args[2].args[3]# args[3]=b
@@ -94,7 +94,7 @@
                 push!(x.args, cachexpr)
      ############################### multiply sign#######################################
         #never happens :#  elseif x isa Expr && x.head == :call && x.args[1]==:* && length(x.args)==3 to get addmul or submul 
-      elseif x isa Expr && x.head == :call && (x.args[1] == :*) && (3 == length(x.args))  && typeof(x.args[2])!=Int && typeof(x.args[3])!=Int #last 2 to avoid changing u[i*1]
+      elseif x isa Expr && x.head == :call && (x.args[1] == :*) && (3 == length(x.args))  && (typeof(x.args[2])!=Symbol|| x.args[2]==:t) && (typeof(x.args[3])!=Symbol|| x.args[3]==:t) #last 2 to avoid changing u[i*1]
              x.args[1] = :mulT
              push!(cachexpr_lengthtracker.args,:b)
              cachexpr1 = Expr(:ref, :cache)
@@ -110,7 +110,7 @@
               cachexpr2 = Expr(:ref, :cache)   #multiply needs two caches
               push!(cachexpr2.args,length(cachexpr_lengthtracker.args))
               push!(x.args, cachexpr2)
-      elseif x isa Expr && x.head == :call && (x.args[1] == :/) && typeof(x.args[2])!=Int && typeof(x.args[3])!=Int #last 2 to avoid changing u[i/1]
+      elseif x isa Expr && x.head == :call && (x.args[1] == :/) && (typeof(x.args[2])!=Symbol || x.args[2]==:t) && (typeof(x.args[3])!=Symbol || x.args[3]==:t) #last 2 to avoid changing u[i/1]
                 x.args[1] = :divT   
                 push!(cachexpr_lengthtracker.args,:b)
                 cachexpr = Expr(:ref, :cache)

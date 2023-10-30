@@ -161,6 +161,7 @@ function createMapFun(jac:: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},fu
             ss*=" end \n"
         elseif dictElement[1] isa Expr
             ss*="elseif $(dictElement[1].args[1])<=i<=$(dictElement[1].args[2])  \n"
+            @show dictElement[2]
             ns=sort!(collect(dictElement[2]))
             ss*="if j==0 return nothing\n"
             iter=1

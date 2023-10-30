@@ -42,20 +42,33 @@ function nmisCycle_and_simulUpdate(cacherealPosi::Vector{Vector{Float64}},cacher
     end
                              
    ########condition:Union 
-#=  if abs(dxj)*3<abs(ẋj) || abs(dxj)>3*abs(ẋj) || (dxj*ẋj)<0.0 
+ #= if abs(dxj)*3<abs(ẋj) || abs(dxj)>3*abs(ẋj) || (dxj*ẋj)<0.0 
     if abs(dxi)>3*abs(ẋi) || abs(dxi)*3<abs(ẋi) ||  (dxi*ẋi)<0.0 
         iscycle=true
     end
-  end    =#                          
+  end   =#                           
     ########condition:Union i
-    if abs(dxj-ẋj)>(abs(dxj+ẋj)/2)  
+  #=   if abs(dxj-ẋj)>(abs(dxj+ẋj)/2)  
       if abs(dxi-dxithrow)>(abs(dxi+dxithrow)/2) 
         iscycle=true
       end
-    end
+    end =#
+    ########condition:Union i union
+    if abs(dxj)*3<abs(ẋj) || abs(dxj)>3*abs(ẋj) || (dxj*ẋj)<0.0 
+      if abs(dxi)>3*abs(dxithrow) || abs(dxi)*3<abs(dxithrow) ||  (dxi*dxithrow)<0.0 || abs(dxi)>3*abs(ẋi) || abs(dxi)*3<abs(ẋi) ||  (dxi*ẋi)<0.0 
+          iscycle=true
+      end
+    end   
+   #=  if 11.377869511741662<=simt<=12.0578335986845602 && (index==1 #= || index==5 =#) && (j==2 #= || j==5 =#) 
+      println("simulUpdate $iscycle at simt=$simt index=$index, j=$j")
+      @show  ẋi,dxi,dxithrow,ẋj,dxj
+      @show qj,xj
+     
+      
+     end =#
  
-
    if iscycle
+   
       #trackSimul[1]+=1 # do not have to recomputeNext
        #find positive zeros f=+-Δ
       bi=aii*xi+aij*xj+uij;ci=aij*(aji*xi+uji)-ajj*(aii*xi+uij);αi=-ajj-aii;βi=aii*ajj-aij*aji
