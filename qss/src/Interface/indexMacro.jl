@@ -2,7 +2,7 @@
 
 macro NLodeProblem(odeExprs)
     Base.remove_linenums!(odeExprs)
-    if verbose println("starting prob parsing...") end 
+    if VERBOSE println("starting prob parsing...") end 
     probHelper=arrangeProb(odeExprs)# replace symbols and params , extract info about size,symbols,initconds
     probSize=probHelper.problemSize
     discSize=probHelper.discreteSize
@@ -29,7 +29,7 @@ end
 
 #= macro saveNLodeProblem(odeExprs) # recommended for large cont problems to save first
     Base.remove_linenums!(odeExprs)
-    if verbose println("starting prob saving...") end 
+    if VERBOSE println("starting prob saving...") end 
     probHelper=arrangeProb(odeExprs)
     probSize=probHelper.problemSize
     discSize=probHelper.discreteSize

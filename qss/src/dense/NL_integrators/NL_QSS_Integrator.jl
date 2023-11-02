@@ -37,10 +37,10 @@ for i = 1:T
   computeNextTime(Val(O), i, initTime, nextStateTime, x, quantum)
   initSmallAdvance=0.1
   #t[0]=initTime#initSmallAdvance
-  clearCache(taylorOpsCache,Val(CS),Val(O));
+ # clearCache(taylorOpsCache,Val(CS),Val(O));
   #@timeit "f" 
   f(i,q,t,taylorOpsCache);#@show taylorOpsCache
-  computeNextInputTime(Val(O), i, initTime, initSmallAdvance,taylorOpsCache[1] , nextInputTime, x,  quantum)
+ computeNextInputTime(Val(O), i, initTime, initSmallAdvance,taylorOpsCache[1] , nextInputTime, x,  quantum)
   #= assignXPrevStepVals(Val(O),prevStepVal,x,i) =#
 end
 
@@ -68,6 +68,7 @@ simt = initTime ;totalSteps=0;prevStepTime=initTime
     t[0]=simt
   ##########################################state######################################## 
   if sch[3] == :ST_STATE
+    numSteps[index]+=1;
     elapsed = simt - tx[index];integrateState(Val(O),x[index],elapsed);tx[index] = simt 
     quantum[index] = relQ * abs(x[index].coeffs[1]) ;quantum[index]=quantum[index] < absQ ? absQ : quantum[index];quantum[index]=quantum[index] > maxErr ? maxErr : quantum[index]   
     for k = 1:O q[index].coeffs[k] = x[index].coeffs[k] end; tq[index] = simt    
@@ -126,17 +127,17 @@ simt = initTime ;totalSteps=0;prevStepTime=initTime
     end
   end
   prevStepTime=simt =#
-   #=   push!(savedVars[index],x[index][0])
+     push!(savedVars[index],x[index][0])
     push!(savedTimes[index],simt)
-    push!(savedVarsQ[index],q[index][0]) =#
+  #  push!(savedVarsQ[index],q[index][0])
 
 
 
-    for i=1:T
+   #=  for i=1:T
       push!(savedVars[i],x[i][0])
       push!(savedTimes[i],simt)
       push!(savedVarsQ[i],q[i][0])
-    end
+    end =#
 
 
 
@@ -148,6 +149,7 @@ end#end while
 end
 resize!(savedTimes,saveVarsHelper[1]) =#
 
-createSol(Val(T),Val(O),savedTimes,savedVars,savedVarsQ, "qss$O",string(odep.prname),absQ,totalSteps,0,numSteps,ft)
+createSol(Val(T),Val(O),savedTimes,savedVars, "qss$O",string(odep.prname),absQ,totalSteps,0,numSteps,ft)
+
 end#end integrate
 

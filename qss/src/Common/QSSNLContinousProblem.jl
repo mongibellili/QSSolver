@@ -17,7 +17,7 @@ end
 
 # to create NLODEContProblem above
 function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{0},::Val{0}, initConditions::Vector{Float64} ,du::Symbol,symDict::Dict{Symbol,Expr})where {T}
-    if verbose println("nlodeprobfun  T= $T") end
+    if VERBOSE println("nlodeprobfun  T= $T") end
     equs=Dict{Union{Int,Expr},Expr}()
     jac = Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}()# set used because do not want to insert an existing varNum
     exacteJacExpr = Dict{Expr,Union{Float64,Int,Symbol,Expr}}()
@@ -30,6 +30,9 @@ function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{0},::Val{0}, initConditi
             varNum=y.args[2] # order/index of variable
             if rhs isa Number # rhs of equ =number  
                 equs[varNum]=:($((transformFSimplecase(:($(rhs)))))) #change rhs from N to cache=taylor0=[[N,0,0],2] for order 2 for exple
+            elseif rhs isa Symbol # case du=t   
+                #equs[varNum ]=quote $rhs end
+                equs[varNum ]=:($((transformFSimplecase(:($(rhs))))))#
             elseif rhs.head==:ref #rhs is only one var
                 extractJacDepNormal(varNum,rhs,jac,exacteJacExpr ,symDict ) #extract jacobian and SD dependencies from normal equation
                 equs[varNum ]=:($((transformFSimplecase(:($(rhs))))))#change rhs from q[i] to cache=q[i] ...just put taylor var in cache

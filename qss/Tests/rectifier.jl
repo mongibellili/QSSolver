@@ -5,6 +5,7 @@ gr(); =#
 
 function test()
     odeprob = @NLodeProblem begin
+        name=(rectifier,)
         #= parameter1=3000.0# cache can be dynamic....parameters take this feature
         parameter2=0.00001 =#
         L=1e3;R=10.0;uu=311.0;ROn = 1.0; ROff = 0.0;w=314.16
@@ -36,7 +37,11 @@ function test()
   # @show sol
  # @show 5
   save_Sol(sol)
-  # save_Sol(sol,xlims=(0.0,0.06) ,ylims=(-2.04e-1,2.06e-1))
+ # save_Sol(sol,xlims=(0.0,0.06) ,ylims=(-1e-2,1e-2))
+   #save_Sol(sol,xlims=(0.0,0.06) ,ylims=(-1e-1,1e-1))
+   #save_Sol(sol,xlims=(0.0,0.06) ,ylims=(-1.0,1.0))
+  # save_Sol(sol,xlims=(0.0,0.06) ,ylims=(-2.0,2.0))
+  # save_Sol(sol,xlims=(0.0,0.06) ,ylims=(-4.0,4.0))
 end
 #@btime 
 test()

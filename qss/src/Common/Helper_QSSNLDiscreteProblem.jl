@@ -4,7 +4,7 @@ struct EventDependencyStruct
   id::Int
   evCont::Vector{Int}
   evDisc::Vector{Int}
-  evContRHS::Vector{Int}
+  evContRHS::Vector{Int} # used to update other Qs before executing the event
 end
 # the following functions handle discrete problems
  
@@ -153,7 +153,7 @@ lendD=length(dD)
       hzSet=Set{Int}()
         evdiscrete=eventDep[j].evDisc
         for i in evdiscrete
-             if i<lendD  
+             if i<=lendD  
               for k in dD[i]
                 push!(hdSet,k)
               end

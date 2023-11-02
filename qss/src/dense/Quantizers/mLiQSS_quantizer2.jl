@@ -3,9 +3,9 @@
 function nmisCycle_and_simulUpdate(cacherealPosi,cacherealPosj,aij,aji,respp::Ptr{Float64}, pp::Ptr{NTuple{2,Float64}},trackSimul,::Val{2},index::Int,j::Int,dirI::Float64,firstguessH::Float64, x::Vector{Taylor0},q::Vector{Taylor0}, quantum::Vector{Float64},exacteA::Function,cacheA::MVector{1,Float64},dxaux::Vector{MVector{2,Float64}},qaux::Vector{MVector{2,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64)
   
 
-   exacteA(q,cacheA,index,index)
+  cacheA[1]=0.0;exacteA(q,cacheA,index,index)
    aii=cacheA[1]
-   exacteA(q,cacheA,j,j)
+   cacheA[1]=0.0; exacteA(q,cacheA,j,j)
    ajj=cacheA[1]
 
 
@@ -640,7 +640,7 @@ function updateQ(::Val{2},i::Int, xv::Vector{Taylor0},qv::Vector{Taylor0}, quant
       #a=getA(Val(Sparsity),cacheA,av,i,i,map)
       #a=av[i][i]
       
-      exacteA(qv,cacheA,i,i)
+     cacheA[1]=0.0; exacteA(qv,cacheA,i,i)
     
         a=cacheA[1]
     # @show a,i

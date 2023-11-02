@@ -1,8 +1,8 @@
 module qss
 
-const global verbose=false
+const global VERBOSE=true
 
-# const global debug=false
+const global DEBUG=true
 
 #using ResumableFunctions
 using RuntimeGeneratedFunctions

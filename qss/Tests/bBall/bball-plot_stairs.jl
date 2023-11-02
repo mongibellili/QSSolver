@@ -10,10 +10,10 @@ function test()
 
         #= parameter1=3000.0# cache can be dynamic....parameters take this feature
         parameter2=0.00001 =#
-        u = [20.0,0.0]
+        u = [20.0,-0.001]
         discrete = [15.0]
         du[1] =u[2]
-        du[2] =-9.8
+        du[2] =-t
         if discrete[1]-u[1]>0   #5*discrte gave error
             u[2]=-u[2]*0.5   #discrete=0.0-->type Symbol has no field args...find to personalize error msg  
            # discrete[1]=discrete[1]-5.0          
@@ -24,17 +24,17 @@ function test()
         if u[2]>0
             discrete[1]=discrete[1]-5.0 #the zc will happen once going up and once going down...so step is -10
         end
-     #=    if u[2]>0
-            u[1]=5.0
+                                        #=    if u[2]>0
+                                                u[1]=5.0
 
-        end =#
+                                            end =#
     end
     #sol= QSS_Solve(odeprob,2.3,qss2(),saveat(0.01),0.0,1e-6,1e-3)
    # save_prob_to_model(odeprob,"D:/models/bball.jl","bball") #any location you want
 
 
-   sol= QSS_Solve(odeprob,qss2()#= ,dQmin=absTol,saveat=0.01,dQrel=relTol =#,finalTime=30.0)
-   # save_Sol(sol)
+   sol= QSS_Solve(odeprob,qss2()#= ,dQmin=absTol,saveat=0.01,dQrel=relTol =#,finalTime=10.0)
+    save_Sol(sol)
 
 
    #=  sol=QSS_Solve_from_model(bball,odeprob,10.0,mliqss2(),saveat(0.01),0.0,1e-6,1e-3)
@@ -43,7 +43,8 @@ function test()
     #= sol= QSS_Solve(odeprob,1.0,qss3(),saveat(0.01),0.0,1e-6,1e-3)
       save_Sol(sol) =#
 end
-@time test()
+#@time 
+test()
 #= function test2()
     odeprob = @NLodeProblem begin
         parameter2=30.0# why 300 bad

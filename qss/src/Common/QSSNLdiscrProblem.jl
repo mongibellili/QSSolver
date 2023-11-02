@@ -57,7 +57,7 @@ end =#
 
 # receives user code and creates the problem struct
 function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{D},::Val{Z},initCond::Vector{Float64},du::Symbol,symDict::Dict{Symbol,Expr})where {T,D,Z}
-    if verbose println("discrete nlodeprobfun  T D Z= $T $D $Z") end
+    if VERBOSE println("discrete nlodeprobfun  T D Z= $T $D $Z") end
     discrVars=Vector{Float64}()
     equs=Dict{Union{Int,Expr},Union{Int,Symbol,Expr}}()
     jac = Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}()# set used because do not want to insert an existing varNum
@@ -196,7 +196,7 @@ function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{D},::Val{Z},initCond::Ve
             
                 end
             end 
-            structposEvent = EventDependencyStruct(indexPosEv, posEv_conArrLHS, posEv_disArrLHS,posEv_conArrRHS) # right now posEv_conArr is vect of floats
+            structposEvent = EventDependencyStruct(indexPosEv, posEv_conArrLHS, posEv_disArrLHS,posEv_conArrRHS) # right now posEv_conArr is vect of ...
             push!(evsArr, structposEvent)
             structnegEvent = EventDependencyStruct(indexNegEv, negEv_conArrLHS, negEv_disArrLHS,negEv_conArrRHS)
             push!(evsArr, structnegEvent)
@@ -255,10 +255,17 @@ function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{D},::Val{Z},initCond::Ve
         push!(allEpxpr.args,myex3)
     end
 
+    fname= :f #default problem name
+    #path="./temp.jl" #default path 
+    if odeExprs.args[1] isa Expr && odeExprs.args[1].args[2] isa Expr && odeExprs.args[1].args[2].head == :tuple#user has to enter problem info in a tuple
+        fname= odeExprs.args[1].args[2].args[1]
+        #path=odeExprs.args[1].args[2].args[2]
+    end
+
     Base.remove_linenums!(allEpxpr)
     def=Dict{Symbol,Any}()
     def[:head] = :function
-    def[:name] = :f   
+    def[:name] = fname  
     def[:args] = [:(i::Int),:(zc::Int),:(ev::Int),:(q::Vector{Taylor0}),:(d::Vector{Float64}), :(t::Taylor0),:(cache::Vector{Taylor0})]
     def[:body] = allEpxpr
     #def[:rtype]=:nothing# test if cache1 always holds sol  
@@ -280,10 +287,12 @@ dZ = Dict{Int64, Set{Int64}}(1 => Set([1])) =#
 
 jacVect=createJacVect(jac,Val(T))
 SDVect=createSDVect(jac,Val(T))
+#@show dD
 dDVect =createdDvect(dD)
-jacDiscreteVect=createJacVect(jacDiscrete,Val(T))
+jacDiscreteVect=createJacVect(jacDiscrete,Val(T)) #
 SZvect=createSZvect(SZ,Val(T))
-
+#@show evsArr
+#@show jacVect,SDVect,dDVect,SZvect
 #= SDVect = [Int64[], [2, 1], [3], [4], Int64[]]    
 jacVect = [[2], [2], [3], [4], Int64[]]
 jacDiscreteVect = [[2, 1], [1], [1], [1], [2, 1]]
@@ -297,24 +306,26 @@ dDVect = [[5, 2, 3, 4, 1], [5, 1]] =#
 
     # HZ1=Hd-->dZ  where Hd  comes from the eventDependecies Struct. 
     HZ1HD1=createDependencyToEventsDiscr(dDVect,dZ,evsArr) 
-
+  # @show HZ1HD1
     # (2) through a continous Var: 
     # ==============================
      #  HD2=Hs-->sD where  Hs comes from the eventDependecies Struct.(sd already created) 
      #  HZ2=Hs-->sZ where  Hs comes from the eventDependecies Struct.(sZ already created) 
     HZ2HD2=createDependencyToEventsCont(SDVect,SZ,evsArr) 
-   # @show HZ2HD2
+  #  @show HZ2HD2
     ##########UNION##############
     HZ=unionDependency(HZ1HD1[1],HZ2HD2[1])
+   # @show HZ
     HD=unionDependency(HZ1HD1[2],HZ2HD2[2])
-
+  # @show HD
  
-    mapFun=createMapFun(jac,:f)
+    mapFun=createMapFun(jac,fname)
+   # @show mapFun
     mapFunF=@RuntimeGeneratedFunction(mapFun)
     functioncodeF=@RuntimeGeneratedFunction(functioncode)
      
     
-    myodeProblem = NLODEDiscProblem(:f,Val(1),Val(T),Val(Z),Val(2Z),Val(num_cache_equs),initCond, discrVars, jacVect ,ZCjac  ,functioncodeF, evsArr,SDVect,HZ,HD,SZvect,mapFunF)
+    myodeProblem = NLODEDiscProblem(fname,Val(1),Val(T),Val(Z),Val(2Z),Val(num_cache_equs),initCond, discrVars, jacVect ,ZCjac  ,functioncodeF, evsArr,SDVect,HZ,HD,SZvect,mapFunF)
   
 
 end
