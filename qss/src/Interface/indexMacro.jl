@@ -24,28 +24,11 @@ macro NLodeProblem(odeExprs)
         end
     end
 
-    NLodeProblemFunc(odeExprs,Val(probSize),Val(discSize),Val(zcSize),initConds,du,symDict)     #returns continuours prob   
+    NLodeProblemFunc(odeExprs,Val(probSize),Val(discSize),Val(zcSize),initConds,du,symDict)     #returns  prob   
 end
 
-#= macro saveNLodeProblem(odeExprs) # recommended for large cont problems to save first
-    Base.remove_linenums!(odeExprs)
-    if VERBOSE println("starting prob saving...") end 
-    probHelper=arrangeProb(odeExprs)
-    probSize=probHelper.problemSize
-    discSize=probHelper.discreteSize
-    zcSize=probHelper.numZC
-    initConds=probHelper.savedInitCond
-    du=probHelper.du
-    if length(initConds)==0 # user chose to represent initCond in a large vector eventhough savedNLode is for large prob and representing initconds in a dict is more efficient
-        vectInitCond=probHelper.initConditions
-        for i=1:length(vectInitCond)
-            initConds[i]=vectInitCond[i]
-        end
-    end
-    saveNLodeProblemFunc(odeExprs,Val(probSize),Val(discSize),Val(zcSize),initConds,du) 
-end
- =#
-struct probHelper #helper struct to return stuff from arrangeprob
+
+struct probHelper #helper struct to return stuff from arrangeProb
     problemSize::Int
     discreteSize::Int
     numZC::Int
@@ -72,12 +55,13 @@ function arrangeProb(x::Expr) # replace symbols and params , extract info about 
             elseif y isa Expr && y.head == :ref && rhs isa Number #initial conds "1st way"  u[a]=N or u[a:b]=N...
                if string(y.args[1])[1] !='d' #prevent the case diffEq du[]=Number
                     stateVarName=y.args[1]   #extract var name
-                    if du==:nothing du=Symbol(:d,stateVarName) end # 
+                    if du==:nothing du=Symbol(:d,stateVarName) end # construct symbol du
                     if  y.args[2] isa Expr && y.args[2].args[1]== :(:)  #u[a:b]=N
-                            y.args[2].args!=3 || error(" use syntax u[a:b]") # not needed
+
+                            length(y.args[2].args)==3 || error(" use syntax u[a:b]") # not needed
                             savedInitCond[:(($(y.args[2].args[2]),$(y.args[2].args[3])))]=rhs# dict {expr->float}
                             if problemSize < y.args[2].args[3]
-                                problemSize=y.args[2].args[3]
+                                problemSize=y.args[2].args[3] #largest b determines probSize
                             end
                     elseif y.args[2] isa Int   #u[a]=N
                         problemSize+=1
@@ -93,7 +77,7 @@ function arrangeProb(x::Expr) # replace symbols and params , extract info about 
                 else
                     discreteSize = length(rhs.args)  
                 end    
-            elseif y isa Expr && y.head == :ref && rhs isa Expr && rhs.head !=:vect#&& rhs.head==:call # a diff equa not in a loop
+            elseif y isa Expr && y.head == :ref && rhs isa Expr && rhs.head !=:vect#&& rhs.head==:call or ref # a diff equa not in a loop
                 argI.args[2]=changeVarNames_params(rhs,stateVarName,:nothing,param,symDict)
             end
         elseif @capture(argI, for var_ in b_:niter_ loopbody__ end)
@@ -103,13 +87,13 @@ function arrangeProb(x::Expr) # replace symbols and params , extract info about 
             (length(argI.args)!=3 && length(argI.args)!=2) && error("use format if A>0 B else C or if A>0 B")
             !(argI.args[1] isa Expr && argI.args[1].head==:call && argI.args[1].args[1]==:> && (argI.args[1].args[3]==0||argI.args[1].args[3]==0.0)) && error("use the format 'if a>0: change if a>b to if a-b>0")
               !(argI.args[1].args[2] isa Expr) && error("LHS of >  must be be an expression!")
-              argI.args[1].args[2]=changeVarNames_params(argI.args[1].args[2],stateVarName,:nothing,param)# name changes have to be per block
+              argI.args[1].args[2]=changeVarNames_params(argI.args[1].args[2],stateVarName,:nothing,param)#zcf
+              # name changes have to be per block
               if length(argI.args)==2 #user used if a b
-                argI.args[2]=changeVarNames_params(argI.args[2],stateVarName,:nothing,param)
+                argI.args[2]=changeVarNames_params(argI.args[2],stateVarName,:nothing,param) #posEv
               elseif length(argI.args)==3 #user used if a b else c
-                argI.args[2]=changeVarNames_params(argI.args[2],stateVarName,:nothing,param)
-                argI.args[3]=changeVarNames_params(argI.args[3],stateVarName,:nothing,param)
-                
+                argI.args[2]=changeVarNames_params(argI.args[2],stateVarName,:nothing,param)#posEv
+                argI.args[3]=changeVarNames_params(argI.args[3],stateVarName,:nothing,param)#negEv
               end
         end#end cases of argI
     end#end for argI in args

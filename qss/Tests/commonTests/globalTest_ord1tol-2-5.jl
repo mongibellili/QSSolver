@@ -37,7 +37,7 @@ function test(case,solvr)
 
 
     
-      BSON.@load "qss/ref_bson/solVect_Tyson_Rodas5Pe-12.bson" solRodas5PVectorTyson
+   #=    BSON.@load "qss/ref_bson/solVect_Tyson_Rodas5Pe-12.bson" solRodas5PVectorTyson
      odeprob = @NLodeProblem begin
          name=(tyson,)
          u = [0.0,0.75,0.25,0.0,0.0,0.0]
@@ -51,7 +51,9 @@ function test(case,solvr)
      println("start tyson solving")
      timenmliqss=0.0
      solnmliqss=QSS_Solve(odeprob,solvr,dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=25.0#= ,maxErr=100*relTol =#)
-    save_Sol(solnmliqss,1,2,3,4,5,6#= xlims=(10.3778695,14.5789) =#)
+    save_Sol(solnmliqss,1,2,3,4,5,6#= xlims=(10.3778695,14.5789) =#) =#
+
+
     # save_Sol(solnmliqss,1,note="x1 intrval13  ",xlims=(4.0,4.38),ylims=(0.0007,0.000723))
  #=    solnmliqssInterp=solInterpolated(solnmliqss,0.01)
     err3=getAverageErrorByRefs(solRodas5PVectorTyson,solnmliqssInterp) 
@@ -62,18 +64,22 @@ function test(case,solvr)
      
 
 
-    #=   BSON.@load "qss/ref_bson/solVectAdvection_N1000d01_Feagin14e-12.bson" solFeagin14VectorN1000d01
+      BSON.@load "qss/ref_bson/solVectAdvection_N1000d01_Feagin14e-12.bson" solFeagin14VectorN1000d01
     prob=@NLodeProblem begin
         name=(adrN1000d01,)
         u[1:333]=1.0
         u[334:1000]=0.0
         _dx=100.0#1/dx=N/10=1000/10
         a=1.0;d=0.1;r=1000.0
+        #discrete=[0.0]
         du[1] = -a*_dx*(u[1]-0.0)+d*_dx*_dx*(u[2]-2.0*u[1]+0.0)+r*u[1]*u[1]*(1.0-u[1]) 
         for k in 2:999  
             du[k]=-a*_dx*(u[k]-u[k-1])+d*_dx*_dx*(u[k+1]-2.0*u[k]+u[k-1])+r*u[k]*u[k]*(1.0-u[k]) ;
         end 
         du[1000]=-a*_dx*(u[1000]-u[999])+d*_dx*_dx*(2.0*u[999]-2.0*u[1000])+r*u[1000]*u[1000]*(1.0-u[1000]) 
+       #=  if u[1]-10.0>0.0 #fake to test discreteintgrator & loop
+          discrete[1]=1.0
+        end =#
     end
     println("start adr solving")
     ttnmliqss=0.0
@@ -81,13 +87,13 @@ function test(case,solvr)
   
     solnmliqss=QSS_Solve(prob,solvr,dQmin=absTol,saveat=0.01,dQrel=relTol,finalTime=4.0)#
     @show solnmliqss.totalSteps,solnmliqss.simulStepCount 
-    save_Sol(solnmliqss,1,2,600,1000) =#
+    save_Sol(solnmliqss,1,2,600,1000) 
     #=   solnmliqssInterp=solInterpolated(solnmliqss,0.01)
     err4=getAverageErrorByRefs(solFeagin14VectorN1000d01,solnmliqssInterp)
     @show err4,solnmliqss.totalSteps
   # ttnmliqss=@belapsed QSS_Solve($prob,$solvr,dQmin=$absTol,saveat=0.01,dQrel=$relTol,finalTime=10.0)
     resnmliqss12E_2= ("$(solnmliqss.algName)",relTol,err4,solnmliqss.totalSteps,solnmliqss.simulStepCount,ttnmliqss)
-    @show resnmliqss12E_2    =# 
+    @show resnmliqss12E_2    =#
 
 
 

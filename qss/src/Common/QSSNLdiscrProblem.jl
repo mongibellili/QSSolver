@@ -19,34 +19,15 @@ struct NLODEDiscProblem{PRTYPE,T,Z,Y,CS}<: NLODEProblem{PRTYPE,T,Z,Y,CS}
     initConditions::Vector{Float64}  
     discreteVars::Vector{Float64}   
     jac::Vector{Vector{Int}}#Jacobian dependency..I have a der and I want to know which vars affect it...opposite of SD
-    ZCjac::Vector{Vector{Int}}
+    ZCjac::Vector{Vector{Int}} # to update other Qs before checking ZCfunction
     eqs::Function#function that holds all ODEs
     eventDependencies::Vector{EventDependencyStruct}# 
     SD::Vector{Vector{Int}}#  I have a var and I want the der that are affected by it
     HZ::Vector{Vector{Int}}#  an ev occured and I want the ZC that are affected by it
     HD::Vector{Vector{Int}}#  an ev occured and I want the der that are affected by it
     SZ::Vector{Vector{Int}}#  I have a var and I want the ZC that are affected by it
-    map::Function
+    exactJac::Function #used only in the implicit integration: linear approximation
 end
-#= struct savedNLODEDiscProblem{PRTYPE,T,Z,Y}<:  NLODEProblem{PRTYPE,T,Z,Y} 
-    prtype::Val{PRTYPE}
-    cacheSize::Int
-    #initConditions::SVector{T,Float64}    
-    initConditions::Vector{Float64}  
-    discreteVars::Vector{Float64}   
-    jacInts::Vector{Vector{Int}}#Jacobian dependency..I have a der and I want to know which vars affect it...opposite of SD
-   # eqs::Expr#function that holds all ODEs
-    zc_SimpleJac::SVector{Z,SVector{T,Int}}#ZC jac dependency...later do not use SA for large sys...opposite of SZ
-    #ZC_jacDiscrete::SVector{Z,SVector{D,Basic}}
-    eventDependencies::SVector{Y,EventDependencyStruct}# 
-    #initJac::MVector{T,MVector{T,Float64}}
-    initJac :: Vector{Vector{Float64}} #initial values of jac
-    #SD::SVector{T,SVector{T,Int}}
-    SD::Vector{Vector{Int}}#  I have a var and I want the der that are affected by it
-    HZ::SVector{Y,SVector{Z,Int}}#  an ev occured and I want the ZC that are affected by it
-    HD::SVector{Y,SVector{T,Int}}#  an ev occured and I want the der that are affected by it
-    SZ::SVector{T,SVector{Z,Int}}#  I have a var and I want the ZC that are affected by it
-end =#
 
 function getInitCond(prob::NLODEDiscProblem,i::Int)
     return prob.initConditions[i]
@@ -61,10 +42,10 @@ function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{D},::Val{Z},initCond::Ve
     discrVars=Vector{Float64}()
     equs=Dict{Union{Int,Expr},Union{Int,Symbol,Expr}}()
     jac = Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}()# set used because do not want to insert an existing varNum
-    SD = Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}()  # NO need to constrcut SD...SDVect will be extracted from Jac (needed for func-save case)
-    jacDiscrete = Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}()# for now is similar to continous jac...if feature of d[i] not to be added then  jacDiscr=Dict{Union{Int,Expr},Set{Int}}()...later
+    #SD = Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}()  # NO need to constrcut SD...SDVect will be extracted from Jac (needed for func-save case)
+    #jacDiscrete = Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}()# for now is similar to continous jac...if feature of d[i] not to be added then  jacDiscr=Dict{Union{Int,Expr},Set{Int}}()...later
     dD = Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}()  # similarly if feature not given then dD=Dict{Int,Set{Union{Int,Symbol,Expr}}}()
-
+    exacteJacExpr = Dict{Expr,Union{Float64,Int,Symbol,Expr}}()
     zcequs=Vector{Expr}()#vect to collect if-statements
     eventequs=Vector{Expr}()#vect to collect events
 
@@ -88,12 +69,14 @@ function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{D},::Val{Z},initCond::Ve
                 equs[varNum]=:($((transformFSimplecase(:($(rhs))))))
             elseif rhs isa Expr && rhs.head==:ref #rhs is only one var
                # if rhs.args[1]==:q # check not needed
-                extractJacDepNormal(varNum,rhs,jac,jacDiscrete,SD,dD ) 
+                
+                extractJacDepNormal(varNum,rhs,jac,exacteJacExpr ,symDict,dD )
                # end
                 equs[varNum ]=:($((transformFSimplecase(:($(rhs))))))
             #elseif rhs isa Symbol #time t
             else #rhs head==call...to be tested later for  math functions and other possible scenarios or user erros                 
-                extractJacDepNormal(varNum,rhs,jac,jacDiscrete ,SD,dD ) 
+               
+                extractJacDepNormal(varNum,rhs,jac,exacteJacExpr ,symDict,dD )
                 temp=(transformF(:($(rhs),1))).args[2]  #number of caches distibuted   ...no need interpolation and wrap in expr....before was cuz quote....
                 if num_cache_equs<temp 
                         num_cache_equs=temp
@@ -102,7 +85,8 @@ function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{D},::Val{Z},initCond::Ve
             end 
         elseif @capture(argI, for counter_ in b_:niter_ loopbody__ end)
              specRHS=loopbody[1].args[2]
-             extractJacDepLoop(b,niter,specRHS,jac ,jacDiscrete ,SD,dD  )   
+            # extractJacDepLoop(b,niter,specRHS,jac ,jacDiscrete ,SD,dD  )   
+             extractJacDepLoop(b,niter,specRHS,jac,exacteJacExpr,symDict ,dD  ) 
              temp=(transformF(:($(specRHS),1))).args[2]
                 if num_cache_equs<temp 
                     num_cache_equs=temp
@@ -270,7 +254,7 @@ function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{D},::Val{Z},initCond::Ve
     def[:body] = allEpxpr
     #def[:rtype]=:nothing# test if cache1 always holds sol  
     functioncode=combinedef(def)
-    
+    functioncodeF=@RuntimeGeneratedFunction(functioncode)
   
 
 
@@ -289,7 +273,7 @@ jacVect=createJacVect(jac,Val(T))
 SDVect=createSDVect(jac,Val(T))
 #@show dD
 dDVect =createdDvect(dD)
-jacDiscreteVect=createJacVect(jacDiscrete,Val(T)) #
+#jacDiscreteVect=createJacVect(jacDiscrete,Val(T)) #
 SZvect=createSZvect(SZ,Val(T))
 #@show evsArr
 #@show jacVect,SDVect,dDVect,SZvect
@@ -319,71 +303,22 @@ dDVect = [[5, 2, 3, 4, 1], [5, 1]] =#
     HD=unionDependency(HZ1HD1[2],HZ2HD2[2])
   # @show HD
  
-    mapFun=createMapFun(jac,fname)
-   # @show mapFun
-    mapFunF=@RuntimeGeneratedFunction(mapFun)
-    functioncodeF=@RuntimeGeneratedFunction(functioncode)
+   # mapFun=createMapFun(jac,fname)
+   # mapFunF=@RuntimeGeneratedFunction(mapFun)
+   exacteJacfunction=createExactJacDiscreteFun(exacteJacExpr,fname)
+    exacteJacfunctionF=@RuntimeGeneratedFunction(exacteJacfunction)
+
+
+    
      
     
-    myodeProblem = NLODEDiscProblem(fname,Val(1),Val(T),Val(Z),Val(2Z),Val(num_cache_equs),initCond, discrVars, jacVect ,ZCjac  ,functioncodeF, evsArr,SDVect,HZ,HD,SZvect,mapFunF)
+    myodeProblem = NLODEDiscProblem(fname,Val(1),Val(T),Val(Z),Val(2Z),Val(num_cache_equs),initCond, discrVars, jacVect ,ZCjac  ,functioncodeF, evsArr,SDVect,HZ,HD,SZvect,exacteJacfunctionF)
   
 
 end
 
 
-#= function saveNLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{D},::Val{Z},initCond::Dict{Union{Int,Expr},Int},du::Symbol)where {T,D,Z}
-    prob=NLodeProblemFunc(odeExprs,Val(T),Val(D),Val(Z))
-    def=splitdef(prob.eqs)
-    if (odeExprs.args[1] isa Symbol) 
-        #isdefined(Main,odeExprs.args[1]) && error("model exists!")
-        def[:name]=odeExprs.args[1]
-    end   
-    functioncode=combinedef(def)
-    allEpxpr=Expr(:block)
 
-    s= " zc_SimpleJac=SVector{$Z,SVector{$T,Int}}(tuple($(prob.zc_SimpleJac)...))"
-    myex1=Meta.parse(s)
-    push!(allEpxpr.args,myex1)
-
-    s= " eventDependencies=SVector{$(2Z),EventDependencyStruct}(tuple($(prob.eventDependencies)...))"
-    myex1=Meta.parse(s)
-    push!(allEpxpr.args,myex1)
-
-    s= " HZ=SVector{$(2Z),SVector{$Z,Int}}(tuple($(prob.HZ)...))"
-    myex1=Meta.parse(s)
-    push!(allEpxpr.args,myex1)
-
-    s= " HD=SVector{$(2Z),SVector{$T,Int}}(tuple($(prob.HD)...))"
-    myex1=Meta.parse(s)
-    push!(allEpxpr.args,myex1)
-
-    s= " SZ=SVector{$(T),SVector{$Z,Int}}(tuple($(prob.SZ)...))"
-    myex1=Meta.parse(s)
-    push!(allEpxpr.args,myex1)
-
-    s="myodeProblem = savedNLODEDiscProblem($(prob.cacheSize),$(prob.initConditions), $(prob.discreteVars), $(prob.jacInts), zc_SimpleJac, eventDependencies,$(prob.initJac),$(prob.SD),HZ,HD,SZ)"
-
-   
-
-
-    myex1=Meta.parse(s)
-    push!(allEpxpr.args,myex1)
-    def=Dict{Symbol,Any}()
-    def[:head] = :function
-    if !(odeExprs.args[1] isa Symbol) 
-        def[:name] = :fproblem   
-    else
-        #isdefined(Main,odeExprs.args[1]) && error("model exists!")
-        def[:name]=Symbol(odeExprs.args[1],:_prob)
-    end
-    def[:body] = allEpxpr
-    problemcode=combinedef(def)
-    open(odeExprs.args[2], "a") do io        
-        println(io,string(functioncode))  
-        println(io,string(problemcode)) 
-    end
-    return prob # just in case you want to solve/run while saving a problem    
-end =#
 
 
 function createdDvect(dD::Dict{Union{Int64, Expr}, Set{Union{Int64, Expr, Symbol}}})

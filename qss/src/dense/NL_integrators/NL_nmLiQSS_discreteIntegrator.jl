@@ -42,8 +42,8 @@ for i =1:3
   cacherealPosi[i]=zeros(2)
   cacherealPosj[i]=zeros(2)
 end
-  exacteA(q,cacheA,1,1)
-  @show exacteA
+  exacteA(q,d,cacheA,1,1)
+  #@show exacteA
  # @show HD,HZ,SZ,d
  #@show f
   #********************************helper values*******************************  
@@ -69,7 +69,7 @@ for i = 1:T
   
   quantum[i] = relQ * abs(x[i].coeffs[1]) ;quantum[i]=quantum[i] < absQ ? absQ : quantum[i];quantum[i]=quantum[i] > maxErr ? maxErr : quantum[i] 
   
-  updateQ(Val(O),i,x,q,quantum,exacteA,cacheA,dxaux,qaux,tx,tq,initTime,ft,nextStateTime) 
+  updateQ(Val(O),i,x,q,quantum,exacteA,d,cacheA,dxaux,qaux,tx,tq,initTime,ft,nextStateTime) 
 end
 #= for i = 1:T
    clearCache(taylorOpsCache,Val(CS),Val(O));f(i,-1,-1,q,d,t,taylorOpsCache);
@@ -86,17 +86,10 @@ end =#
 
 #@show nextStateTime,nextInputTime
 for i=1:Z
-  #= clearCache(taylorOpsCache,Val(CS),Val(O));output=zcf[i](x,d,t,taylorOpsCache).coeffs[1]  =#
-  clearCache(taylorOpsCache,Val(CS),Val(O));
-  #@show taylorOpsCache
-  #@timeit "zcf" 
-  f(-1,i,-1,x,d,t,taylorOpsCache)        
-                 
+  clearCache(taylorOpsCache,Val(CS),Val(O));  f(-1,i,-1,x,d,t,taylorOpsCache)                
   oldsignValue[i,2]=taylorOpsCache[1][0] #value
   oldsignValue[i,1]=sign(taylorOpsCache[1][0]) #sign modify 
-
-  computeNextEventTime(i,taylorOpsCache[1],oldsignValue,initTime,  nextEventTime, quantum)
-
+  computeNextEventTime(Val(O),i,taylorOpsCache[1],oldsignValue,initTime,  nextEventTime, quantum)
 end
 
 ###################################################################################################################################################################
@@ -104,7 +97,7 @@ end
 #---------------------------------------------------------------------------------while loop-------------------------------------------------------------------------
 ###################################################################################################################################################################
 ####################################################################################################################################################################
-simt = initTime ;totalSteps=0;prevStepTime=initTime;modifiedIndex=0; countEvents=0
+simt = initTime ;totalSteps=0;prevStepTime=initTime;modifiedIndex=0; countEvents=0;;simulStepCount=0
   
 while simt< ft && totalSteps < 50000000
   sch = updateScheduler(Val(T),nextStateTime,nextEventTime, nextInputTime)
@@ -119,12 +112,10 @@ while simt< ft && totalSteps < 50000000
   t[0]=simt
   ##########################################state######################################## 
   if stepType == :ST_STATE
-    if 131<totalSteps<145
-      println("begin of state")
-      @show simt,index,stepType,totalSteps
-      @show x,q
-   
-     end
+    
+  
+
+
     xitemp=x[index][0]
     numSteps[index]+=1;
     
@@ -136,7 +127,7 @@ while simt< ft && totalSteps < 50000000
       elapsedq = simt - tq[b] ;
       if elapsedq>0 integrateState(Val(O-1),q[b],elapsedq);tq[b]=simt end
     end
-    firstguess=updateQ(Val(O),index,x,q,quantum,exacteA,cacheA,dxaux,qaux,tx,tq,simt,ft,nextStateTime) ;tq[index] = simt   
+    firstguess=updateQ(Val(O),index,x,q,quantum,exacteA,d,cacheA,dxaux,qaux,tx,tq,simt,ft,nextStateTime) ;tq[index] = simt   
     #----------------------------------------------------check dependecy cycles---------------------------------------------   
     trackSimul[1]=0 
     #= for i =1:5
@@ -147,8 +138,8 @@ while simt< ft && totalSteps < 50000000
         elapsedq = simt - tq[b] ;
         if elapsedq>0  integrateState(Val(O-1),q[b],elapsedq); tq[b]=simt  end
       end
-      cacheA[1]=0.0; exacteA(q,cacheA,index,j);aij=cacheA[1]# can be passed to simul so that i dont call exactfunc again
-      cacheA[1]=0.0;exacteA(q,cacheA,j,index);aji=cacheA[1]
+      cacheA[1]=0.0; exacteA(q,d,cacheA,index,j);aij=cacheA[1]# can be passed to simul so that i dont call exactfunc again
+      cacheA[1]=0.0;exacteA(q,d,cacheA,j,index);aji=cacheA[1]
      
     
     
@@ -158,8 +149,8 @@ while simt< ft && totalSteps < 50000000
             cacherealPosi[i][1]=0.0; cacherealPosi[i][2]=0.0
             cacherealPosj[i][1]=0.0; cacherealPosj[i][2]=0.0
           end 
-          @show aij,aji
-          if nmisCycle_and_simulUpdate(cacherealPosi,cacherealPosj,aij,aji,respp,pp,trackSimul,Val(O),index,j,dirI,firstguess,x,q,quantum,exacteA,cacheA,dxaux,qaux,tx,tq,simt,ft)
+         # @show aij,aji
+          if nmisCycle_and_simulUpdate(cacherealPosi,cacherealPosj,aij,aji,respp,pp,trackSimul,Val(O),index,j,dirI,firstguess,x,q,quantum,exacteA,d,cacheA,dxaux,qaux,tx,tq,simt,ft)
             simulStepCount+=1
            clearCache(taylorOpsCache,Val(CS),Val(O));f(index,-1,-1,q,d,t,taylorOpsCache);computeDerivative(Val(O), x[index], taylorOpsCache[1])
           #  clearCache(taylorOpsCache,Val(CS),Val(O));f(j,q,d,t,taylorOpsCache);computeDerivative(Val(O), x[j], taylorOpsCache[1])
@@ -174,7 +165,7 @@ while simt< ft && totalSteps < 50000000
                       elapsedq = simt - tq[b]
                       if elapsedq>0 integrateState(Val(O-1),q[b],elapsedq);tq[b]=simt end
                     end  
-                    clearCache(taylorOpsCache,Val(CS),Val(O));f(k-1,-1,q,d,t,taylorOpsCache);computeDerivative(Val(O), x[k], taylorOpsCache[1])
+                    clearCache(taylorOpsCache,Val(CS),Val(O));f(k,-1,-1,q,d,t,taylorOpsCache);computeDerivative(Val(O), x[k], taylorOpsCache[1])
                     Liqss_reComputeNextTime(Val(O), k, simt, nextStateTime, x, q, quantum)
                 end#end if k!=0
             end#end for k depend on j     
@@ -185,7 +176,7 @@ while simt< ft && totalSteps < 50000000
                   #elapsedq = simt - tq[b];if elapsedq>0 integrateState(Val(O-1),q[b],elapsedq);tq[b]=simt end
               end            
               clearCache(taylorOpsCache,Val(CS),Val(O));f(-1,k,-1,q,d,t,taylorOpsCache)   # run ZCF--------      
-              computeNextEventTime(k,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum)
+              computeNextEventTime(Val(O),k,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum)
             end#end for SZ
 
           end#end ifcycle check
@@ -202,10 +193,7 @@ while simt< ft && totalSteps < 50000000
   #-------------------------------------------------------------------------------------
   #---------------------------------normal liqss: proceed--------------------------------
   #-------------------------------------------------------------------------------------
-  #= if 0.0003>simt>0.00029
-    @show index
-    println("---before normalSD---------------", q,x,totalSteps)
-  end =#
+  
     for c in SD(index)   #index influences c  
          
       elapsedx = simt - tx[c] ;
@@ -232,20 +220,10 @@ while simt< ft && totalSteps < 50000000
           #elapsedq = simt - tq[b];if elapsedq>0 integrateState(Val(O-1),q[b],elapsedq);tq[b]=simt end
       end            
       clearCache(taylorOpsCache,Val(CS),Val(O));f(-1,j,-1,q,d,t,taylorOpsCache)   # run ZCF--------      
-      computeNextEventTime(j,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum)
+      computeNextEventTime(Val(O),j,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum)
   end#end for SZ
-  #=  if 8.377869511741662<=simt<=14.578335986845602 && (index==2 #= || index==5 =#) 
-      println("intgrator at simt=$simt index=$index")
-     
-      @show x[index],nextStateTime[index]
-      
-     end =#
-     if 131<totalSteps<145
-      println("end of state")
-      @show simt,index,stepType,totalSteps
-      @show x,q
-   
-     end
+ 
+    
     ##################################input########################################
   elseif stepType == :ST_INPUT  # time of change has come to a state var that does not depend on anything...no one will give you a chance to change but yourself    
   #=   if VERBOSE println("nmliqss discreteintgrator under input, index= $index, totalsteps= $totalSteps")  end
@@ -283,113 +261,70 @@ while simt< ft && totalSteps < 50000000
        
         end              
        #=  clearCache(taylorOpsCache,Val(CS),Val(O))#normally and later i should update x,q (integrate q=q+e derQ  for higher orders)
-        computeNextEventTime(j,zcf[j](x,d,t,taylorOpsCache),oldsignValue,simt,  nextEventTime, quantum)#,maxIterer)  =#
+        computeNextEventTime(Val(O),j,zcf[j](x,d,t,taylorOpsCache),oldsignValue,simt,  nextEventTime, quantum)#,maxIterer)  =#
         clearCache(taylorOpsCache,Val(CS),Val(O));f(-1,j,-1,x,d,t,taylorOpsCache)        
-         computeNextEventTime(j,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum)
+         computeNextEventTime(Val(O),j,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum)
      
     end =#
   #################################################################event########################################
   
 else
-  if 131<totalSteps<145
-      println("begin of event")
-      @show simt,index,stepType,totalSteps
-      @show x,q
-   
-     end
-         # printcounter=5
          if VERBOSE println("x at start of event simt=$simt index=$index") end
-       
-       
-      
           for b in zc_SimpleJac[index] # elapsed update all other vars that this zc depends upon.
-              
-             #=  elapsedq = simt - tq[b];
-              if elapsedq>0 
-                integrateState(Val(O),q[b],elapsedq);
-               # println("should update var1 b=",b)
-                tq[b]=simt 
-              end =#
              elapsedq = simt - tq[b];if elapsedq>0 integrateState(Val(O-1),q[b],elapsedq);tq[b]=simt end
-           
           end    
          # modifiedIndex=0#first we have a zc happened which corresponds to nexteventtime and index (one of zc) but we want also the sign in O to know ev+ or ev- 
         
           clearCache(taylorOpsCache,Val(CS),Val(O));f(-1,index,-1,q,d,t,taylorOpsCache)    # run ZCF-------- 
           if VERBOSE  @show oldsignValue[index,2],taylorOpsCache[1][0]  end
-          #=  println(" just after event")
-        
-          @show t 
-          @show nextEventTime   =# 
-                
-          if (taylorOpsCache[1][0])>-1e-13  #zcf>=0      # sign is not needed here
-            modifiedIndex=2*index-1   # the  event that just occured is at  this index
-            #println("event1")
-          else
-            modifiedIndex=2*index
-          end  
-          if oldsignValue[index,2]*taylorOpsCache[1][0]>0 && abs(taylorOpsCache[1][0])>1e-13 # if both have same sign and zcf is not very small
-            println("case wrong estimation of event at simt $simt")
-            computeNextEventTime(index,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum) 
-            
+          if oldsignValue[index,2]*taylorOpsCache[1][0]>=0 && abs(taylorOpsCache[1][0])>1e-9*absQ # if both have same sign and zcf is not very small
+            computeNextEventTime(Val(O),index,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum) 
+            if DEBUG  println("wrong estimation of event at $simt") end
             continue
           end
-
-         #=  if oldsignValue[index,2]<0.0 #rise
-            modifiedIndex=2*index-1 
-          else # drop
-            modifiedIndex=2*index
-
-          end =#
-         #=  if taylorOpsCache[1][0]>oldsignValue[index,2] #scheduled rise
+          # needSaveEvent=true
+          countEvents+=1
+          if taylorOpsCache[1][0]>oldsignValue[index,2] #scheduled rise
             modifiedIndex=2*index-1 
           elseif taylorOpsCache[1][0]<oldsignValue[index,2] #scheduled drop
             modifiedIndex=2*index
-          else # == coming from a triggered zc (very rare when a check coincides with zcf==0)
-            if oldsignValue[index,2]<0.0 #rise
-              modifiedIndex=2*index-1 
-            else
-              modifiedIndex=2*index
-            end
-          end =#
+          else # == ( zcf==oldZCF)
+            if DEBUG  println("ZCF==oldZCF at $simt") end
+            continue
+          end
           oldsignValue[index,2]=taylorOpsCache[1][0]
           oldsignValue[index,1]=sign(taylorOpsCache[1][0])
-        # println("x before event= ",x) 
-        if VERBOSE @show modifiedIndex end
-           
-         for b in evDep[modifiedIndex].evContRHS
-                
-                  elapsedq = simt - tq[b];
-                  if elapsedq>0 
-                    integrateState(Val(O-1),q[b],elapsedq);
-                  #  println("var2 here b = ",b)
-                    
-                    tq[b]=simt 
-                   end
-               
-           end
-           
-         ###### eventf[modifiedIndex](x,d,t,taylorOpsCache) #if a choice to use x instead of q in events, then i think there should be a q update after the eventexecuted
-        # @show x,modifiedIndex,d
-     
-         f(-1,-1,modifiedIndex,x,d,t,taylorOpsCache)# execute event--------no need to clear cache; events touch vectors directly
+          
+          if VERBOSE 
+            @show modifiedIndex,x
+          end
+              
+          for b in evDep[modifiedIndex].evContRHS
+              elapsedq = simt - tq[b];if elapsedq>0 integrateState(Val(O-1),q[b],elapsedq);tq[b]=simt end
+          end
+          f(-1,-1,modifiedIndex,x,d,t,taylorOpsCache)# execute event----------------no need to clear cache; events touch vectors directly
        
+          if VERBOSE 
+            @show d
+          end
+
           for i in evDep[modifiedIndex].evCont
             #------------event influences a Continete var: ...here update quantum and q and computenext
             
                 quantum[i] = relQ * abs(x[i].coeffs[1]) ;quantum[i]=quantum[i] < absQ ? absQ : quantum[i];quantum[i]=quantum[i] > maxErr ? maxErr : quantum[i] 
                # q[i][0]=x[i][0]; # for liqss updateQ?
-               firstguess=updateQ(Val(O),i,x,q,quantum,exacteA,cacheA,dxaux,qaux,tx,tq,simt,ft,nextStateTime)   
+               firstguess=updateQ(Val(O),i,x,q,quantum,exacteA,d,cacheA,dxaux,qaux,tx,tq,simt,ft,nextStateTime)   
               #  computeNextTime(Val(O), i, simt, nextStateTime, x, quantum) 
               tx[i] = simt;tq[i] = simt
               Liqss_reComputeNextTime(Val(O), i, simt, nextStateTime, x, q, quantum)
            
           end
-          nextEventTime[index]=Inf   #investigate more 
-          #computeNextEventTime(index,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum) #infinite events
-          if 131<totalSteps<145 
-            println("after execute eve "  ,simt,d,x,q,totalSteps)
-           end
+         #=  if VERBOSE 
+            @show x,q,nextStateTime
+          end =#
+         # nextEventTime[index]=Inf   #investigate more 
+          computeNextEventTime(Val(O),index,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum) #infinite events
+         
           for j in (HD[modifiedIndex]) # care about dependency to this event only
                  
               elapsedx = simt - tx[j];if elapsedx > 0 x[j].coeffs[1] = x[j](elapsedx);tx[j] = simt;#= @show j,x[j] =# end
@@ -403,9 +338,9 @@ else
               clearCache(taylorOpsCache,Val(CS),Val(O));f(j,-1,-1,q,d,t,taylorOpsCache);computeDerivative(Val(O), x[j], taylorOpsCache[1])
                    
               Liqss_reComputeNextTime(Val(O), j, simt, nextStateTime, x, q, quantum)
-              if 131<totalSteps<145 
-                println("after j in HD ",simt,j,x,q,nextStateTime,totalSteps)
-               end
+            #=   if VERBOSE 
+                @show x,q,nextStateTime
+              end =#
            
           end
           for j in (HZ[modifiedIndex])
@@ -417,23 +352,18 @@ else
                     
                     end            
                   #= clearCache(taylorOpsCache,Val(CS),Val(O)) #normally and later i should update q (integrate q=q+e derQ  for higher orders)          
-                  computeNextEventTime(j,zcf[j](x,d,t,taylorOpsCache),oldsignValue,simt,  nextEventTime, quantum)#,maxIterer) =#
+                  computeNextEventTime(Val(O),j,zcf[j](x,d,t,taylorOpsCache),oldsignValue,simt,  nextEventTime, quantum)#,maxIterer) =#
                   
                   clearCache(taylorOpsCache,Val(CS),Val(O));f(-1,j,-1,q,d,t,taylorOpsCache)  # run ZCF-------- 
                   if VERBOSE @show j,oldsignValue[j,2],taylorOpsCache[1][0] end     
-                 computeNextEventTime(j,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum)
+                 computeNextEventTime(Val(O),j,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum)
                
-              # if 0.4>simt > 0.31  println("$index $j nexteventtime from HZ= ",nextEventTime)   end   
+              # if 0.022>simt > 0.018  println("$index $j at simt=$simt nexteventtime from HZ= ",nextEventTime)   end   
           end
          #=  println("x end of step event")
          @show x 
          @show q =# 
-         if 141<totalSteps<145
-          println("end of event")
-          @show simt,index,stepType
-          @show x,q
-       
-         end
+        
   end#end state/input/event
   #for i=1:T
   
@@ -466,5 +396,5 @@ end#end while
 @show countEvents
 #@show savedVars
 #createSol(Val(T),Val(O),savedTimes,savedVars, "qss$O",string(nameof(f)),absQ,totalSteps,0)#0 I track simulSteps 
-createSol(Val(T),Val(O),savedTimes,savedVars, "nmLiqss$O",string(odep.prname),absQ,totalSteps,0,numSteps,ft)
+createSol(Val(T),Val(O),savedTimes,savedVars, "nmLiqss$O",string(odep.prname),absQ,totalSteps,simulStepCount,numSteps,ft)
 end#end integrate

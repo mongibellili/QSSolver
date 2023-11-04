@@ -1,9 +1,9 @@
 #analy
-function nmisCycle_and_simulUpdate(cacherealPosi::Vector{Vector{Float64}},cacherealPosj::Vector{Vector{Float64}},aij::Float64,aji::Float64,respp::Ptr{Float64}, pp::Ptr{NTuple{2,Float64}},trackSimul,::Val{1},index::Int,j::Int,dirI::Float64,dti::Float64, x::Vector{Taylor0},q::Vector{Taylor0}, quantum::Vector{Float64},exacteA::Function,cacheA::MVector{1,Float64},dxaux::Vector{MVector{1,Float64}},qaux::Vector{MVector{1,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64)
+function nmisCycle_and_simulUpdate(cacherealPosi::Vector{Vector{Float64}},cacherealPosj::Vector{Vector{Float64}},aij::Float64,aji::Float64,respp::Ptr{Float64}, pp::Ptr{NTuple{2,Float64}},trackSimul,::Val{1},index::Int,j::Int,dirI::Float64,dti::Float64, x::Vector{Taylor0},q::Vector{Taylor0}, quantum::Vector{Float64},exacteA::Function,d::Vector{Float64},cacheA::MVector{1,Float64},dxaux::Vector{MVector{1,Float64}},qaux::Vector{MVector{1,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64)
  
-  cacheA[1]=0.0;exacteA(q,cacheA,index,index)
+  cacheA[1]=0.0;exacteA(q,d,cacheA,index,index)
   aii=cacheA[1]
-  cacheA[1]=0.0;exacteA(q,cacheA,j,j)
+  cacheA[1]=0.0;exacteA(q,d,cacheA,j,j)
   ajj=cacheA[1]
  #=  exacteA(q,cacheA,index,j)
   aij=cacheA[1]

@@ -19,6 +19,7 @@ function nmLiQSS_integrate(CommonqssData::CommonQSS_data{O,0},liqssdata::LiQSS_d
   #***************************************************************  
   qaux=liqssdata.qaux;dxaux=liqssdata.dxaux#= olddx=liqssdata.olddx; ; olddxSpec=liqssdata.olddxSpec =#
 
+  d=[0.0]# this is a dummy var used in updateQ and simulUpdate because in the discrete world exactA needs d, this is better than creating new updateQ and simulUpdate functions
   
   pp=pointer(Vector{NTuple{2,Float64}}(undef, 7))
  # savedVarsQ = Vector{Vector{Float64}}(undef, T)  
@@ -36,7 +37,7 @@ for i =1:3
   cacherealPosj[i]=zeros(2)
 end
   exacteA(q,cacheA,1,1)  # this 'unnecessary call' 'compiles' the function and it helps remove allocations when used after !!!
-  @show exacteA
+ # @show exacteA
   numSteps = Vector{Int}(undef, T)
  #@show f
    #######################################compute initial values##################################################
@@ -60,7 +61,7 @@ end
     #push!(savedVarsQ[i],q[i][0])
      push!(savedTimes[i],0.0)
      quantum[i] = relQ * abs(x[i].coeffs[1]) ;quantum[i]=quantum[i] < absQ ? absQ : quantum[i];quantum[i]=quantum[i] > maxErr ? maxErr : quantum[i] 
-    updateQ(Val(O),i,x,q,quantum,exacteA,cacheA,dxaux,qaux,tx,tq,initTime,ft,nextStateTime) 
+    updateQ(Val(O),i,x,q,quantum,exacteA,d,cacheA,dxaux,qaux,tx,tq,initTime,ft,nextStateTime) 
   end
  # for i = 1:T
     # clearCache(taylorOpsCache,Val(CS),Val(O));f(i,q,t,taylorOpsCache);
@@ -72,7 +73,7 @@ end
    #prevStepVal[i]=x[i][0]#assignXPrevStepVals(Val(O),prevStepVal,x,i)
  # end
 
-  @show x
+  #@show x
 
   ###################################################################################################################################################################
   ####################################################################################################################################################################
@@ -84,7 +85,7 @@ end
   #simul=false
 
 
-  while simt > ft && totalSteps < 30000000
+  while simt < ft && totalSteps < 30000000
     sch = updateScheduler(Val(T),nextStateTime,nextEventTime, nextInputTime)
     simt = sch[2];index = sch[1]
     if simt>ft
@@ -105,7 +106,7 @@ end
           elapsedq = simt - tq[b] ;
           if elapsedq>0 integrateState(Val(O-1),q[b],elapsedq);tq[b]=simt end
         end
-        firstguess=updateQ(Val(O),index,x,q,quantum,exacteA,cacheA,dxaux,qaux,tx,tq,simt,ft,nextStateTime) ;tq[index] = simt   
+        firstguess=updateQ(Val(O),index,x,q,quantum,exacteA,d,cacheA,dxaux,qaux,tx,tq,simt,ft,nextStateTime) ;tq[index] = simt   
         #----------------------------------------------------check dependecy cycles---------------------------------------------   
         trackSimul[1]=0 
         #= for i =1:5
@@ -122,13 +123,13 @@ end
         
         
           if j!=index && aij*aji!=0.0
-            @show aij,aji
+           # @show aij,aji
               #prvStepValj= savedVars[j][end]#getPrevStepVal(prevStepVal,j) 
               for i =1:3
                 cacherealPosi[i][1]=0.0; cacherealPosi[i][2]=0.0
                 cacherealPosj[i][1]=0.0; cacherealPosj[i][2]=0.0
               end 
-              if nmisCycle_and_simulUpdate(cacherealPosi,cacherealPosj,aij,aji,respp,pp,trackSimul,Val(O),index,j,dirI,firstguess,x,q,quantum,exacteA,cacheA,dxaux,qaux,tx,tq,simt,ft)
+              if nmisCycle_and_simulUpdate(cacherealPosi,cacherealPosj,aij,aji,respp,pp,trackSimul,Val(O),index,j,dirI,firstguess,x,q,quantum,exacteA,d,cacheA,dxaux,qaux,tx,tq,simt,ft)
                 simulStepCount+=1
                clearCache(taylorOpsCache,Val(CS),Val(O));f(index,q,t,taylorOpsCache);computeDerivative(Val(O), x[index], taylorOpsCache[1])
               #  clearCache(taylorOpsCache,Val(CS),Val(O));f(j,q,t,taylorOpsCache);computeDerivative(Val(O), x[j], taylorOpsCache[1])

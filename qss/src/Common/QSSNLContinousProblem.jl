@@ -3,14 +3,15 @@ struct NLODEContProblem{PRTYPE,T,Z,Y,CS}<: NLODEProblem{PRTYPE,T,Z,Y,CS}
     prname::Symbol # problem name used to distinguish printed results
     prtype::Val{PRTYPE} # problem type: not used but created in case in the future we want to handle problems differently
     a::Val{T} #problem size based on number of vars: T is used not a: 'a' is a mute var
-    b::Val{Z} #number of Zero crossing functions (ZCF) based on number of 'if statements': Z is used not a: 'b' is a mute var
-    c::Val{Y} #number of discrete events=2*ZCF: Z is used not a: 'c' is a mute var
-    cacheSize::Val{CS}#CS= cache size is used  : 'cacheSize' is a mute var
+    b::Val{Z} #number of Zero crossing functions (ZCF) based on number of 'if statements': Z is used not b: 'b' is a mute var
+    c::Val{Y} #number of discrete events=2*ZCF: Z is used not c: 'c' is a mute var
+    cacheSize::Val{CS}# CS= cache size is used  : 'cacheSize' is a mute var
     initConditions::Vector{Float64}  # 
     eqs::Function#function that holds all ODEs
-    jac::Vector{Vector{Int}}#Jacobian dependency..I have a der and I want to know which vars affect it...opposite of SD...is a vect for direct method (@resumable..closure..for saved method)
+    jac::Vector{Vector{Int}}#Jacobian dependency..I have a der and I want to know which vars affect it...opposite of SD...is a vect for direct method (later @resumable..closure..for saved method)
     SD::Vector{Vector{Int}}#  I have a var and I want the der that are affected by it
-    map::Function  # if sparsity to be exploited: maps a[i][j] to a[i][γ] where γ usually=1,2,3...a small int
+    exactJac::Function  # used only in the implicit intgration
+    #map::Function  # if sparsity to be exploited: it maps a[i][j] to a[i][γ] where γ usually=1,2,3...(a small int)
     jacDim::Function # if sparsity to be exploited: gives length of each row
 end
 
@@ -18,11 +19,12 @@ end
 # to create NLODEContProblem above
 function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{0},::Val{0}, initConditions::Vector{Float64} ,du::Symbol,symDict::Dict{Symbol,Expr})where {T}
     if VERBOSE println("nlodeprobfun  T= $T") end
-    equs=Dict{Union{Int,Expr},Expr}()
-    jac = Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}()# set used because do not want to insert an existing varNum
+    equs=Dict{Union{Int,Expr},Expr}() #du[int] or du[i]==du[a<i<b]==du[(a:b)]
+    jac = Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}()# datastrucutre 'Set' used because we do not want to insert an existing varNum
     exacteJacExpr = Dict{Expr,Union{Float64,Int,Symbol,Expr}}()
     # NO need to constrcut SD...SDVect will be extracted from Jac
     num_cache_equs=1#initial cachesize::will hold the number of caches (vectors) of the longest equation
+  
     for argI in odeExprs.args
         #only diff eqs: du[]= number || ref || call 
         if argI isa Expr &&  argI.head == :(=)  && argI.args[1] isa Expr && argI.args[1].head == :ref && argI.args[1].args[1]==du#expr LHS=RHS and LHS is du
@@ -34,7 +36,7 @@ function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{0},::Val{0}, initConditi
                 #equs[varNum ]=quote $rhs end
                 equs[varNum ]=:($((transformFSimplecase(:($(rhs))))))#
             elseif rhs.head==:ref #rhs is only one var
-                extractJacDepNormal(varNum,rhs,jac,exacteJacExpr ,symDict ) #extract jacobian and SD dependencies from normal equation
+                extractJacDepNormal(varNum,rhs,jac,exacteJacExpr ,symDict ) #extract jacobian and exactJac approx form from normal equation
                 equs[varNum ]=:($((transformFSimplecase(:($(rhs))))))#change rhs from q[i] to cache=q[i] ...just put taylor var in cache
             else #rhs head==call...to be tested later for  math functions and other possible scenarios or user erros                 
                 extractJacDepNormal(varNum,rhs,jac,exacteJacExpr,symDict ) 
@@ -63,14 +65,11 @@ function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{0},::Val{0}, initConditi
         fname= odeExprs.args[1].args[2].args[1]
         #path=odeExprs.args[1].args[2].args[2]
     end
-   # @show exacteJacExpr
-   # @show jac
-    #@show equs
-    exacteJacfunction=createexacteJacFun(exacteJacExpr,fname)
+ 
+    exacteJacfunction=createExactJacFun(exacteJacExpr,fname)
     
    #=  open("./temp.jl", "a") do io    
         println(io,string(exacteJacfunction)) 
-
     end =#
 
     exacteJacfunctionF=@RuntimeGeneratedFunction(exacteJacfunction)
@@ -190,7 +189,7 @@ function createMapFun(jac:: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},fu
     functioncode1=combinedef(def1)
 end
 
-function createexacteJacFun(jac:: Dict{Expr,Union{Float64,Int,Symbol,Expr}},funName::Symbol)
+function createExactJacFun(jac:: Dict{Expr,Union{Float64,Int,Symbol,Expr}},funName::Symbol)
     ss="if i==0 return nothing\n"
     for dictElement in jac
         if dictElement[1].args[1] isa Int
@@ -218,8 +217,7 @@ function createexacteJacFun(jac:: Dict{Expr,Union{Float64,Int,Symbol,Expr}},funN
     functioncode1=combinedef(def1)
 end
 
-
-#= function createexacteJacFun(jac:: Dict{Expr,Union{Float64,Int,Symbol,Expr}},funName::Symbol)
+function createExactJacDiscreteFun(jac:: Dict{Expr,Union{Float64,Int,Symbol,Expr}},funName::Symbol)
     ss="if i==0 return nothing\n"
     for dictElement in jac
         if dictElement[1].args[1] isa Int
@@ -241,11 +239,11 @@ end
     Base.remove_linenums!(myex1)
     def1=Dict{Symbol,Any}() #any changeto Union{expr,Symbol}  ????
     def1[:head] = :function
-    def1[:name] = Symbol(:map,funName)  
-    def1[:args] = [:(q::Vector{Taylor0{Float64}}),:(cache::MVector{1,Float64}),:(i::Int),:(j::Int)]
+    def1[:name] = Symbol(:exactJac,funName)  
+    def1[:args] = [:(q::Vector{Taylor0}),:(d::Vector{Float64}),:(cache::MVector{1,Float64}),:(i::Int),:(j::Int)]
     def1[:body] = myex1
     functioncode1=combinedef(def1)
-end =#
+end
 
 function createJacVect(jac:: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},::Val{T}) where{T}# 
     jacVect = Vector{Vector{Int}}(undef, T)

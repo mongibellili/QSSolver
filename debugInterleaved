@@ -1,0 +1,210 @@
+(HD, HZ, SZ, zc_SimpleJac, d) = 
+([Int64[], Int64[], [2], Int64[], [3], Int64[], [4], Int64[], [5], Int64[], [2], Int64[], [3], Int64[], [4], Int64[], [5], Int64[], [2], Int64[], [3], Int64[], [4], Int64[], [5], Int64[]],
+
+ [[5, 4, 6, 7, 2, 9, 8, 3, 1], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[]],
+ 
+  [Int64[], [10], [11], [12], [13]], 
+  [Int64[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[], Int64[], [2], [3], [4], [5]], 
+ [100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 1.0e-8, 0.0])
+ 
+evDep = EventDependencyStruct[EventDependencyStruct(1, Int64[], [10, 9], Int64[]), EventDependencyStruct(2, Int64[], Int64[], Int64[]), EventDependencyStruct(3, Int64[], [5, 1], Int64[]), EventDependencyStruct(4, Int64[], Int64[], Int64[]), EventDependencyStruct(5, Int64[], [6, 2], Int64[]), EventDependencyStruct(6, Int64[], Int64[], Int64[]), EventDependencyStruct(7, Int64[], [7, 3], Int64[]), EventDependencyStruct(8, Int64[], Int64[], Int64[]), EventDependencyStruct(9, Int64[], [8, 4], Int64[]), EventDependencyStruct(10, Int64[], Int64[], Int64[]), EventDependencyStruct(11, Int64[], [5, 1], Int64[]), EventDependencyStruct(12, Int64[], Int64[], Int64[]), EventDependencyStruct(13, Int64[], [6, 2], Int64[]), EventDependencyStruct(14, Int64[], Int64[], Int64[]), EventDependencyStruct(15, Int64[], [7, 3], Int64[]), EventDependencyStruct(16, Int64[], Int64[], Int64[]), EventDependencyStruct(17, Int64[], [8, 4], Int64[]), EventDependencyStruct(18, Int64[], Int64[], Int64[]), EventDependencyStruct(19, Int64[], [1], Int64[]), EventDependencyStruct(20, Int64[], Int64[], Int64[]), EventDependencyStruct(21, Int64[], [2], Int64[]), EventDependencyStruct(22, Int64[], Int64[], Int64[]), EventDependencyStruct(23, Int64[], [3], Int64[]), EventDependencyStruct(24, Int64[], Int64[], Int64[]), EventDependencyStruct(25, Int64[], [4], Int64[]), EventDependencyStruct(26, Int64[], Int64[], Int64[])]
+f = RuntimeGeneratedFunctions.RuntimeGeneratedFunction{(:i, :zc, :ev, :q, :d, :t, :cache), qss.var"#_RGF_ModTag", qss.var"#_RGF_ModTag", (0x1ad3ed5d, 0x22b72a1f, 0x6d6816ad, 0x0b02809c, 0xac5e4777), Expr}(quote
+    if i == 0
+        return nothing
+    elseif i == 5
+        mulT(mulsub(subT(divT(24.0, d[8], cache[4]), q[5], cache[3]), divT(mulT(d[8], d[4], cache[6]), addT(d[8], d[4], cache[7]), cache[5]), q[1], cache[2]), 10000.0, cache[1])
+        return nothing
+    elseif i == 4
+        mulT(mulsub(subT(divT(24.0, d[7], cache[4]), q[4], cache[3]), divT(mulT(d[7], d[3], cache[6]), addT(d[7], d[3], cache[7]), cache[5]), q[1], cache[2]), 10000.0, cache[1])
+        return nothing
+    elseif i == 2
+        mulT(mulsub(subT(divT(24.0, d[5], cache[4]), q[2], cache[3]), divT(mulT(d[5], d[1], cache[6]), addT(d[5], d[1], cache[7]), cache[5]), q[1], cache[2]), 10000.0, cache[1])
+        return nothing
+    elseif i == 3
+        mulT(mulsub(subT(divT(24.0, d[6], cache[4]), q[3], cache[3]), divT(mulT(d[6], d[2], cache[6]), addT(d[6], d[2], cache[7]), cache[5]), q[1], cache[2]), 10000.0, cache[1])
+        return nothing
+    elseif i == 1
+        mulT(10000.0, subT(addT(q[2], q[3], q[4], q[5], cache[3]), mulT(0.1, q[1], cache[4]), cache[2]), cache[1])
+        return nothing
+    end
+    if zc == 1
+        subT(t, d[9], cache[1])
+        return nothing
+    elseif zc == 2
+        subsub(t, d[10], mulT(0.01, 0.0001, cache[2]), cache[1])
+        return nothing
+    elseif zc == 3
+        subsub(subT(t, d[10], cache[2]), divT(0.0001, 4.0, cache[3]), mulT(0.01, 0.0001, cache[4]), cache[1])
+        return nothing
+    elseif zc == 4
+        subsub(subT(t, d[10], cache[2]), divT(0.0001, 2.0, cache[3]), mulT(0.01, 0.0001, cache[4]), cache[1])
+        return nothing
+    elseif zc == 5
+        subsub(subT(t, d[10], cache[2]), divT(mulT(0.0001, 3.0, cache[4]), 4.0, cache[3]), mulT(0.01, 0.0001, cache[5]), cache[1])
+        return nothing
+    elseif zc == 6
+        subsub(subT(t, d[10], cache[2]), divT(mulT(0.5, 0.0001, cache[4]), 4.0, cache[3]), mulT(0.01, 0.0001, cache[5]), cache[1])
+        return nothing
+    elseif zc == 7
+        subsub(subsub(t, d[10], divT(0.0001, 4.0, cache[3]), cache[2]), divT(mulT(0.5, 0.0001, cache[5]), 4.0, cache[4]), mulT(0.01, 0.0001, cache[6]), cache[1])
+        return nothing
+    elseif zc == 8
+        subsub(subsub(t, d[10], divT(0.0001, 2.0, cache[3]), cache[2]), divT(mulT(0.5, 0.0001, cache[5]), 4.0, cache[4]), mulT(0.01, 0.0001, cache[6]), cache[1])
+        return nothing
+    elseif zc == 9
+        subsub(subsub(t, d[10], divT(mulT(0.0001, 3.0, cache[4]), 4.0, cache[3]), cache[2]), divT(mulT(0.5, 0.0001, cache[6]), 4.0, cache[5]), mulT(0.01, 0.0001, cache[7]), cache[1])
+        return nothing
+    elseif zc == 10
+        negateT(q[2], cache[1])
+        return nothing
+    elseif zc == 11
+        negateT(q[3], cache[1])
+        return nothing
+    elseif zc == 12
+        negateT(q[4], cache[1])
+        return nothing
+    elseif zc == 13
+        negateT(q[5], cache[1])
+        return nothing
+    end
+    if ev == 1
+        begin
+            d[10] = d[9]
+            d[9] = d[9] + 0.0001
+        end
+        return nothing
+    elseif ev == 2
+        begin
+            nothing
+        end
+        return nothing
+    elseif ev == 3
+        begin
+            d[5] = 1.0e-5
+            d[1] = 100000.0
+        end
+        return nothing
+    elseif ev == 4
+        begin
+            nothing
+        end
+        return nothing
+    elseif ev == 5
+        begin
+            d[6] = 1.0e-5
+            d[2] = 100000.0
+        end
+        return nothing
+    elseif ev == 6
+        begin
+            nothing
+        end
+        return nothing
+    elseif ev == 7
+        begin
+            d[7] = 1.0e-5
+            d[3] = 100000.0
+        end
+        return nothing
+    elseif ev == 8
+        begin
+            nothing
+        end
+        return nothing
+    elseif ev == 9
+        begin
+            d[8] = 1.0e-5
+            d[4] = 100000.0
+        end
+        return nothing
+    elseif ev == 10
+        begin
+            nothing
+        end
+        return nothing
+    elseif ev == 11
+        begin
+            d[5] = 100000.0
+            d[1] = 1.0e-5
+        end
+        return nothing
+    elseif ev == 12
+        begin
+            nothing
+        end
+        return nothing
+    elseif ev == 13
+        begin
+            d[6] = 100000.0
+            d[2] = 1.0e-5
+        end
+        return nothing
+    elseif ev == 14
+        begin
+            nothing
+        end
+        return nothing
+    elseif ev == 15
+        begin
+            d[7] = 100000.0
+            d[3] = 1.0e-5
+        end
+        return nothing
+    elseif ev == 16
+        begin
+            nothing
+        end
+        return nothing
+    elseif ev == 17
+        begin
+            d[8] = 100000.0
+            d[4] = 1.0e-5
+        end
+        return nothing
+    elseif ev == 18
+        begin
+            nothing
+        end
+        return nothing
+    elseif ev == 19
+        begin
+            d[1] = 100000.0
+        end
+        return nothing
+    elseif ev == 20
+        begin
+            nothing
+        end
+        return nothing
+    elseif ev == 21
+        begin
+            d[2] = 100000.0
+        end
+        return nothing
+    elseif ev == 22
+        begin
+            nothing
+        end
+        return nothing
+    elseif ev == 23
+        begin
+            d[3] = 100000.0
+        end
+        return nothing
+    elseif ev == 24
+        begin
+            nothing
+        end
+        return nothing
+    elseif ev == 25
+        begin
+            d[4] = 100000.0
+        end
+        return nothing
+    elseif ev == 26
+        begin
+            nothing
+        end
+        return nothing
+    end
+end)

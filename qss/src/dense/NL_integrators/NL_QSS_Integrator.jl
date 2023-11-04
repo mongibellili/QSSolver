@@ -1,5 +1,5 @@
 #using TimerOutputs
-function QSS_integrate(CommonqssData::CommonQSS_data{O,0}, odep::NLODEProblem{PRTYPE,T,0,0,CS},f::Function,jac::Function,SD::Function,map::Function) where {PRTYPE,O,T,CS}
+function QSS_integrate(CommonqssData::CommonQSS_data{O,0}, odep::NLODEProblem{PRTYPE,T,0,0,CS},f::Function,jac::Function,SD::Function) where {PRTYPE,O,T,CS}
 
   ft = CommonqssData.finalTime;initTime = CommonqssData.initialTime;relQ = CommonqssData.dQrel;absQ = CommonqssData.dQmin;maxErr=CommonqssData.maxErr;
   #= savetimeincrement=CommonqssData.savetimeincrement;savetime = savetimeincrement =#

@@ -2,74 +2,63 @@
 
 struct EventDependencyStruct
   id::Int
-  evCont::Vector{Int}
-  evDisc::Vector{Int}
-  evContRHS::Vector{Int} # used to update other Qs before executing the event
+  evCont::Vector{Int} #index tracking used for HD & HZ. Also it is used to update q,quantum,recomputeNext when x is modified in an event
+  evDisc::Vector{Int} #index tracking used for HD & HZ.
+  evContRHS::Vector{Int} #index tracking used to update other Qs before executing the event
 end
 # the following functions handle discrete problems
  
-function extractJacDepNormal(varNum::Int,rhs::Union{Symbol,Int,Expr},jac :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},jacDiscr :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},SD :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},dD :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}) 
+function extractJacDepNormal(varNum::Int,rhs::Union{Symbol,Int,Expr},jac :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},exacteJacExpr :: Dict{Expr,Union{Float64,Int,Symbol,Expr}},symDict::Dict{Symbol,Expr},dD :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}) 
   jacSet=Set{Union{Int,Symbol,Expr}}()
-  jacDiscrSet=Set{Union{Int,Symbol,Expr}}()
-  postwalk(rhs) do a   #
+  #jacDiscrSet=Set{Union{Int,Symbol,Expr}}()
+  m=postwalk(rhs) do a   #
       if a isa Expr && a.head == :ref && a.args[1]==:q# 
-          push!(jacSet,  (a.args[2]))  #
-          SDset=Set{Union{Int,Symbol,Expr}}()
-          if haskey(SD, (a.args[2]))
-              SDset=get(SD,(a.args[2]),SDset)
-          end
-          push!(SDset,  varNum)
-          SD[(a.args[2])]=SDset
+          push!(jacSet,  (a.args[2]))  # du[varNum=1]=rhs=u[5]+u[2] : 2 and 5 are stored in jacset
+          a=eliminateRef(a)#q[i] -> qi
       elseif a isa Expr && a.head == :ref && a.args[1]==:d# 
-          push!(jacDiscrSet,  (a.args[2]))  #
+         # push!(jacDiscrSet,  (a.args[2]))  #
           dDset=Set{Union{Int,Symbol,Expr}}()
           if haskey(dD, (a.args[2]))
               dDset=get(dD,(a.args[2]),dDset)
           end
           push!(dDset,  varNum)
           dD[(a.args[2])]=dDset
+          a=eliminateRef(a)#q[i] -> qi
       end
       return a 
   end
+
+  basi = convert(Basic, m)
+  for i in jacSet
+    symarg=symbolFromRef(i) # specific to elements in jacSet: get q1 from 1 for exple
+   
+    coef = diff(basi, symarg) # symbolic differentiation: returns type Basic
+    coefstr=string(coef);coefExpr=Meta.parse(coefstr)#convert from basic to expression
+   
+    jacEntry=restoreRef(coefExpr,symDict)# get back ref: qi->q[i][0]  ...0 because later in exactJac fun cache[1]::Float64=jacEntry
+ 
+    exacteJacExpr[:(($varNum,$i))]=jacEntry # entry (varNum,i) is jacEntry
+  end
+
   if length(jacSet)>0 jac[varNum]=jacSet end
-  if length(jacDiscrSet)>0 jacDiscr[varNum]=jacDiscrSet end
+  #if length(jacDiscrSet)>0 jacDiscr[varNum]=jacDiscrSet end
 end
 
 
 
-function extractJacDepLoop(b::Int,niter::Int,rhs::Union{Symbol,Int,Expr},jac :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},jacDiscr :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},SD :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},dD :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}) 
+function extractJacDepLoop(b::Int,niter::Int,rhs::Union{Symbol,Int,Expr},jac :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},exacteJacExpr :: Dict{Expr,Union{Float64,Int,Symbol,Expr}},symDict::Dict{Symbol,Expr},dD :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}) 
   #dD is for the saving-function case
   jacSet=Set{Union{Int,Symbol,Expr}}()
-  jacDiscrSet=Set{Union{Int,Symbol,Expr}}()
-  sdSet=Set{Union{Int,Symbol,Expr}}() #  when the index is a symbol or expr SD will be filled like Jac and later (the caller outside) will extract SDFunction. SDset uppercase is for numbers
+ # jacDiscrSet=Set{Union{Int,Symbol,Expr}}()
+  #sdSet=Set{Union{Int,Symbol,Expr}}() #  when the index is a symbol or expr SD will be filled like Jac and later (the caller outside) will extract SDFunction. SDset uppercase is for numbers
   #dDSet=Set{Union{Int,Symbol,Expr}}()  # feature not implemented: I will restrict d[---] to integers ie  --- == intger
-  postwalk(rhs) do a   
+  m=postwalk(rhs) do a   
       if a isa Expr && a.head == :ref && a.args[1]==:q# 
               push!(jacSet,  (a.args[2]))  #
-              if a.args[2] isa Int   #the index is a number
-                  SDset=Set{Union{Int,Symbol,Expr}}()  #SDset   SD uppercase
-                  if haskey(SD, (a.args[2]))
-                      SDset=get(SD,(a.args[2]),SDset)
-                  end
-                  push!(SDset,  :(($b,$niter)))
-                  SD[(a.args[2])]=SDset
-              elseif a.args[2] isa Symbol   # there is only when symbol in this rhs
-                  push!(sdSet,  (a.args[2]))
-              elseif a.args[2] isa Expr   
-                  temp=deepcopy(a.args[2])
-                  if a.args[2].args[1]== :+
-                      temp.args[1]= :-
-                  elseif a.args[2].args[1]== :-
-                      temp.args[1]= :+
-                  elseif a.args[2].args[1]== :*
-                      temp.args[1]= :/
-                  elseif a.args[2].args[1]== :/
-                      temp.args[1]= :*
-                  end
-                  push!(sdSet,  temp)
-              end
+              a=eliminateRef(a)#q[i] -> qi
+           
       elseif a isa Expr && a.head == :ref && a.args[1]==:d
-        push!(jacDiscrSet,  (a.args[2])) 
+       # push!(jacDiscrSet,  (a.args[2])) 
         if a.args[2] isa Int  #for now allow only d[integer]
           dDset=Set{Union{Int,Symbol,Expr}}()
           if haskey(dD, (a.args[2]))
@@ -77,6 +66,7 @@ function extractJacDepLoop(b::Int,niter::Int,rhs::Union{Symbol,Int,Expr},jac :: 
           end
           push!(dDset,  :(($b,$niter)))
           dD[(a.args[2])]=dDset
+         
         #= elseif a.args[2] isa Symbol
             push!(dDSet,  (a.args[2]))
         elseif a.args[2] isa Expr
@@ -93,12 +83,26 @@ function extractJacDepLoop(b::Int,niter::Int,rhs::Union{Symbol,Int,Expr},jac :: 
             push!(dDSet,  temp)
             =#
         end 
+        a=eliminateRef(a)#q[i] -> qi
       end
       return a
   end
+  basi = convert(Basic, m)
+  for i in jacSet
+    symarg=symbolFromRef(i);
+
+    coef = diff(basi, symarg)
+    coefstr=string(coef);
+
+   
+
+    coefExpr=Meta.parse(coefstr)
+    jacEntry=restoreRef(coefExpr,symDict)
+    exacteJacExpr[:((($b,$niter),$i))]=jacEntry
+  end
   jac[:(($b,$niter))]=jacSet
-  jacDiscr[:(($b,$niter))]=jacDiscrSet
-  SD[:(($b,$niter))]=sdSet  #symbol and expressions stored like jac
+ # jacDiscr[:(($b,$niter))]=jacDiscrSet
+ # SD[:(($b,$niter))]=sdSet  #symbol and expressions stored like jac
 
 end
 

@@ -1,7 +1,6 @@
 using qss
 using BenchmarkTools
-#= using Plots;
-gr(); =#
+
 
 function test()
     odeprob = @NLodeProblem begin
@@ -33,18 +32,11 @@ function test()
         discrete[5]=0.0
       end 
 
-     #=  if -(discrete[5]*((u[1]*discrete[2]-U)/(discrete[1]+discrete[2]))+(1-discrete[5])*((u[1]*discrete[2]-U)*discrete[1]/(discrete[1]+discrete[2])))>0
-        #= discrete[1]=ROn
-        discrete[5]=1.0
-      else =#
-        discrete[1]=ROff
-        discrete[5]=0.0
-      end=#
+   
            
     end
-   sol= QSS_Solve(odeprob,qss2(),dQmin=1e-4,dQrel=1e-3,finalTime=0.006)
-              #@show sol
-            # @show 5
+   sol= QSS_Solve(odeprob,qss2(),dQmin=1e-4,dQrel=1e-3,finalTime=0.0025)
+            
   save_Sol(sol)
  # save_Sol(sol,xlims=(0.0,0.0006) ,ylims=(-2.04e-1,40.0))
 end

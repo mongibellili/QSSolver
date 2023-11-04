@@ -20,7 +20,7 @@ function test()
 
         if -u[1]>0.0 
             discrete[1]=ROff
-            u[2]=0.0
+           # u[2]=0.0
         else
             discrete[1] = ROn
         end
@@ -33,7 +33,7 @@ function test()
         end =#
            
     end
-   sol= QSS_Solve(odeprob,qss2(),dQmin=1e-3,dQrel=1e-2,finalTime=0.06)
+   sol= QSS_Solve(odeprob,qss2(),dQmin=1e-4,dQrel=1e-3,finalTime=0.06)
   # @show sol
  # @show 5
   save_Sol(sol)

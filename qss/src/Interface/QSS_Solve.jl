@@ -8,33 +8,32 @@ end
 function QSS_Solve(prob::NLODEProblem{PRTYPE,T,Z,Y,CS},::Tuple{SolverType, OrderType};sparsity::Val{Sparsity}=Val(false),finalTime=1.0::Float64,saveat=0.1::Float64,initialTime=0.0::Float64,dQmin=1e-6::Float64,dQrel=1e-3::Float64,maxErr=Inf::Float64) where{PRTYPE,T,Z,Y,CS,SolverType,OrderType,Sparsity}    
    custom_Solve(prob,SolverType,OrderType,Val(Sparsity),finalTime,saveat,initialTime,dQmin,dQrel,maxErr)
 end
-#default solve method: this is not to be touched...extension or modification is done through creating another custom_solve
+#default solve method: this is not to be touched...extension or modification is done through creating another custom_solve with different PRTYPE
 function custom_Solve(prob::NLODEProblem{PRTYPE,T,Z,Y,CS},::Type{Val{Solver}},::Type{Val{Order}},::Val{Sparsity},finalTime::Float64,saveat::Float64,initialTime::Float64,dQmin::Float64,dQrel::Float64,maxErr::Float64) where{PRTYPE,T,Z,Y,CS,Solver,Order,Sparsity}
     sizehint=floor(Int64, 1.0+(finalTime/saveat)*0.6)
     commonQSSdata=createCommonData(prob,Val(T),Val(Z),Val(Order),sizehint,finalTime,saveat, initialTime,dQmin,dQrel,maxErr)
-    jac=getClosure(prob.jac)::Function
+    jac=getClosure(prob.jac)::Function #if in future jac and SD are different datastructures
     SD=getClosure(prob.SD)::Function
-    
     if Solver==:qss
-        QSS_integrate(commonQSSdata,prob,prob.eqs,jac,SD,prob.map)
+        QSS_integrate(commonQSSdata,prob,prob.eqs,jac,SD)
     else
           liqssdata=createLiqssData(prob,Val(Sparsity),Val(T),Val(Order))
          specialLiqssData=createSpecialLiqssData(Val(T))
         if Solver==:nmliqss
-             nmLiQSS_integrate(commonQSSdata,liqssdata,specialLiqssData,prob,prob.eqs,jac,SD,prob.map)
+             nmLiQSS_integrate(commonQSSdata,liqssdata,specialLiqssData,prob,prob.eqs,jac,SD,prob.exactJac)
         elseif Solver==:nliqss
-            nLiQSS_integrate(commonQSSdata,liqssdata,specialLiqssData,prob,prob.eqs,jac,SD,prob.map)
+            nLiQSS_integrate(commonQSSdata,liqssdata,specialLiqssData,prob,prob.eqs,jac,SD,prob.exactJac)
         elseif Solver==:mliqss
-            mLiQSS_integrate(commonQSSdata,liqssdata,specialLiqssData,prob,prob.eqs,jac,SD,prob.map)
+            mLiQSS_integrate(commonQSSdata,liqssdata,specialLiqssData,prob,prob.eqs,jac,SD,prob.exactJac)
         elseif Solver==:liqss
-             LiQSS_integrate(commonQSSdata,liqssdata,specialLiqssData,prob,prob.eqs,jac,SD,prob.map)     
+             LiQSS_integrate(commonQSSdata,liqssdata,specialLiqssData,prob,prob.eqs,jac,SD,prob.exactJac)     
         end
     end
  end
 
 
 
- function getClosure(jacSD::Function)::Function # if not used with saving, it allocates...happens when multiple fun_'combinedef' and runtimegenerated
+ function getClosure(jacSD::Function)::Function # 
    function closureJacSD(i::Int)
         jacSD(i)
    end
@@ -101,7 +100,7 @@ function createLiqssData(prob::NLODEProblem{PRTYPE,T,Z,Y,CS},::Val{false},::Val{
     dxaux=Vector{MVector{Order,Float64}}(undef, T)
     olddx = Vector{MVector{Order,Float64}}(undef, T)
     olddxSpec = Vector{MVector{Order,Float64}}(undef, T)
-    #= @timeit  "liqssdense" =# for i=1:T
+     for i=1:T
        #=  temparr=Vector{MVector{Order,Float64}}(undef, T)
         for j=1:T
             temparr[j]=zeros(MVector{Order,Float64})

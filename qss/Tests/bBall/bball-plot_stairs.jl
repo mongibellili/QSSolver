@@ -7,7 +7,7 @@ gr(); =#
 #include("D:/models/bball.jl")
 function test()
     odeprob = @NLodeProblem begin
-
+        name=(bballStairs,)
         #= parameter1=3000.0# cache can be dynamic....parameters take this feature
         parameter2=0.00001 =#
         u = [20.0,-0.001]
