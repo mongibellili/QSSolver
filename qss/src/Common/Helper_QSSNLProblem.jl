@@ -73,11 +73,11 @@ function restoreRef(coefExpr,symDict)
   newEx
  
 end
-function changeVarNames_params(ex::Expr,stateVarName::Symbol,muteVar::Symbol,param::Dict{Symbol,Number},symDict::Dict{Symbol,Expr})#
+function changeVarNames_params(ex::Expr,stateVarName::Symbol,muteVar::Symbol,param::Dict{Symbol,Union{Float64,Expr}},symDict::Dict{Symbol,Expr})#
   newEx=postwalk(ex) do element#postwalk to change var names and parameters
       if element isa Symbol   
           if haskey(param, element)#symbol is a parameter
-              element=param[element] 
+              element=copy(param[element]) # copy needed in the case symbol id=expression substitued in equations...do not want all eqs reference same expression...ie if 1 eq changes, other eqs change
           elseif element==stateVarName #symbol is a var
               element=:q 
           elseif element==:discrete #symbol is a discr var
@@ -89,21 +89,21 @@ function changeVarNames_params(ex::Expr,stateVarName::Symbol,muteVar::Symbol,par
           end
       elseif element isa Expr && element.head == :ref && element.args[1]==:q# 
             symarg=symbolFromRef(element.args[2])  #q[i] -> qi
-            symDict[symarg]=element #store this translation  q[i] <-> qi 
+            symDict[symarg]=element #store this translation  q[i] <-> qi for later use
       elseif element isa Expr && element.head == :ref && element.args[1]==:d#   
-        symarg=symbolFromRefd(element.args[2])  #q[i] -> qi
-        symDict[symarg]=element #store this translation  q[i] <-> qi   
+        symarg=symbolFromRefd(element.args[2])  #d[i] -> di
+        symDict[symarg]=element #store this translation  d[i] <-> di   
       end
       return element
     end#end postwalk
   newEx
 end
 
-function changeVarNames_params(ex::Expr,stateVarName::Symbol,muteVar::Symbol,param::Dict{Symbol,Number})######
+function changeVarNames_params(ex::Expr,stateVarName::Symbol,muteVar::Symbol,param::Dict{Symbol,Union{Float64,Expr}})######special for if statements and events
   newEx=postwalk(ex) do element#postwalk to change var names and parameters
       if element isa Symbol   
           if haskey(param, element)#symbol is a parameter
-              element=param[element] 
+              element=copy(param[element])
           elseif element==stateVarName #symbol is a var
               element=:q 
           elseif element==:discrete #symbol is a discr var

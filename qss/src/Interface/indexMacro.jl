@@ -23,7 +23,7 @@ macro NLodeProblem(odeExprs)
             end
         end
     end
-
+   # @show odeExprs
     NLodeProblemFunc(odeExprs,Val(probSize),Val(discSize),Val(zcSize),initConds,du,symDict)     #returns  prob   
 end
 
@@ -38,7 +38,7 @@ struct probHelper #helper struct to return stuff from arrangeProb
     symDict::Dict{Symbol,Expr}
 end
 function arrangeProb(x::Expr) # replace symbols and params , extract info about size,symbols,initconds
-    param=Dict{Symbol,Number}()
+    param=Dict{Symbol,Union{Float64,Expr}}()
     symDict=Dict{Symbol,Expr}()
     stateVarName=:q
     du=:nothing #default anything 
@@ -50,8 +50,11 @@ function arrangeProb(x::Expr) # replace symbols and params , extract info about 
     for argI in x.args
         if argI isa Expr &&  argI.head == :(=) #&& @capture(argI, y_ = rhs_) 
             y=argI.args[1];rhs=argI.args[2]
-            if y isa Symbol && rhs isa Number  #params: fill dict of param
+            if y isa Symbol && rhs isa Number #params: fill dict of param
                 param[y]=rhs
+            elseif y isa Symbol && rhs isa Expr && (rhs.head==:call || rhs.head==:ref) #params=epression fill dict of param
+                    argI.args[2]=changeVarNames_params(rhs,stateVarName,:nothing,param,symDict)
+                    param[y]=argI.args[2]
             elseif y isa Expr && y.head == :ref && rhs isa Number #initial conds "1st way"  u[a]=N or u[a:b]=N...
                if string(y.args[1])[1] !='d' #prevent the case diffEq du[]=Number
                     stateVarName=y.args[1]   #extract var name
@@ -101,30 +104,4 @@ function arrangeProb(x::Expr) # replace symbols and params , extract info about 
 end#end function
 
 
-
-
-qss1()=(Val(:qss),Val(1))
-qss2()=(Val(:qss),Val(2))
-qss3()=(Val(:qss),Val(3))
-
-nmliqss1()=(Val(:nmliqss),Val(1))
-nmliqss2()=(Val(:nmliqss),Val(2))
-nmliqss3()=(Val(:nmliqss),Val(3))
-
-nliqss1()=(Val(:nliqss),Val(1))
-nliqss2()=(Val(:nliqss),Val(2))
-nliqss3()=(Val(:nliqss),Val(3))
-
-mliqss1()=(Val(:mliqss),Val(1))
-mliqss2()=(Val(:mliqss),Val(2))
-mliqss3()=(Val(:mliqss),Val(3))
-
-liqss1()=(Val(:liqss),Val(1))
-liqss2()=(Val(:liqss),Val(2))
-liqss3()=(Val(:liqss),Val(3))
-
-
-
-sparse()=Val(true)
-dense()=Val(false)
 

@@ -1,5 +1,5 @@
 
-function mLiQSS_integrate(CommonqssData::CommonQSS_data{O,0},liqssdata::LiQSS_data{O,false},specialLiqssData::SpecialLiqssQSS_data, odep::NLODEProblem{PRTYPE,T,0,0,CS},f::Function,jac::Function,SD::Function,exacteA::Function) where {PRTYPE,CS,O,T}
+function mLiQSS_integrate(Al::QSSAlgorithm{:nmliqss,O},CommonqssData::CommonQSS_data{0},liqssdata::LiQSS_data{O,false},specialLiqssData::SpecialLiqssQSS_data, odep::NLODEProblem{PRTYPE,T,0,0,CS},f::Function,jac::Function,SD::Function,exacteA::Function) where {PRTYPE,CS,O,T}
   cacheA=specialLiqssData.cacheA
   direction=specialLiqssData.direction
   #qminus= specialLiqssData.qminus

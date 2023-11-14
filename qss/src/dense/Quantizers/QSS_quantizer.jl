@@ -70,23 +70,28 @@ function reComputeNextTime(::Val{1}, index::Int, simt::Float64, nextTime::Vector
 end
 
 function reComputeNextTime(::Val{2}, index::Int, simt::Float64, nextTime::Vector{Float64}, x::Vector{Taylor0},q::Vector{Taylor0}, quantum::Vector{Float64})
-  absDeltaT=1e-12
-  coef=@SVector [q[index].coeffs[1] - (x[index].coeffs[1]) - quantum[index], q[index].coeffs[2]-x[index].coeffs[2],-(x[index].coeffs[3])]#not *2 because i am solving c+bt+a/2*t^2
-  time1 =  minPosRoot(coef, Val(2))
-  coef=setindex(coef,q[index].coeffs[1] - (x[index].coeffs[1]) + quantum[index],1)
-  time2 =  minPosRoot(coef, Val(2))
-  timeTemp = time1 < time2 ? time1 : time2
-  tempTime=max(timeTemp,absDeltaT)#guard against very small Δt 
+  absDeltaT=1e-15
 
- # if tempTime==absDeltaT #normal
-   # x[index].coeffs[3]=sign(x[index].coeffs[3])*(abs(quantum[index])/(absDeltaT*absDeltaT))/2
-  # if DEBUG  println("smalldelta in recompute next, simt= ",simt) end
- # end
+  if abs(q[index].coeffs[1] - (x[index].coeffs[1])) >= quantum[index] # this happened when var i and j s turns are now...var i depends on j, j is asked here for next time
+    nextTime[index] = simt+1e-15
+  else
+    coef=@SVector [q[index].coeffs[1] - (x[index].coeffs[1]) - quantum[index], q[index].coeffs[2]-x[index].coeffs[2],-(x[index].coeffs[3])]#not *2 because i am solving c+bt+a/2*t^2
+    time1 =  minPosRoot(coef, Val(2))
+    coef=setindex(coef,q[index].coeffs[1] - (x[index].coeffs[1]) + quantum[index],1)
+    time2 =  minPosRoot(coef, Val(2))
+    timeTemp = time1 < time2 ? time1 : time2
+    tempTime=max(timeTemp,absDeltaT)#guard against very small Δt 
+
+  # if tempTime==absDeltaT #normal
+    # x[index].coeffs[3]=sign(x[index].coeffs[3])*(abs(quantum[index])/(absDeltaT*absDeltaT))/2
+    # if DEBUG  println("smalldelta in recompute next, simt= ",simt) end
+  # end
 
 
 
-  nextTime[index] = simt +tempTime
+    nextTime[index] = simt +tempTime
 
+  end
  
   return nothing
 end
@@ -207,29 +212,10 @@ function computeNextInputTime(::Val{3}, i::Int, simt::Float64,elapsed::Float64, 
 end
 
 
-function computeNextEventTime(::Val{1},j::Int,ZCFun::Taylor0,oldsignValue,simt,  nextEventTime, quantum::Vector{Float64})
-  if ZCFun[0]==0.0 && oldsignValue[j,1] !=0.0
-    if DEBUG println("qss quantizer:zcf$j ZCF=0.0 (rare) immediate event at simt= $simt oldzcf value= $(oldsignValue[j,2])  ") end
-    nextEventTime[j]=simt 
-  elseif (oldsignValue[j,1] != sign(ZCFun[0])) && oldsignValue[j,1] !=0.0 #prevent double tapping: when zcf is leaving zero it should be considered an event
-    if DEBUG  println("qss quantizer:zcf$j immediate event at simt= $simt oldzcf value= $(oldsignValue[j,2])  newZCF value= $(ZCFun[0])") end
-    nextEventTime[j]=simt 
-  else # old and new ZCF both pos or both neg
-    coef=@SVector [ZCFun[0],ZCFun[1]]
-    mpr=minPosRoot(coef, Val(1)) 
-    if mpr<1e-14 # prevent very close events
-      mpr=1e-12
-      #sl=ZCFun[0]+mpr*ZCFun[1]+mpr*mpr*ZCFun[2]/2
-    end
-    nextEventTime[j] =simt + mpr
-     # if DEBUG  println("qss quantizer:zcf$j at simt= $simt ****scheduled**** event at $(simt + mpr) oldzcf value= $(oldsignValue[j,2])  newZCF value= $(ZCFun[0])") end
-    oldsignValue[j,1]=sign(ZCFun[0])#update the values
-    oldsignValue[j,2]=ZCFun[0]
-  end
-end
 
 
-function computeNextEventTime(::Val{2},j::Int,ZCFun::Taylor0,oldsignValue,simt,  nextEventTime, quantum::Vector{Float64})
+
+function computeNextEventTime(::Val{O},j::Int,ZCFun::Taylor0,oldsignValue,simt,  nextEventTime, quantum::Vector{Float64}) where {O}
   if ZCFun[0]==0.0 && oldsignValue[j,1] !=0.0#abs(oldsignValue[j,1])>1e-15
     if DEBUG println("qss quantizer:zcf$j ZCF=0.0 (rare) immediate event at simt= $simt oldzcf value= $(oldsignValue[j,2])  ") end
     nextEventTime[j]=simt 
@@ -237,14 +223,15 @@ function computeNextEventTime(::Val{2},j::Int,ZCFun::Taylor0,oldsignValue,simt, 
     if DEBUG  println("qss quantizer:zcf$j immediate event at simt= $simt oldzcf value= $(oldsignValue[j,2])  newZCF value= $(ZCFun[0])") end
     nextEventTime[j]=simt 
   else # old and new ZCF both pos or both neg
-    coef=@SVector [ZCFun[0],ZCFun[1],ZCFun[2]]
-    mpr=minPosRoot(coef, Val(2)) 
+   # coef=@SVector [ZCFun[0],ZCFun[1],ZCFun[2]]
+
+    mpr=minPosRoot(ZCFun, Val(O)) 
     if mpr<1e-14 # prevent very close events
       mpr=1e-12
       #sl=ZCFun[0]+mpr*ZCFun[1]+mpr*mpr*ZCFun[2]/2
     end
     nextEventTime[j] =simt + mpr
-      if DEBUG && simt<1.0448468569905396e-7
+      if DEBUG2
          println("qss quantizer:zcf$j at simt= $simt ****scheduled**** event at $(simt + mpr) oldzcf value= $(oldsignValue[j,2])  newZCF value= $(ZCFun[0])") 
         end
     oldsignValue[j,1]=sign(ZCFun[0])#update the values

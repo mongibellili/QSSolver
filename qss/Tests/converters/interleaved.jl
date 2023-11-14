@@ -78,7 +78,8 @@ function test()
                 discrete[4] = ROff
             end 
     end
-   sol= QSS_Solve(odeprob,qss2(),dQmin=1e-4,dQrel=1e-3,finalTime=0.0003)
+    tspan=(0.0,0.001)
+   sol= solve(odeprob,qss2(),abstol=1e-4,reltol=1e-3,tspan)
   # @show sol
    save_Sol(sol)
   # save_Sol(sol,xlims=(0.0,15.0) ,ylims=(-2.04e-1,2.06e-1))

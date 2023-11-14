@@ -1,6 +1,6 @@
  #using TimerOutputs
  #using InteractiveUtils
- function LiQSS_integrate(CommonqssData::CommonQSS_data{O,0},liqssdata::LiQSS_data{O,false},specialLiqssData::SpecialLiqssQSS_data, odep::NLODEProblem{PRTYPE,T,0,0,CS},f::Function,jac::Function,SD::Function,exacteA::Function ) where {PRTYPE,CS,O,T}
+ function LiQSS_integrate(Al::QSSAlgorithm{:nmliqss,O},CommonqssData::CommonQSS_data{0},liqssdata::LiQSS_data{O,false},specialLiqssData::SpecialLiqssQSS_data, odep::NLODEProblem{PRTYPE,T,0,0,CS},f::Function,jac::Function,SD::Function,exacteA::Function ) where {PRTYPE,CS,O,T}
   cacheA=specialLiqssData.cacheA
   ft = CommonqssData.finalTime;initTime = CommonqssData.initialTime;relQ = CommonqssData.dQrel;absQ = CommonqssData.dQmin;maxErr=CommonqssData.maxErr;
   savetimeincrement=CommonqssData.savetimeincrement;savetime = savetimeincrement
@@ -114,6 +114,7 @@
       @show 55
        elapsed = simt - tx[index];integrateState(Val(O),x[index],elapsed);tx[index] = simt 
        quantum[index] = relQ * abs(x[index].coeffs[1]) ;quantum[index]=quantum[index] < absQ ? absQ : quantum[index];quantum[index]=quantum[index] > maxErr ? maxErr : quantum[index]   
+       if abs(x[index].coeffs[2])>1e7 quantum[index]=10*quantum[index] end
        for k = 1:O q[index].coeffs[k] = x[index].coeffs[k] end; tq[index] = simt 
         for b in jac(index) 
           elapsedq = simt - tq[b];if elapsedq>0 integrateState(Val(O-1),q[b],elapsedq);tq[b]=simt end
@@ -126,7 +127,7 @@
            elapsedx = simt - tx[j];
            if elapsedx > 0 
              x[j].coeffs[1] = x[j](elapsedx);tx[j] = simt 
-             quantum[j] = relQ * abs(x[j].coeffs[1]) ;quantum[j]=quantum[j] < absQ ? absQ : quantum[j];quantum[j]=quantum[j] > maxErr ? maxErr : quantum[j]   
+            # quantum[j] = relQ * abs(x[j].coeffs[1]) ;quantum[j]=quantum[j] < absQ ? absQ : quantum[j];quantum[j]=quantum[j] > maxErr ? maxErr : quantum[j]   
            end
            elapsedq = simt - tq[j];if elapsedq > 0 integrateState(Val(O-1),q[j],elapsedq);tq[j] = simt  end#q needs to be updated here for recomputeNext                 
  

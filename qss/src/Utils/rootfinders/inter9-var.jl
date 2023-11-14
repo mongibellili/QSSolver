@@ -231,7 +231,7 @@ function allrealrootintervalnewtonregulafalsi(coeffs::NTuple{N,F}, res::Ptr{F}, 
 					delta = comid / comid′
                     #@show mid comid comid′
 					newmid = mid - delta
-					if abs(delta) < 1.0e-8abs(mid) 
+					if abs(delta) < 1.0e-12abs(mid) 
 						counter += 1
                         unsafe_store!(res, newmid, counter)
                         break
@@ -383,8 +383,16 @@ function quadRootv2(coeff::NTuple{3,Float64}) #
   end
 
 
-  
-				#= coeffs2=NTuple{3,Float64}((14.691504647354595,-747452.6968034876,1.0e-6))
+ #=    coef=NTuple{3,Float64}((-2.5768276401549883e-12, -239999.2196676244,1735305783508325))
+  x=mprv2(coef)
+  @show x
+  sl=coef[3]+x*coef[2]+coef[1]*x*x
+@show sl =#
+ # 1735305783508325, -239999.2196676244, -2.5768276401549883
+             #=    coeffs2=NTuple{3,Float64}((0.7,23999.2196676244,-2.5768276401549883e-12))
+				#coeffs2=NTuple{3,Float64}((-2.5768276401549883e-12,-239999.2196676244,17))
+				
+				#coeffs2=NTuple{3,Float64}((14.691504647354595,-747452.6968034876,1.0e-6))
 						function iter(res1::Ptr{Float64}, pp::Ptr{NTuple{2,Float64}},coeffs2::NTuple{3,Float64})
 											#coeffs2=NTuple{3,Float64}((1.0, -2.0, -1.06))
 										
@@ -411,8 +419,11 @@ function quadRootv2(coeff::NTuple{3,Float64}) #
 						res1 = pointer(Vector{Float64}(undef, 2))
 						@show iter(res1,pp,coeffs2)
 						@show anal1(coeffs2)
-						@show anal2(coeffs2)  =#
-
+						@show anal2(coeffs2) 
+						x= smallestpositiverootintervalnewtonregulafalsi(coeffs2,pp)
+						@show x
+						sl=coeffs2[3]+x*coeffs2[2]+coeffs2[1]*x*x
+					  @show sl  =#
 #= @btime iter(res1,pp)
 @btime anal1()
 @btime anal2() =#

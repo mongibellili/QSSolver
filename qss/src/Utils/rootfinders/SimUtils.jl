@@ -14,6 +14,20 @@ function minPosRoot(coeff::SVector{2,Float64}, ::Val{1}) # coming from val(1) me
     return mpr
 end
 
+function minPosRoot(coeff::Taylor0, ::Val{1}) # coming from val(1) means coef has x and derx only...size 2
+  mpr=-1
+      if coeff[1] == 0 
+          mpr = Inf
+      else 
+          mpr = -coeff[0] / coeff[1];
+      end
+      if mpr < 0
+          mpr = Inf
+      end
+     # println("mpr inside minPosRoot in utils= ",mpr)
+  return mpr
+end
+
   function minPosRootv1(coeff::NTuple{3,Float64}) #
     a=coeff[1];b=coeff[2];c=coeff[3]
   mpr=-1 #coef1=c, coef2=b, coef3=a
@@ -51,41 +65,97 @@ end
 end
 
 function minPosRoot(coeff::SVector{3,Float64}, ::Val{2}) # credit goes to github.com/CIFASIS/qss-solver
-    mpr=-1 #coef1=c, coef2=b, coef3=a
-    if coeff[3] == 0 #|| (10000 * abs(coeff[3])) < abs(coeff[2])# coef3 is the coef of t^2
-        if coeff[2] == 0
-          mpr = Inf
-        else 
-          mpr = -coeff[1] / coeff[2]
-        end
-        if mpr < 0
-          mpr = Inf
-        end
-    else 
-       #double disc;
-        disc = coeff[2] * coeff[2] - 4 * coeff[3] * coeff[1]#b^2-4ac
-        if disc < 0 # no real roots
-          mpr = Inf
-        else 
-          #double sd, r1;
-          sd = sqrt(disc);
-          r1 = (-coeff[2] + sd) / (2 * coeff[3]);
-          if r1 > 0 
-            mpr = r1;
-          else 
-            mpr = Inf;
-          end
-          r1 = (-coeff[2] - sd) / (2 * coeff[3]);
-          if ((r1 > 0) && (r1 < mpr)) 
-            mpr = r1;
-          end
-        end
+    mpr=-1 
+    a=coeff[3];b=coeff[2];c=coeff[1];  # a is coeff 3 because in taylor representation 1 is var 2 is der 3 is derder
+    if a == 0  || (10000 * abs(a)) < abs(b)# coef3 is the coef of t^2
+      if b == 0
+        mpr = Inf
+      else 
+        mpr = -c / b
+        #@show mpr
+      end
+      if mpr < 0
+        mpr = Inf
+      end
+  else 
+     #double disc;
+      disc = b * b - 4 * a * c#b^2-4ac
+    
+      if disc < 0 # no real roots
+        mpr = Inf
+      else 
+        #double sd, r1;
+        sd = sqrt(disc);
+      
+        r1 = (-b + sd) / (2 * a);
+        if r1 > 0 
+          mpr = r1;
         
-    end
-    return mpr
+        else 
+          mpr = Inf;
+        end
+        r1 = (-b - sd) / (2 * a);
+      
+        if ((r1 > 0) && (r1 < mpr)) 
+          mpr = r1;
+        end
+      end
+      
+  end
+  if DEBUG2 && mpr!=Inf
+    sl=c+mpr*b+a*mpr*mpr
+    @show sl
+  end
+  return mpr
 end
 
-#= function minPosRoot(coeff::SVector{3,Float64}, ::Val{2}) # ben lauwens
+
+function minPosRoot(coeff::Taylor0, ::Val{2}) # credit goes to github.com/CIFASIS/qss-solver
+  mpr=-1 
+  a=coeff[2];b=coeff[1];c=coeff[0];  # a is coeff 3 because in taylor representation 1 is var 2 is der 3 is derder
+  if a == 0  || (10000 * abs(a)) < abs(b)# coef3 is the coef of t^2
+    if b == 0
+      mpr = Inf
+    else 
+      mpr = -c / b
+      #@show mpr
+    end
+    if mpr < 0
+      mpr = Inf
+    end
+else 
+   #double disc;
+    disc = b * b - 4 * a * c#b^2-4ac
+  
+    if disc < 0 # no real roots
+      mpr = Inf
+    else 
+      #double sd, r1;
+      sd = sqrt(disc);
+    
+      r1 = (-b + sd) / (2 * a);
+      if r1 > 0 
+        mpr = r1;
+      
+      else 
+        mpr = Inf;
+      end
+      r1 = (-b - sd) / (2 * a);
+    
+      if ((r1 > 0) && (r1 < mpr)) 
+        mpr = r1;
+      end
+    end
+    
+end
+if DEBUG2 && mpr!=Inf
+  sl=c+mpr*b+a*mpr*mpr
+  @show sl
+end
+return mpr
+end
+
+function minPosRoot2(coeff::SVector{3,Float64}, ::Val{2}) # ben lauwens
   mpr=-1 #coef1=c, coef2=b, coef3=a
   a=coeff[3];b=coeff[2];c=coeff[1]
   if a == 0 #|| (10000 * abs(coeff[3])) < abs(coeff[2])# coef3 is the coef of t^2
@@ -117,7 +187,7 @@ end
       
   end
   return mpr
-end =#
+end
 
 
 #= @inline function minPosRoot(coeffs::SVector{4,Float64}, ::Val{3})#where F <: AbstractFloat
@@ -165,6 +235,12 @@ end =#
   end
 end =#
 
+
+function minPosRoot(ZCFun::Taylor0, ::Val{3})
+  coeffs=@SVector [ZCFun[0],ZCFun[1],ZCFun[2],ZCFun[3]]
+  minPosRoot(coeffs,Val(3))
+
+end
 @inline function minPosRoot(coeffs::SVector{4,Float64}, ::Val{3})#where F <: AbstractFloat
   if coeffs[4] == 0.0
     coeffs2=@SVector[coeffs[1],coeffs[2],coeffs[3]]
@@ -233,9 +309,15 @@ end
 end =#
 
 #coef=@SVector [-5.144241008311048e7, -8938.3815305787700, -0.2906652780025, 1e-6]
-#= coef=@SVector [1e-6, -0.2906652780025, -8938.3815305787700, -5.144241008311048e7]
-x=minPosRoot(coef, Val(3))
-@show x =#
+#coef=@SVector [17, -239999.2196676244, -2.5768276401549883e-12]
+#= coef=@SVector [-2.5768276401549883e-12, 23999.2196676244, 0.7]
+x=minPosRoot(coef, Val(2))
+@show x
+#x=7.23046371232382538e9
+
+sl=coef[1]+x*coef[2]+coef[3]*x*x
+@show sl =#
+
 #coef=@SVector [-5.144241008311048e7, -8938.3815305787700, -0.2906652780025, 1e-6]
 #= coef=@SVector [1e-6, -0.040323840000000166, -3914.116824448214, 1.021243315770821e8]
 x=minPosRoot(coef, Val(3))

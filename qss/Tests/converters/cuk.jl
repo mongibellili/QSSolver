@@ -5,42 +5,51 @@ using BenchmarkTools
 function test()
     odeprob = @NLodeProblem begin
       name=(cuk,)
-         C = 1e-4; L = 1e-4; R = 10;U = 24.0; T = 1e-4; DC = 0.25; ROn = 1e-5;ROff = 1e5;L1=1e-4;C1=1e-4
+         C = 1e-4; L = 1e-4; R = 10.0;U = 24.0; T = 1e-4; DC = 0.25; ROn = 1e-5;ROff = 1e5;L1=1e-4;C1=1e-4
          #discrete Rd(start=1e5), Rs(start=1e-5), nextT(start=T),lastT,diodeon;
          discrete = [1e5,1e-5,1e-4,0.0,0.0]
        
         u = [0.0,0.0,0.0,0.0]
+        rd=discrete[1];rs=discrete[2];nextT=discrete[3];lastT=discrete[4];diodeon=discrete[5]
+        il=u[1] ;uc=u[3];il1=u[2] ;uc1=u[4]
       
-        du[1] =(-(((u[1]+u[2])*discrete[2]-u[4])*discrete[1]/(discrete[1]+discrete[2]))-u[3])/L
-        du[2]=(U-u[4]-(((u[1]+u[2])*discrete[2]-u[4])*discrete[1]/(discrete[1]+discrete[2])))/L1
-        du[3]=(u[1]-u[3]/R)/C
-        du[4]=(((u[1]+u[2])*discrete[2]-u[4])/(discrete[1]+discrete[2])-u[1])/C1
+        id=((il+il1)*rs-uc1)/(rd+rs) # diode's current
 
-        if t-discrete[3]>0.0 
-            discrete[4]=discrete[3]
-            discrete[3]=discrete[3]+T
-            discrete[2]=ROn
-        end
+        du[1] =(-id*rd-uc)/L #il
+        du[2]=(U-uc1-id*rd)/L1 #il1
+        du[3]=(il-uc/R)/C  #uc
+        du[4]=(id-il)/C1   #uc1
 
-        if t-discrete[4]-DC*T>0.0 
-            discrete[2]=ROff
-        end                          
-        
-      if discrete[5]*(((u[1]+u[2])*discrete[2]-u[4])/(discrete[1]+discrete[2]))+(1.0-discrete[5])*(((u[1]+u[2])*discrete[2]-u[4])*discrete[1]/(discrete[1]+discrete[2]))>0
-        discrete[1]=ROn
-        discrete[5]=1.0
-      else
-        discrete[1]=ROff
-        discrete[5]=0.0
-      end 
+        if t-nextT>0.0 
+          lastT=nextT
+          nextT=nextT+T
+          rs=ROn
+         
+      end
 
+      if t-lastT-DC*T>0.0 
+          rs=ROff
+         
+      end                          
+      
+    if diodeon*(id)+(1.0-diodeon)*(id*rd)>0
+      rd=ROn
+      diodeon=1.0
+    else
+      rd=ROff
+      diodeon=0.0
+    end 
    
            
     end
-   sol= QSS_Solve(odeprob,nmliqss2(),dQmin=1e-4,dQrel=1e-3,finalTime=0.0025)
-            
+    tspan=(0.0,0.0001)
+   sol= solve(odeprob,nmliqss2(),abstol=1e-4,reltol=1e-3,tspan)
+   println("-----------------------------------------------------------------")
+   sol= solve(odeprob,qss2(),abstol=1e-4,reltol=1e-3,tspan)
+  
   save_Sol(sol)
- # save_Sol(sol,xlims=(0.0,0.0006) ,ylims=(-2.04e-1,40.0))
+ # save_Sol(sol,2,xlims=(0.0000250,0.00002501) ,ylims=(4.0,5.0))
+
 end
 #@btime 
 test()

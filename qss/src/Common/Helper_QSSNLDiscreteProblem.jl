@@ -7,29 +7,30 @@ struct EventDependencyStruct
   evContRHS::Vector{Int} #index tracking used to update other Qs before executing the event
 end
 # the following functions handle discrete problems
- 
+ # to extract jac & dD....SD can be extracted from jac later
 function extractJacDepNormal(varNum::Int,rhs::Union{Symbol,Int,Expr},jac :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},exacteJacExpr :: Dict{Expr,Union{Float64,Int,Symbol,Expr}},symDict::Dict{Symbol,Expr},dD :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}) 
   jacSet=Set{Union{Int,Symbol,Expr}}()
   #jacDiscrSet=Set{Union{Int,Symbol,Expr}}()
   m=postwalk(rhs) do a   #
-      if a isa Expr && a.head == :ref && a.args[1]==:q# 
-          push!(jacSet,  (a.args[2]))  # du[varNum=1]=rhs=u[5]+u[2] : 2 and 5 are stored in jacset
+      if a isa Expr && a.head == :ref && a.args[1]==:q#  q[2]
+          push!(jacSet,  (a.args[2]))  # du[varNum=1]=rhs=u[5]+u[2] : 2 and 5 are stored in jacset one at a time
           a=eliminateRef(a)#q[i] -> qi
-      elseif a isa Expr && a.head == :ref && a.args[1]==:d# 
+      elseif a isa Expr && a.head == :ref && a.args[1]==:d# d[3]
          # push!(jacDiscrSet,  (a.args[2]))  #
           dDset=Set{Union{Int,Symbol,Expr}}()
-          if haskey(dD, (a.args[2]))
-              dDset=get(dD,(a.args[2]),dDset)
+          if haskey(dD, (a.args[2]))    # dict dD already contains key a.args[2] (in this case var 3)
+              dDset=get(dD,(a.args[2]),dDset) # if var d3 first time to influence some var, dDset is empty, otherwise get its set of influences 
           end
-          push!(dDset,  varNum)
-          dD[(a.args[2])]=dDset
-          a=eliminateRef(a)#q[i] -> qi
+          push!(dDset,  varNum)      # d3 also influences varNum
+          dD[(a.args[2])]=dDset       #update the dict
+          a=eliminateRef(a)#d[i] -> di
       end
       return a 
   end
 
-  basi = convert(Basic, m)
-  for i in jacSet
+  # extract the jac
+  basi = convert(Basic, m) # m ready: all refs are symbols
+  for i in jacSet  # jacset contains vars in RHS
     symarg=symbolFromRef(i) # specific to elements in jacSet: get q1 from 1 for exple
    
     coef = diff(basi, symarg) # symbolic differentiation: returns type Basic
@@ -45,7 +46,7 @@ function extractJacDepNormal(varNum::Int,rhs::Union{Symbol,Int,Expr},jac :: Dict
 end
 
 
-
+# like above except (b,niter) instead of varNum
 function extractJacDepLoop(b::Int,niter::Int,rhs::Union{Symbol,Int,Expr},jac :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}},exacteJacExpr :: Dict{Expr,Union{Float64,Int,Symbol,Expr}},symDict::Dict{Symbol,Expr},dD :: Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}) 
   #dD is for the saving-function case
   jacSet=Set{Union{Int,Symbol,Expr}}()
@@ -108,9 +109,9 @@ end
 
 
 
-function extractZCJacDepNormal(counter::Int,zcf::Expr,zcjac :: Vector{Vector{Int}},zcjacDiscr :: Vector{Vector{Int}},SZ ::Dict{Int,Set{Int}},dZ :: Dict{Int,Set{Int}}) 
+function extractZCJacDepNormal(counter::Int,zcf::Expr,zcjac :: Vector{Vector{Int}},SZ ::Dict{Int,Set{Int}},dZ :: Dict{Int,Set{Int}}) 
   zcjacSet=Set{Int}()
-  zcjacDiscrSet=Set{Int}()
+ #zcjacDiscrSet=Set{Int}()
   postwalk(zcf) do a   #
       if a isa Expr && a.head == :ref && a.args[1]==:q# 
           push!(zcjacSet,  (a.args[2]))  #
@@ -121,7 +122,7 @@ function extractZCJacDepNormal(counter::Int,zcf::Expr,zcjac :: Vector{Vector{Int
           push!(SZset,  counter)
           SZ[(a.args[2])]=SZset
       elseif a isa Expr && a.head == :ref && a.args[1]==:d# 
-          push!(zcjacDiscrSet,  (a.args[2]))  #
+         # push!(zcjacDiscrSet,  (a.args[2]))  #
           dZset=Set{Int}()
           if haskey(dZ, (a.args[2]))
               dZset=get(dZ,(a.args[2]),dZset)
@@ -133,7 +134,7 @@ function extractZCJacDepNormal(counter::Int,zcf::Expr,zcjac :: Vector{Vector{Int
       return a 
   end
   push!(zcjac,collect(zcjacSet))#convert set to vector
-  push!(zcjacDiscr,collect(zcjacDiscrSet))
+  #push!(zcjacDiscr,collect(zcjacDiscrSet))
 end
 
 
@@ -143,9 +144,9 @@ end
 
 
 
-  function createDependencyToEventsDiscr(dD::Vector{Vector{Int}},dZ::Dict{Int64, Set{Int64}},eventDep::Vector{EventDependencyStruct}) 
+function createDependencyToEventsDiscr(dD::Vector{Vector{Int}},dZ::Dict{Int64, Set{Int64}},eventDep::Vector{EventDependencyStruct}) 
     Y=length(eventDep)
-lendD=length(dD)
+    lendD=length(dD)
     HD2 = Vector{Vector{Int}}(undef, Y)
     HZ2 = Vector{Vector{Int}}(undef, Y)
       for ii=1:Y

@@ -1,5 +1,5 @@
 #using TimerOutputs
-function QSS_integrate(CommonqssData::CommonQSS_data{O,Z}, odep::NLODEProblem{PRTYPE,T,Z,Y,CS},f::Function,jac::Function,SD::Function) where {PRTYPE,O,T,Z,Y,CS}
+function integrate(Al::QSSAlgorithm{:qss,O},CommonqssData::CommonQSS_data{Z}, odep::NLODEProblem{PRTYPE,T,Z,Y,CS},f::Function,jac::Function,SD::Function) where {PRTYPE,O,T,Z,Y,CS}
 
   ft = CommonqssData.finalTime;initTime = CommonqssData.initialTime;relQ = CommonqssData.dQrel;absQ = CommonqssData.dQmin;maxErr=CommonqssData.maxErr;
 
@@ -17,9 +17,9 @@ function QSS_integrate(CommonqssData::CommonQSS_data{O,Z}, odep::NLODEProblem{PR
   SZ=odep.SZ
   evDep = odep.eventDependencies
 
-  if DEBUG @show HD,HZ,SZ,zc_SimpleJac,d end
-  if DEBUG @show evDep end
-  if DEBUG @show f end
+  if DEBUG2 @show HD,HZ,SZ,zc_SimpleJac,d end
+  if DEBUG2 @show evDep end
+  if DEBUG2 @show f end
   
   #********************************helper values*******************************  
 
@@ -58,7 +58,7 @@ end
 #---------------------------------------------------------------------------------while loop-------------------------------------------------------------------------
 ###################################################################################################################################################################
 ####################################################################################################################################################################
-simt = initTime ;totalSteps=0;prevStepTime=initTime;modifiedIndex=0; countEvents=0;#needSaveEvent=false
+simt = initTime ;totalSteps=0;prevStepTime=initTime;modifiedIndex=0;statestep=0; countEvents=0;#needSaveEvent=false
   
 while simt<ft && totalSteps < 50000000
   sch = updateScheduler(Val(T),nextStateTime,nextEventTime, nextInputTime)
@@ -69,11 +69,15 @@ while simt<ft && totalSteps < 50000000
   end
   totalSteps+=1
   t[0]=simt
+ 
   ##########################################state######################################## 
   if stepType == :ST_STATE
+    statestep+=1
     numSteps[index]+=1;
+   
     elapsed = simt - tx[index];integrateState(Val(O),x[index],elapsed);tx[index] = simt 
     quantum[index] = relQ * abs(x[index].coeffs[1]) ;quantum[index]=quantum[index] < absQ ? absQ : quantum[index];quantum[index]=quantum[index] > maxErr ? maxErr : quantum[index]   
+    if abs(x[index].coeffs[2])>1e7 quantum[index]=10*quantum[index] end
     for k = 1:O q[index].coeffs[k] = x[index].coeffs[k] end; tq[index] = simt    
     computeNextTime(Val(O), index, simt, nextStateTime, x, quantum) #
     for j in (SD(index))
@@ -93,18 +97,21 @@ while simt<ft && totalSteps < 50000000
       clearCache(taylorOpsCache,Val(CS),Val(O));f(-1,j,-1,q,d,t,taylorOpsCache)   # run ZCF--------      
       computeNextEventTime(Val(O),j,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum)
   end#end for SZ
+
+   
+
     ##################################input########################################
   elseif stepType == :ST_INPUT  # time of change has come to a state var that does not depend on anything...no one will give you a chance to change but yourself    
   #################################################################event########################################
   else
-      if VERBOSE println("at start of event simt=$simt index=$index") end
+      if DEBUG println("at start of event simt=$simt index=$index") end
       for b in zc_SimpleJac[index] # elapsed update all other vars that this zc depends upon.
           elapsedq = simt - tq[b];if elapsedq>0 integrateState(Val(O-1),q[b],elapsedq);tq[b]=simt end
       end    
       clearCache(taylorOpsCache,Val(CS),Val(O));f(-1,index,-1,q,d,t,taylorOpsCache)    # run ZCF-------- 
-      if VERBOSE  @show oldsignValue[index,2],taylorOpsCache[1][0]  end
+      if DEBUG  @show oldsignValue[index,2],taylorOpsCache[1][0]  end
       
-      if oldsignValue[index,2]*taylorOpsCache[1][0]>0 && abs(taylorOpsCache[1][0])>1e-9*absQ # if both have same sign and zcf is not very small
+      if oldsignValue[index,2]*taylorOpsCache[1][0]>=0 && abs(taylorOpsCache[1][0])>1e-9*absQ # if both have same sign and zcf is not very small
         computeNextEventTime(Val(O),index,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum) 
         if DEBUG  println("wrong estimation of event at $simt") end
         continue
@@ -122,7 +129,10 @@ while simt<ft && totalSteps < 50000000
       oldsignValue[index,2]=taylorOpsCache[1][0]
       oldsignValue[index,1]=sign(taylorOpsCache[1][0])
       
-      if VERBOSE @show modifiedIndex end
+     #=  if DEBUG 
+        @show modifiedIndex,x 
+      @show q
+      end =#
           
       for b in evDep[modifiedIndex].evContRHS
           elapsedq = simt - tq[b];if elapsedq>0 integrateState(Val(O-1),q[b],elapsedq);tq[b]=simt end
@@ -131,7 +141,7 @@ while simt<ft && totalSteps < 50000000
       for i in evDep[modifiedIndex].evCont
         #------------event influences a Continete var: x already updated in event...here update quantum and q and computenext
             quantum[i] = relQ * abs(x[i].coeffs[1]) ;quantum[i]=quantum[i] < absQ ? absQ : quantum[i];quantum[i]=quantum[i] > maxErr ? maxErr : quantum[i] 
-            q[i][0]=x[i][0];tx[i] = simt;tq[i] = simt # for liqss updateQ?
+            for k = 0:O-1  q[i][k]=x[i][k] end;tx[i] = simt;tq[i] = simt # for liqss updateQ?
           #   firstguess=updateQ(Val(O),i,x,q,quantum,exacteA,cacheA,dxaux,qaux,tx,tq,simt,ft,nextStateTime) ;tq[i] = simt   
             computeNextTime(Val(O), i, simt, nextStateTime, x, quantum) 
       end
@@ -157,7 +167,16 @@ while simt<ft && totalSteps < 50000000
               clearCache(taylorOpsCache,Val(CS),Val(O));f(-1,j,-1,q,d,t,taylorOpsCache)  # run ZCF-------- 
               if VERBOSE @show j,oldsignValue[j,2],taylorOpsCache[1][0] end     
               computeNextEventTime(Val(O),j,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum)  
-      end
+    
+             
+     end
+     if DEBUG
+      println("x at end of event simt=$simt x=$x") 
+      println("q at end of event simt=$simt q=$q")
+      @show countEvents,totalSteps,statestep
+      @show nextStateTime,quantum
+     end
+
   end#end state/input/event
   if stepType != :ST_EVENT
       push!(savedVars[index],x[index][0])
@@ -175,7 +194,7 @@ while simt<ft && totalSteps < 50000000
 
 end#end while
  
- @show countEvents
+ @show countEvents,totalSteps
 
 createSol(Val(T),Val(O),savedTimes,savedVars, "qss$O",string(odep.prname),absQ,totalSteps,0,numSteps,ft)
 end#end integrate

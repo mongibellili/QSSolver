@@ -29,18 +29,18 @@ function test()
 
                                             end =#
     end
-    #sol= QSS_Solve(odeprob,2.3,qss2(),saveat(0.01),0.0,1e-6,1e-3)
+    #sol= solve(odeprob,2.3,qss2(),saveat(0.01),0.0,1e-6,1e-3)
    # save_prob_to_model(odeprob,"D:/models/bball.jl","bball") #any location you want
 
-
-   sol= QSS_Solve(odeprob,qss2()#= ,dQmin=absTol,saveat=0.01,dQrel=relTol =#,finalTime=10.0)
+   tspan=(0.0,10.0)
+   sol= solve(odeprob,qss2()#= ,abstol=absTol,saveat=0.01,reltol=relTol =#,tspan)
     save_Sol(sol)
 
 
    #=  sol=QSS_Solve_from_model(bball,odeprob,10.0,mliqss2(),saveat(0.01),0.0,1e-6,1e-3)
     save_Sol(sol) =#
    #=  save_Sol(sol," ";xlims=(1.40,1.433),ylims=(-2.04e-1,2.06e-1)) =#
-    #= sol= QSS_Solve(odeprob,1.0,qss3(),saveat(0.01),0.0,1e-6,1e-3)
+    #= sol= solve(odeprob,1.0,qss3(),saveat(0.01),0.0,1e-6,1e-3)
       save_Sol(sol) =#
 end
 #@time 
@@ -59,10 +59,10 @@ test()
             discrete[1]=0.0                                    
         end
     end
-    sol= QSS_Solve(odeprob,1.5,qss2(),saveat(0.01),0.0,1e-6,1e-3)
+    sol= solve(odeprob,1.5,qss2(),saveat(0.01),0.0,1e-6,1e-3)
     save_Sol(sol)
     
-   #=  sol= QSS_Solve(odeprob,1.0,qss3(),saveat(0.01),0.0,1e-6,1e-3)
+   #=  sol= solve(odeprob,1.0,qss3(),saveat(0.01),0.0,1e-6,1e-3)
       save_Sol(sol) =#
 end
 test2() =#

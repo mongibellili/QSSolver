@@ -16,12 +16,7 @@ end
   x.coeffs[3] = x.coeffs[3]+elapsed*x.coeffs[4]*3#(x.coeffs[3]*2+elapsed*x.coeffs[4]*6)/2
 end
 
-@inline function integrateOldx(::Val{2}, x::Taylor0,olddx::MVector{2,Float64},elapsed::Float64) 
-  olddx[1]=x.coeffs[2]+elapsed*x.coeffs[3]*2
-end
-@inline function integrateOldx(::Val{3}, x::Taylor0,olddx::MVector{3,Float64},elapsed::Float64) 
-  olddx[1]=x.coeffs[2]+elapsed*x.coeffs[3]*2+elapsed*elapsed*x.coeffs[4]*3
-end
+
 ######################################################################################################################################"
 function computeDerivative( ::Val{1}  ,x::Taylor0,f::Taylor0 )
     x.coeffs[2] =f.coeffs[1]

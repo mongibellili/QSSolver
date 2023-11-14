@@ -1,10 +1,9 @@
 
 
 #if you want to put a note and lims in the graph
-function save_Sol(sol::Sol{T,O},xvars::Int...;note=" "::String,xlims=(0.0,0.0)::Tuple{Float64, Float64},ylims=(0.0,0.0)::Tuple{Float64, Float64}) where{T,O}
+function plot_Sol(sol::Sol{T,O},xvars::Int...;note=" "::String,xlims=(0.0,0.0)::Tuple{Float64, Float64},ylims=(0.0,0.0)::Tuple{Float64, Float64}) where{T,O}
   p1=plot()
-  mydate=now()
-  timestamp=(string(year(mydate),"_",month(mydate),"_",day(mydate),"_",hour(mydate),"_",minute(mydate),"_",second(mydate)))
+ 
   #= if sol.algName=="nmliqss1"
     mycolor=:green
     stle=:dash
@@ -34,7 +33,7 @@ function save_Sol(sol::Sol{T,O},xvars::Int...;note=" "::String,xlims=(0.0,0.0)::
       end
      # p1=plot!(p1,sol.savedTimes[k], sol.savedVarsQ[k],line=(1,mycolor,:dash),marker=(:star),label="q$k $(sol.algName)")
      # p1=plot!(p1,sol.savedTimes[k], sol.savedVars[k]#= ,marker=(:circle) =#,markersize=2,label="x$k ",legend=:bottomright)
-      p1=plot!(p1,sol.savedTimes[k], sol.savedVars[k],line=(sze,stle),label="x$k ",legend=:right)
+      p1=plot!(p1,sol.savedTimes[k], sol.savedVars[k],line=(sze,stle),marker=(:circle),label="x$k "#= ,legend=:right =#)
     end
   else
     for k=1:T
@@ -56,9 +55,19 @@ function save_Sol(sol::Sol{T,O},xvars::Int...;note=" "::String,xlims=(0.0,0.0)::
   else
     p1=plot!(p1, title="$(sol.sysName)_$(sol.algName)_$(sol.absQ)_$(sol.totalSteps)_$(sol.simulStepCount) \n $note")
   end
+  p1
+  #savefig(p1, "plot_$(sol.sysName)_$(sol.algName)_$(sol.absQ)_$(note)_ft_$(sol.ft)_$(timestamp).png")
+end
+
+function save_Sol(sol::Sol{T,O},xvars::Int...;note=" "::String,xlims=(0.0,0.0)::Tuple{Float64, Float64},ylims=(0.0,0.0)::Tuple{Float64, Float64}) where{T,O}
+  
+  p1= plot_Sol(sol,xvars...;note=note,xlims=xlims,ylims=ylims)
+  mydate=now()
+  timestamp=(string(year(mydate),"_",month(mydate),"_",day(mydate),"_",hour(mydate),"_",minute(mydate),"_",second(mydate)))
   savefig(p1, "plot_$(sol.sysName)_$(sol.algName)_$(sol.absQ)_$(note)_ft_$(sol.ft)_$(timestamp).png")
 end
 
+#for debug to be deleted later: simultaneous steps plot
 function save_SimulSol(sol::Sol{T,O},xvars::Int...;note=" "::String,xlims=(0.0,0.0)::Tuple{Float64, Float64},ylims=(0.0,0.0)::Tuple{Float64, Float64}) where{T,O}
   p1=plot()
   mydate=now()
@@ -126,7 +135,7 @@ function getPlot!(sol::Sol{T,O},k::Int) where{T,O}
 end
 
 
-function plotSol(sol::Sol{T,O}) where{T,O}
+#= function plotSol(sol::Sol{T,O}) where{T,O}
   numPoints=length(sol.savedTimes)
   #numVars=length(sol.savedVars)
   p1=plot()
@@ -139,4 +148,4 @@ function plotSol(sol::Sol{T,O}) where{T,O}
   end
     println("press enter to exit")
     readline() 
-end
+end =#

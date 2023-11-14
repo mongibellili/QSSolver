@@ -102,6 +102,10 @@ function negateT(a::Taylor0,cache::Taylor0) #where {T<:Number}
   @__dot__ cache.coeffs = (-)(a.coeffs)
   return cache
 end
+function negateT(a::T,cache::Taylor0) where {T<:Number} # requires cache1 clean
+  cache[0]=-a
+return cache
+end
 #################################################subsub########################################################"
 function subsub(a::Taylor0, b::Taylor0,c::Taylor0,cache::Taylor0) 
   @__dot__ cache.coeffs = subsub(a.coeffs, b.coeffs,c.coeffs)

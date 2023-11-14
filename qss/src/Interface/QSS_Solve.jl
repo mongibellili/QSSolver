@@ -1,25 +1,26 @@
 
 
 # user does not provide solver. default mliqss2
-function QSS_Solve(prob::NLODEProblem{PRTYPE,T,Z,Y,CS};sparsity::Val{Sparsity}=Val(false),finalTime=1.0::Float64,saveat=0.1::Float64,initialTime=0.0::Float64,dQmin=1e-6::Float64,dQrel=1e-3::Float64,maxErr=Inf::Float64) where {PRTYPE,T,Z,Y,CS,Sparsity}    
-   QSS_Solve(prob,(Val(:mliqss),Val(2));sparsity=sparsity,finalTime=finalTime,saveat=saveat,initialTime=initialTime,dQmin=dQmin,dQrel=dQrel,maxErr=maxErr)  
+function solve(prob::NLODEProblem{PRTYPE,T,Z,D,CS},tspan::Tuple{Float64, Float64};sparsity::Val{Sparsity}=Val(false)::Float64,saveat=1e-9::Float64::Float64,abstol=1e-6::Float64,reltol=1e-3::Float64,maxErr=Inf::Float64) where {PRTYPE,T,Z,D,CS,Sparsity}    
+   solve(prob,QSSAlgorithm(Val(:nmliqss),Val(2)),tspan;sparsity=sparsity,saveat=saveat,abstol=abstol,reltol=reltol,maxErr=maxErr)  
 end
 #main solve interface
-function QSS_Solve(prob::NLODEProblem{PRTYPE,T,Z,Y,CS},::Tuple{SolverType, OrderType};sparsity::Val{Sparsity}=Val(false),finalTime=1.0::Float64,saveat=0.1::Float64,initialTime=0.0::Float64,dQmin=1e-6::Float64,dQrel=1e-3::Float64,maxErr=Inf::Float64) where{PRTYPE,T,Z,Y,CS,SolverType,OrderType,Sparsity}    
-   custom_Solve(prob,SolverType,OrderType,Val(Sparsity),finalTime,saveat,initialTime,dQmin,dQrel,maxErr)
+function solve(prob::NLODEProblem{PRTYPE,T,Z,D,CS},al::QSSAlgorithm{SolverType, OrderType},tspan::Tuple{Float64, Float64};sparsity::Val{Sparsity}=Val(false),saveat=1e-9::Float64,abstol=1e-6::Float64,reltol=1e-3::Float64,maxErr=Inf::Float64) where{PRTYPE,T,Z,D,CS,SolverType,OrderType,Sparsity}    
+   custom_Solve(prob,al,Val(Sparsity),tspan[2],saveat,tspan[1],abstol,reltol,maxErr)
 end
 #default solve method: this is not to be touched...extension or modification is done through creating another custom_solve with different PRTYPE
-function custom_Solve(prob::NLODEProblem{PRTYPE,T,Z,Y,CS},::Type{Val{Solver}},::Type{Val{Order}},::Val{Sparsity},finalTime::Float64,saveat::Float64,initialTime::Float64,dQmin::Float64,dQrel::Float64,maxErr::Float64) where{PRTYPE,T,Z,Y,CS,Solver,Order,Sparsity}
-    sizehint=floor(Int64, 1.0+(finalTime/saveat)*0.6)
-    commonQSSdata=createCommonData(prob,Val(T),Val(Z),Val(Order),sizehint,finalTime,saveat, initialTime,dQmin,dQrel,maxErr)
+function custom_Solve(prob::NLODEProblem{PRTYPE,T,Z,D,CS},al::QSSAlgorithm{Solver, Order},::Val{Sparsity},finalTime::Float64,saveat::Float64,initialTime::Float64,abstol::Float64,reltol::Float64,maxErr::Float64) where{PRTYPE,T,Z,D,CS,Solver,Order,Sparsity}
+    # sizehint=floor(Int64, 1.0+(finalTime/saveat)*0.6)
+    commonQSSdata=createCommonData(prob,Val(Order),finalTime,saveat, initialTime,abstol,reltol,maxErr)
     jac=getClosure(prob.jac)::Function #if in future jac and SD are different datastructures
     SD=getClosure(prob.SD)::Function
     if Solver==:qss
-        QSS_integrate(commonQSSdata,prob,prob.eqs,jac,SD)
+        integrate(al,commonQSSdata,prob,prob.eqs,jac,SD)
     else
           liqssdata=createLiqssData(prob,Val(Sparsity),Val(T),Val(Order))
          specialLiqssData=createSpecialLiqssData(Val(T))
-        if Solver==:nmliqss
+         integrate(al,commonQSSdata,liqssdata,specialLiqssData,prob,prob.eqs,jac,SD,prob.exactJac)
+        #= if Solver==:nmliqss
              nmLiQSS_integrate(commonQSSdata,liqssdata,specialLiqssData,prob,prob.eqs,jac,SD,prob.exactJac)
         elseif Solver==:nliqss
             nLiQSS_integrate(commonQSSdata,liqssdata,specialLiqssData,prob,prob.eqs,jac,SD,prob.exactJac)
@@ -27,7 +28,7 @@ function custom_Solve(prob::NLODEProblem{PRTYPE,T,Z,Y,CS},::Type{Val{Solver}},::
             mLiQSS_integrate(commonQSSdata,liqssdata,specialLiqssData,prob,prob.eqs,jac,SD,prob.exactJac)
         elseif Solver==:liqss
              LiQSS_integrate(commonQSSdata,liqssdata,specialLiqssData,prob,prob.eqs,jac,SD,prob.exactJac)     
-        end
+        end =#
     end
  end
 
@@ -50,9 +51,9 @@ function custom_Solve(prob::NLODEProblem{PRTYPE,T,Z,Y,CS},::Type{Val{Solver}},::
 
 
 
-#helper methods...not to be touched...extension can be done through creating others via specializing on one PRTYPE or more of the symbols (PRTYPE,T,Z,Y,Order) if in the future...
+#helper methods...not to be touched...extension can be done through creating others via specializing on one PRTYPE or more of the symbols (PRTYPE,T,Z,D,Order) if in the future...
 #################################################################################################################################################################################
-function createCommonData(prob::NLODEProblem{PRTYPE,T,Z,Y,CS},::Val{T},::Val{Z},::Val{Order},sizehint::Int,finalTime::Float64,saveat::Float64,initialTime::Float64,dQmin::Float64,dQrel::Float64,maxErr::Float64)where{PRTYPE,T,Z,Y,CS,Order}
+function createCommonData(prob::NLODEProblem{PRTYPE,T,Z,D,CS},::Val{Order},finalTime::Float64,saveat::Float64,initialTime::Float64,abstol::Float64,reltol::Float64,maxErr::Float64)where{PRTYPE,T,Z,D,CS,Order}
     quantum =  zeros(T)
     x = Vector{Taylor0}(undef, T)
     q = Vector{Taylor0}(undef, T)
@@ -69,6 +70,10 @@ function createCommonData(prob::NLODEProblem{PRTYPE,T,Z,Y,CS},::Val{T},::Val{Z},
     t[0]=initialTime
     integratorCache=Taylor0(zeros(Order+1),Order) #for integratestate only
 
+    d=zeros(D)
+    for i=1:D
+        d[i]=prob.discreteVars[i]
+    end
     for i = 1:T
         nextInputTime[i]=Inf
         x[i]=Taylor0(zeros(Order + 1), Order) 
@@ -85,7 +90,7 @@ function createCommonData(prob::NLODEProblem{PRTYPE,T,Z,Y,CS},::Val{T},::Val{Z},
     push!(taylorOpsCache,Taylor0(zeros(Order+1),Order))
     end
     
-    commonQSSdata= CommonQSS_data(Val(Order),quantum,x,q,tx,tq,nextStateTime,nextInputTime ,nextEventTime , t, integratorCache,taylorOpsCache,finalTime,saveat, initialTime,dQmin,dQrel,maxErr,savedTimes,savedVars)
+    commonQSSdata= CommonQSS_data(quantum,x,q,tx,tq,d,nextStateTime,nextInputTime ,nextEventTime , t, integratorCache,taylorOpsCache,finalTime,saveat, initialTime,abstol,reltol,maxErr,savedTimes,savedVars)
 end
 
 
@@ -93,7 +98,7 @@ end
 
 
 #no sparsity
-function createLiqssData(prob::NLODEProblem{PRTYPE,T,Z,Y,CS},::Val{false},::Val{T},::Val{Order})where{PRTYPE,T,Z,Y,CS,Order}
+function createLiqssData(prob::NLODEProblem{PRTYPE,T,Z,D,CS},::Val{false},::Val{T},::Val{Order})where{PRTYPE,T,Z,D,CS,Order}
     a = Vector{Vector{Float64}}(undef, T)
    # u=Vector{Vector{MVector{Order,Float64}}}(undef, T)
     qaux = Vector{MVector{Order,Float64}}(undef, T)
@@ -117,7 +122,7 @@ function createLiqssData(prob::NLODEProblem{PRTYPE,T,Z,Y,CS},::Val{false},::Val{
 end
 
 #to be removed if sparsity did not help
-function createLiqssData(prob::NLODEProblem{PRTYPE,T,Z,Y,CS},::Val{true},::Val{T},::Val{Order})where{PRTYPE,T,Z,Y,CS,Order}
+function createLiqssData(prob::NLODEProblem{PRTYPE,T,Z,D,CS},::Val{true},::Val{T},::Val{Order})where{PRTYPE,T,Z,D,CS,Order}
     a = Vector{Vector{Float64}}(undef, T)
     u=Vector{Vector{MVector{Order,Float64}}}(undef, T)
     qaux = Vector{MVector{Order,Float64}}(undef, T)

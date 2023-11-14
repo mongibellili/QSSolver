@@ -23,7 +23,8 @@ function test()
             discrete[1]=discrete[1]-5.0 #the zc will happen once going up and once going down...so step is -10
         end =#
     end
-   sol= QSS_Solve(odeprob,qss2()#= ,dQmin=absTol,saveat=0.01,dQrel=relTol =#,finalTime=15.0)
+    tspan=(0.0,15.0)
+   sol= solve(odeprob,qss2()#= ,abstol=absTol,saveat=0.01,reltol=relTol =#,tspan)
    #save_Sol(sol,xlims=(0.0,15.0) ,ylims=(-2.04e-1,2.06e-1))
 end
 #@time 

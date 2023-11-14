@@ -1,11 +1,11 @@
 #hold helper datastructures needed for simulation, can be seen as the model in the qss architecture (model-integrator-quantizer)
-struct CommonQSS_data{O,Z}
-    order::Val{O}
+struct CommonQSS_data{Z}
     quantum :: Vector{Float64} 
     x :: Vector{Taylor0}  #MVector cannot hold non-isbits
     q :: Vector{Taylor0}
     tx ::  Vector{Float64} 
     tq :: Vector{Float64} 
+    d::Vector{Float64} 
     nextStateTime :: Vector{Float64}    
     nextInputTime :: Vector{Float64} # 
     nextEventTime :: MVector{Z,Float64}  
@@ -57,3 +57,4 @@ end
     hv=HeavySpecialQSS_data(savedVars,prevStepVal,cacheA)
  end
  =#
+ 

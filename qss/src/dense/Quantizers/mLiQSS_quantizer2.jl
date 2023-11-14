@@ -49,7 +49,7 @@ function nmisCycle_and_simulUpdate(cacherealPosi,cacherealPosj,aij,aji,respp::Pt
   ddxj=aji*qi1+ajj*qj1+uji2
   if abs(ddxj)==0.0
     ddxj=1e-30
-    @show ddxj
+    if DEBUG2  @show ddxj end
   end
   iscycle=false
     qjplus=xjaux-sign(ddxj)*quanj
@@ -73,7 +73,7 @@ function nmisCycle_and_simulUpdate(cacherealPosi,cacherealPosj,aij,aji,respp::Pt
       ddxi=aii*qi1+aij*dqjplus+uij2
       if abs(ddxi)==0.0
         ddxi=1e-30
-        @show ddxi
+        if DEBUG2 @show ddxi end
       end
       hi=sqrt(2*quani/abs(ddxi))
       βidir=dxi+hi*ddxi/2

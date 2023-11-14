@@ -1,5 +1,5 @@
-using qss
-using BenchmarkTools
+#= using qss
+using BenchmarkTools =#
 #= using Plots;
 gr(); =#
 
@@ -50,7 +50,7 @@ function odeDiffEquPackage()
         u[1]
     end =#
     function affect_neg!(integrator)
-        integrator.u[2] = 0.0
+        #integrator.u[2] = 0.0
         integrator.p=0.0
             
     end
@@ -60,7 +60,7 @@ function odeDiffEquPackage()
             
     end
     cb=ContinuousCallback(condition1,nothing,affect_neg!)
-    cb2=ContinuousCallback(condition1,affect_pos!)
+    cb2=ContinuousCallback(condition1,affect_pos!,nothing)
     cbs = CallbackSet(cb, cb2)
     u0 = [0.5,0.1]
     tspan = (0.0,0.06)

@@ -9,12 +9,12 @@
 end =#
 
 #struct that holds prob data 
-struct NLODEDiscProblem{PRTYPE,T,Z,Y,CS}<: NLODEProblem{PRTYPE,T,Z,Y,CS} 
+struct NLODEDiscProblem{PRTYPE,T,Z,D,CS}<: NLODEProblem{PRTYPE,T,Z,D,CS} 
     prname::Symbol
     prtype::Val{PRTYPE}
     a::Val{T}
     b::Val{Z}
-    c::Val{Y}
+    c::Val{D}
     cacheSize::Val{CS}
     initConditions::Vector{Float64}  
     discreteVars::Vector{Float64}   
@@ -39,6 +39,7 @@ end =#
 # receives user code and creates the problem struct
 function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{D},::Val{Z},initCond::Vector{Float64},du::Symbol,symDict::Dict{Symbol,Expr})where {T,D,Z}
     if VERBOSE println("discrete nlodeprobfun  T D Z= $T $D $Z") end
+   # @show odeExprs
     discrVars=Vector{Float64}()
     equs=Dict{Union{Int,Expr},Union{Int,Symbol,Expr}}()
     jac = Dict{Union{Int,Expr},Set{Union{Int,Symbol,Expr}}}()# set used because do not want to insert an existing varNum
@@ -50,10 +51,10 @@ function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{D},::Val{Z},initCond::Ve
     eventequs=Vector{Expr}()#vect to collect events
 
     ZCjac=Vector{Vector{Int}}()#zeros(SVector{Z,SVector{T,Int}}) # bad when T is large...it is a good idea to use Vector{Vector{Int}}(undef, Z)
-    ZCjacDiscrete=Vector{Vector{Int}}()#zeros(SVector{Z,SVector{D,Int}})# usually D (num of disc vars) and Z (num of zcfunctions) are small even for real problems
+  
     ZCFCounter=0
     #SZ=Vector{Vector{Int}}()#zeros(SVector{T,SVector{Z,Int}}) # bad when T is large...(opposite of ZCjac)...many vars dont influence zcf so it is better to use dict
-   # dZ=Vector{Vector{Int}}()#zeros(SVector{D,SVector{Z,Int}})# usually D (num of disc vars) and Z (num of zcfunctions) are small even for real problems (opposite of ZCjacDiscrete)
+   # dZ=Vector{Vector{Int}}()#zeros(SVector{D,SVector{Z,Int}})# usually D (num of disc vars) and Z (num of zcfunctions) are small even for real problems 
    SZ= Dict{Int,Set{Int}}()
    dZ= Dict{Int,Set{Int}}()  #since D is not large ...i can use zeros(SVector{D,SVector{Z,Int}})
    evsArr = EventDependencyStruct[]
@@ -65,6 +66,7 @@ function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{D},::Val{Z},initCond::Ve
         elseif argI isa Expr &&  argI.head == :(=)  && argI.args[1] isa Expr && argI.args[1].head == :ref && argI.args[1].args[1]==du#&& ((argI.args[2] isa Expr && (argI.args[2].head ==:ref || argI.args[2].head ==:call ))||argI.args[2] isa Number)
             y=argI.args[1];rhs=argI.args[2]
             varNum=y.args[2] # order of variable
+
             if rhs isa Number || rhs isa Symbol # rhs of equ =number  
                 equs[varNum]=:($((transformFSimplecase(:($(rhs))))))
             elseif rhs isa Expr && rhs.head==:ref #rhs is only one var
@@ -83,6 +85,7 @@ function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{D},::Val{Z},initCond::Ve
                 end 
                 equs[varNum]=rhs
             end 
+           
         elseif @capture(argI, for counter_ in b_:niter_ loopbody__ end)
              specRHS=loopbody[1].args[2]
             # extractJacDepLoop(b,niter,specRHS,jac ,jacDiscrete ,SD,dD  )   
@@ -95,7 +98,7 @@ function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{D},::Val{Z},initCond::Ve
         elseif argI isa Expr && argI.head==:if   #@capture if did not work
            zcf=argI.args[1].args[2]
            ZCFCounter+=1
-           extractZCJacDepNormal(ZCFCounter,zcf,ZCjac ,ZCjacDiscrete ,SZ ,dZ ) 
+           extractZCJacDepNormal(ZCFCounter,zcf,ZCjac ,SZ ,dZ ) 
             if zcf.head==:ref  #if one_Var
                   push!(zcequs,(transformFSimplecase(:($(zcf)))))    
                 ########################push!(zcequs,:($((transformFSimplecase(:($(zcf))))))) 
@@ -264,7 +267,7 @@ SD = Dict{Union{Int64, Expr}, Set{Union{Int64, Expr, Symbol}}}(2 => Set([1]))
 jacDiscrete = Dict{Union{Int64, Expr}, Set{Union{Int64, Expr, Symbol}}}(1 => Set())
 dD = Dict{Union{Int64, Expr}, Set{Union{Int64, Expr, Symbol}}}()
 ZCjac = [[1], [2]]
-ZCjacDiscrete = [[1], Int64[]]
+
 ZCFCounter = 2
 SZ = Dict{Int64, Set{Int64}}(2 => Set([2]), 1 => Set([1]))
 dZ = Dict{Int64, Set{Int64}}(1 => Set([1])) =#
@@ -312,7 +315,7 @@ dDVect = [[5, 2, 3, 4, 1], [5, 1]] =#
     
      
     
-    myodeProblem = NLODEDiscProblem(fname,Val(1),Val(T),Val(Z),Val(2Z),Val(num_cache_equs),initCond, discrVars, jacVect ,ZCjac  ,functioncodeF, evsArr,SDVect,HZ,HD,SZvect,exacteJacfunctionF)
+    myodeProblem = NLODEDiscProblem(fname,Val(1),Val(T),Val(Z),Val(D),Val(num_cache_equs),initCond, discrVars, jacVect ,ZCjac  ,functioncodeF, evsArr,SDVect,HZ,HD,SZvect,exacteJacfunctionF)
   
 
 end

@@ -1,5 +1,5 @@
 
-function nmLiQSS_integrate(CommonqssData::CommonQSS_data{O,0},liqssdata::LiQSS_data{O,false},specialLiqssData::SpecialLiqssQSS_data, odep::NLODEProblem{PRTYPE,T,0,0,CS},f::Function,jac::Function,SD::Function,exacteA::Function) where {PRTYPE,CS,O,T}
+function integrate(Al::QSSAlgorithm{:nmliqss,O},CommonqssData::CommonQSS_data{0},liqssdata::LiQSS_data{O,false},specialLiqssData::SpecialLiqssQSS_data, odep::NLODEProblem{PRTYPE,T,0,0,CS},f::Function,jac::Function,SD::Function,exacteA::Function) where {PRTYPE,CS,O,T}
   cacheA=specialLiqssData.cacheA
   #direction=specialLiqssData.direction
   #qminus= specialLiqssData.qminus
@@ -100,6 +100,7 @@ end
         xitemp=x[index][0]
         elapsed = simt - tx[index];integrateState(Val(O),x[index],elapsed);tx[index] = simt 
         quantum[index] = relQ * abs(x[index].coeffs[1]) ;quantum[index]=quantum[index] < absQ ? absQ : quantum[index];quantum[index]=quantum[index] > maxErr ? maxErr : quantum[index] 
+        if abs(x[index].coeffs[2])>1e7 quantum[index]=10*quantum[index] end       
         #dirI=x[index][0]-savedVars[index][end]  
         dirI=x[index][0]-xitemp
         for b in (jac(index)  )    # update Qb : to be used to calculate exacte Aindexb...move below updateQ

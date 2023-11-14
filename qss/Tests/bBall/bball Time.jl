@@ -18,7 +18,8 @@ function test()
             discrete[1]=-1.0   =#                                  
         end
     end
-   sol= QSS_Solve(odeprob,qss2()#= ,dQmin=absTol,saveat=0.01,dQrel=relTol =#,finalTime=15.0)
+    tspan=(0.0,15.0)
+   sol= solve(odeprob,qss2()#= ,abstol=absTol,saveat=0.01,reltol=relTol =#,tspan)
    #save_Sol(sol)
    save_Sol(sol,xlims=(0.0,15.0) ,ylims=(19.0,22.0))
 end

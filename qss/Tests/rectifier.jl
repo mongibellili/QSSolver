@@ -33,7 +33,8 @@ function test()
         end =#
            
     end
-   sol= QSS_Solve(odeprob,qss2(),dQmin=1e-4,dQrel=1e-3,finalTime=0.06)
+    tspan=(0.0,0.01)
+   sol= solve(odeprob,qss2(),abstol=1e-4,reltol=1e-3,tspan)
   # @show sol
  # @show 5
   save_Sol(sol)

@@ -1,5 +1,5 @@
 #using TimerOutputs
-function QSS_integrate(CommonqssData::CommonQSS_data{O,0}, odep::NLODEProblem{PRTYPE,T,0,0,CS},f::Function,jac::Function,SD::Function) where {PRTYPE,O,T,CS}
+function integrate(Al::QSSAlgorithm{:qss,O},CommonqssData::CommonQSS_data{0}, odep::NLODEProblem{PRTYPE,T,0,0,CS},f::Function,jac::Function,SD::Function) where {PRTYPE,O,T,CS}
 
   ft = CommonqssData.finalTime;initTime = CommonqssData.initialTime;relQ = CommonqssData.dQrel;absQ = CommonqssData.dQmin;maxErr=CommonqssData.maxErr;
   #= savetimeincrement=CommonqssData.savetimeincrement;savetime = savetimeincrement =#
@@ -71,6 +71,7 @@ simt = initTime ;totalSteps=0;prevStepTime=initTime
     numSteps[index]+=1;
     elapsed = simt - tx[index];integrateState(Val(O),x[index],elapsed);tx[index] = simt 
     quantum[index] = relQ * abs(x[index].coeffs[1]) ;quantum[index]=quantum[index] < absQ ? absQ : quantum[index];quantum[index]=quantum[index] > maxErr ? maxErr : quantum[index]   
+    if abs(x[index].coeffs[2])>1e7 quantum[index]=10*quantum[index] end
     for k = 1:O q[index].coeffs[k] = x[index].coeffs[k] end; tq[index] = simt    
     computeNextTime(Val(O), index, simt, nextStateTime, x, quantum) #
     for j in (SD(index))

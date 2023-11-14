@@ -3,6 +3,7 @@ module qss
 const global VERBOSE=false
 
 const global DEBUG=false
+const global DEBUG2=false
 
 #using ResumableFunctions
 using RuntimeGeneratedFunctions
@@ -26,7 +27,8 @@ RuntimeGeneratedFunctions.init(@__MODULE__)
 
 
 #this section belongs to taylorseries subcomponent
-import Base: ==, +, -, *, /, ^                     
+import Base: ==, +, -, *, /, ^   
+#import Plots:plot!               
 #import Base: Base.gc_enable
 
 import Base: iterate, size, eachindex, firstindex, lastindex,
@@ -52,7 +54,7 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
     export plotAbsoluteError#,stackplotAbsoluteError,plot_save_AbsoluteError,stackplot_save_AbsoluteError,saveAbsoluteError,stacksaveAbsoluteError
     export getError,getPlot,getPlot!#,plotCumulativeSquaredRelativeError,plotMSE,getIntervalError,plotElapsed
 
-    export  @NLodeProblem,@saveNLodeProblem,QSS_Solve,save_prob_to_model,QSS_Solve_from_model,solInterpolated
+    export  @NLodeProblem,@saveNLodeProblem,solve,save_prob_to_model,QSS_Solve_from_model,solInterpolated
     export Sol,getErrorByRodas,getAllErrorsByRefs,getAverageErrorByRefs
 
     export Taylor0,mulT,mulTT,createT,addsub,negateT,subsub,subadd,subT,addT,muladdT,mulsub,divT
@@ -95,7 +97,7 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
     include("Common/QSSNLContinousProblem.jl")
     include("Common/QSSNLdiscrProblem.jl")
     
-   
+    include("Common/QSS_Algorithm.jl")
     include("Common/QSS_data.jl")
     include("Common/Scheduler.jl")
   
@@ -119,7 +121,9 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
     
    include("dense/Quantizers/Quantizer_Common.jl")
    include("dense/Quantizers/QSS_quantizer.jl")
-    include("dense/Quantizers/LiQSS_quantizer.jl")
+    include("dense/Quantizers/LiQSS_quantizer1.jl")
+    include("dense/Quantizers/LiQSS_quantizer2.jl")
+    include("dense/Quantizers/LiQSS_quantizer3.jl")
     include("dense/Quantizers/mLiQSS_quantizer1.jl")
     include("dense/Quantizers/mLiQSS_quantizer2.jl")
     include("dense/Quantizers/mLiQSS_quantizer3.jl")
