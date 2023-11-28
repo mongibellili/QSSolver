@@ -36,7 +36,7 @@ for i =1:3
   cacherealPosi[i]=zeros(2)
   cacherealPosj[i]=zeros(2)
 end
-  exacteA(q,cacheA,1,1)  # this 'unnecessary call' 'compiles' the function and it helps remove allocations when used after !!!
+  exacteA(q,d,cacheA,1,1)  # this 'unnecessary call' 'compiles' the function and it helps remove allocations when used after !!!
  # @show exacteA
   numSteps = Vector{Int}(undef, T)
  #@show f
@@ -89,7 +89,7 @@ end
     sch = updateScheduler(Val(T),nextStateTime,nextEventTime, nextInputTime)
     simt = sch[2];index = sch[1]
     if simt>ft
-      break # simt=120 for simulation of ft=100 terminates while it adds some steps for ft=500, because dx is really small but not zero.
+      break # 
     end
     numSteps[index]+=1;totalSteps+=1
 
@@ -100,7 +100,7 @@ end
         xitemp=x[index][0]
         elapsed = simt - tx[index];integrateState(Val(O),x[index],elapsed);tx[index] = simt 
         quantum[index] = relQ * abs(x[index].coeffs[1]) ;quantum[index]=quantum[index] < absQ ? absQ : quantum[index];quantum[index]=quantum[index] > maxErr ? maxErr : quantum[index] 
-        if abs(x[index].coeffs[2])>1e7 quantum[index]=10*quantum[index] end       
+        if abs(x[index].coeffs[2])>1e6 quantum[index]=10*quantum[index] end       
         #dirI=x[index][0]-savedVars[index][end]  
         dirI=x[index][0]-xitemp
         for b in (jac(index)  )    # update Qb : to be used to calculate exacte Aindexb...move below updateQ
@@ -118,14 +118,13 @@ end
             elapsedq = simt - tq[b] ;
             if elapsedq>0  integrateState(Val(O-1),q[b],elapsedq); tq[b]=simt  end
           end
-          cacheA[1]=0.0;exacteA(q,cacheA,index,j);aij=cacheA[1]# can be passed to simul so that i dont call exactfunc again
-          cacheA[1]=0.0;exacteA(q,cacheA,j,index);aji=cacheA[1]
+          cacheA[1]=0.0;exacteA(q,d,cacheA,index,j);aij=cacheA[1]# can be passed to simul so that i dont call exactfunc again
+          cacheA[1]=0.0;exacteA(q,d,cacheA,j,index);aji=cacheA[1]
          
         
         
           if j!=index && aij*aji!=0.0
-           # @show aij,aji
-              #prvStepValj= savedVars[j][end]#getPrevStepVal(prevStepVal,j) 
+          
               for i =1:3
                 cacherealPosi[i][1]=0.0; cacherealPosi[i][2]=0.0
                 cacherealPosj[i][1]=0.0; cacherealPosj[i][2]=0.0
@@ -133,9 +132,7 @@ end
               if nmisCycle_and_simulUpdate(cacherealPosi,cacherealPosj,aij,aji,respp,pp,trackSimul,Val(O),index,j,dirI,firstguess,x,q,quantum,exacteA,d,cacheA,dxaux,qaux,tx,tq,simt,ft)
                 simulStepCount+=1
                clearCache(taylorOpsCache,Val(CS),Val(O));f(index,q,t,taylorOpsCache);computeDerivative(Val(O), x[index], taylorOpsCache[1])
-              #  clearCache(taylorOpsCache,Val(CS),Val(O));f(j,q,t,taylorOpsCache);computeDerivative(Val(O), x[j], taylorOpsCache[1])
-              # Liqss_reComputeNextTime(Val(O), index, simt, nextStateTime, x, q, quantum)
-              #  Liqss_reComputeNextTime(Val(O), j, simt, nextStateTime, x, q, quantum)
+             
    
                 for k in SD(j)  #j influences k
                     if k!=index && k!=j
@@ -178,13 +175,10 @@ end
           clearCache(taylorOpsCache,Val(CS),Val(O)); f(c,q,t,taylorOpsCache);computeDerivative(Val(O), x[c], taylorOpsCache[1])
           Liqss_reComputeNextTime(Val(O), c, simt, nextStateTime, x, q, quantum)
         end#end for SD
-      #=  if 8.377869511741662<=simt<=14.578335986845602 && (index==2 #= || index==5 =#) 
-          println("intgrator at simt=$simt index=$index")
-         
-          @show x[index],nextStateTime[index]
-          
-         end =#
-  
+    
+       #=  if  11.163688670259043<simt<12.165
+          @show simt,index,x[index],q[index],nextStateTime
+        end =#
       ##################################input########################################
     elseif sch[3] == :ST_INPUT  # time of change has come to a state var that does not depend on anything...no one will give you a chance to change but yourself    
    #=  println("nmliqss intgrator under input, index= $index, totalsteps= $totalSteps")
@@ -253,13 +247,8 @@ end
 
   end =#
   end#end while
-@show inputSteps
-  #@show cacheQ
-#@show trackSimul
- #= @timeit "createSol" =# 
- #createSol(Val(T),Val(O),savedTimes,savedVars, "nmliqss$O",string(odep.prname),absQ,simulStepCount,numSteps,ft)
- #createSol(Val(T),Val(O),savedTimes,savedVars, "nmliqss$O",string(odep.prname),absQ,totalSteps,simulStepCount,numSteps,ft)
- createSol(Val(T),Val(O),savedTimes,savedVars, "nmliqss$O",string(odep.prname),absQ,totalSteps,simulStepCount,numSteps,ft)
+
+ createSol(Val(T),Val(O),savedTimes,savedVars, "nmliqss$O",string(odep.prname),absQ,totalSteps,simulStepCount,0,numSteps,ft)
      # change this to function /constrcutor...remember it is bad to access structs (objects) directly
   
 end

@@ -1,7 +1,7 @@
  #iters
-#=  function updateQ(::Val{1},i::Int, xv::Vector{Taylor0},qv::Vector{Taylor0}, quantum::Vector{Float64}#= ,av::Vector{Vector{Float64}} =#,exacteA::Function,cacheA::MVector{1,Float64},dxaux::Vector{MVector{1,Float64}},qaux::Vector{MVector{1,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64, nextStateTime::Vector{Float64})
+  function updateQ(::Val{1},i::Int, xv::Vector{Taylor0},qv::Vector{Taylor0}, quantum::Vector{Float64}#= ,av::Vector{Vector{Float64}} =#,exacteA::Function,d::Vector{Float64},cacheA::MVector{1,Float64},dxaux::Vector{MVector{1,Float64}},qaux::Vector{MVector{1,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64, nextStateTime::Vector{Float64})
    # a=av[i][i]
-     cacheA[1]=0.0;exacteA(qv,cacheA,i,i)
+     cacheA[1]=0.0;exacteA(qv,d,cacheA,i,i)
     
      a=cacheA[1]
  
@@ -92,11 +92,11 @@
    # println("inside single updateQ: q & qaux[$i][1]= ",q," ; ",qaux[i][1])
    nextStateTime[i]=simt+h
     return h
-end  =#
+end   
  
  
  #analytic favor q-x
-   function updateQ(::Val{1},i::Int, xv::Vector{Taylor0},qv::Vector{Taylor0}, quantum::Vector{Float64}#= ,av::Vector{Vector{Float64}} =#,exacteA::Function,d::Vector{Float64},cacheA::MVector{1,Float64},dxaux::Vector{MVector{1,Float64}},qaux::Vector{MVector{1,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64, nextStateTime::Vector{Float64})
+#=  function updateQ(::Val{1},i::Int, xv::Vector{Taylor0},qv::Vector{Taylor0}, quantum::Vector{Float64}#= ,av::Vector{Vector{Float64}} =#,exacteA::Function,d::Vector{Float64},cacheA::MVector{1,Float64},dxaux::Vector{MVector{1,Float64}},qaux::Vector{MVector{1,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64, nextStateTime::Vector{Float64})
     cacheA[1]=0.0;exacteA(qv,d,cacheA,i,i);a=cacheA[1]
      q=qv[i][0];x=xv[i][0];x1=xv[i][1];
      qaux[i][1]=q
@@ -150,7 +150,7 @@ end  =#
     qv[i][0]=q
     nextStateTime[i]=simt+h
     return h
-end   
+end     =#
  
  #analytic favor q-x but care about h large
 #= function updateQ(::Val{1},i::Int, xv::Vector{Taylor0},qv::Vector{Taylor0}, quantum::Vector{Float64}#= ,av::Vector{Vector{Float64}} =#,exacteA::Function,cacheA::MVector{1,Float64},dxaux::Vector{MVector{1,Float64}},qaux::Vector{MVector{1,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64, nextStateTime::Vector{Float64})
@@ -347,28 +347,28 @@ end   =#
 
 function Liqss_reComputeNextTime(::Val{1}, i::Int, simt::Float64, nextStateTime::Vector{Float64}, xv::Vector{Taylor0},qv::Vector{Taylor0}, quantum::Vector{Float64}#= ,a::Vector{Vector{Float64}} =#)
     dt=0.0; q=qv[i][0];x=xv[i][0];x1=xv[i][1]
-    if x1 !=0.0 #&& abs(q-x)>quantum[i]/10
-        dt=(q-x)/x1
-        if dt>0.0
-            nextStateTime[i]=simt+dt# later guard against very small dt
-        elseif dt<0.0
-            if x1>0.0  
-                nextStateTime[i]=simt+(q-x+2*quantum[i])/x1
-            else
-                nextStateTime[i]=simt+(q-x-2*quantum[i])/x1
-            end
-        end
+    if abs(q-x) >= 2*quani # this happened when var i and j s turns are now...var i depends on j, j is asked here for next time...or if you want to increase quant*10 later it can be put back to normal and q & x are spread out by 10quan
+        nextStateTime[i] = simt+1e-15
     else
-        nextStateTime[i]=Inf
+                if x1 !=0.0 #&& abs(q-x)>quantum[i]/10
+                    dt=(q-x)/x1
+                    if dt>0.0
+                        nextStateTime[i]=simt+dt# later guard against very small dt
+                    elseif dt<0.0
+                        if x1>0.0  
+                            nextStateTime[i]=simt+(q-x+2*quantum[i])/x1
+                        else
+                            nextStateTime[i]=simt+(q-x-2*quantum[i])/x1
+                        end
+                    end
+                else
+                    nextStateTime[i]=Inf
+                end
     end
-    if nextStateTime[i]<simt # this is coming from the fact that a variable can reach 2quan distance when it is not its turn, then computation above gives next=simt+(p-p)/dx...p-p should be zero but it can be very small negative
-        nextStateTime[i]=simt+1e-12
+    if nextStateTime[i]<simt 
+        nextStateTime[i]=simt+Inf#1e-12
     end
-   #=  if 11.377869511741662<=simt<=13.578335986845602 && (i==2 || i==5) 
-        println("recomputeNext  at simt=$simt index=$i")
-        @show x1,q,x,nextStateTime[i]
-        
-       end =#
+  # this is coming from the fact that a variable can reach 2quan distance when it is not its turn, then computation above gives next=simt+(p-p)/dx...p-p should be zero but it can be very small negative
 end
 
 

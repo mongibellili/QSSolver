@@ -1,8 +1,8 @@
 
 using qss
 #using XLSX
-using BenchmarkTools
-using BSON
+#using BenchmarkTools
+#using BSON
 #using TimerOutputs
 #using Plots
 function test(case,solvr)
@@ -26,7 +26,9 @@ function test(case,solvr)
      
      println("start LTI solving")
      tspan=(0.0,100.0)
-     solnmliqss=solve(odeprob,solvr,abstol=absTol,saveat=0.01,reltol=relTol,tspan,maxErr=10000*relTol)
+     solnmliqss=solve(odeprob,solvr,abstol=absTol,saveat=0.01,reltol=relTol,tspan#= ,maxErr=10000*relTol =#)
+     @show solnmliqss.totalSteps
+    #save_Sol(solnmliqss,note="xi10dxi")
 
      solnmliqssInterp=solInterpolated(solnmliqss,0.01)
      er1=getError(solnmliqssInterp,1,x1)  
@@ -38,7 +40,7 @@ function test(case,solvr)
 
 
     
-   #=    BSON.@load "qss/ref_bson/solVect_Tyson_Rodas5Pe-12.bson" solRodas5PVectorTyson
+      #BSON.@load "qss/ref_bson/solVect_Tyson_Rodas5Pe-12.bson" solRodas5PVectorTyson
      odeprob = @NLodeProblem begin
          name=(tyson,)
          u = [0.0,0.75,0.25,0.0,0.0,0.0]
@@ -53,11 +55,12 @@ function test(case,solvr)
      timenmliqss=0.0
      tspan=(0.0,25.0)
      solnmliqss=solve(odeprob,solvr,abstol=absTol,saveat=0.01,reltol=relTol,tspan#= ,maxErr=100*relTol =#)
-    save_Sol(solnmliqss,1,2,3,4,5,6#= xlims=(10.3778695,14.5789) =#) =#
+     @show solnmliqss.totalSteps
+    #save_Sol(solnmliqss,note="cancelcriteria-3_xi10dxi"#= xlims=(10.3778695,14.5789) =#)  
 
 
     # save_Sol(solnmliqss,1,note="x1 intrval13  ",xlims=(4.0,4.38),ylims=(0.0007,0.000723))
- #=    solnmliqssInterp=solInterpolated(solnmliqss,0.01)
+ #=     solnmliqssInterp=solInterpolated(solnmliqss,0.01)
     err3=getAverageErrorByRefs(solRodas5PVectorTyson,solnmliqssInterp) 
 
   # timenmliqss=@belapsed solve($odeprob,$solvr,abstol=$absTol,saveat=0.01,reltol=$relTol,tspan#= ,maxErr=1000*$relTol =#)
@@ -66,7 +69,7 @@ function test(case,solvr)
      
 
 
-      BSON.@load "qss/ref_bson/solVectAdvection_N1000d01_Feagin14e-12.bson" solFeagin14VectorN1000d01
+ #=      BSON.@load "qss/ref_bson/solVectAdvection_N1000d01_Feagin14e-12.bson" solFeagin14VectorN1000d01
     prob=@NLodeProblem begin
         name=(adrN1000d01,)
         u[1:333]=1.0
@@ -86,14 +89,14 @@ function test(case,solvr)
     println("start adr solving")
     ttnmliqss=0.0
 
-  
-    solnmliqss=solve(prob,solvr,abstol=absTol,saveat=0.01,reltol=relTol,tspan=4.0)#
+    tspan=(0.0,10.0)
+    solnmliqss=solve(prob,solvr,abstol=absTol,saveat=0.01,reltol=relTol,tspan)#
     @show solnmliqss.totalSteps,solnmliqss.simulStepCount 
-    save_Sol(solnmliqss,1,2,600,1000) 
-    #=   solnmliqssInterp=solInterpolated(solnmliqss,0.01)
+   # save_Sol(solnmliqss,1,2,600,1000,note="unioni_") 
+      solnmliqssInterp=solInterpolated(solnmliqss,0.01)
     err4=getAverageErrorByRefs(solFeagin14VectorN1000d01,solnmliqssInterp)
     @show err4,solnmliqss.totalSteps
-    tspan=(0.0,10.0)
+
   # ttnmliqss=@belapsed solve($prob,$solvr,abstol=$absTol,saveat=0.01,reltol=$relTol,tspan)
     resnmliqss12E_2= ("$(solnmliqss.algName)",relTol,err4,solnmliqss.totalSteps,solnmliqss.simulStepCount,ttnmliqss)
     @show resnmliqss12E_2    =#
@@ -114,6 +117,6 @@ function test(case,solvr)
      end =#
 end
 
-case="order1_newcondsijdxithrow"
+case="order1_"
 #test(case,mliqss1())
-test(case,nmliqss1())
+test(case,nmliqss2())

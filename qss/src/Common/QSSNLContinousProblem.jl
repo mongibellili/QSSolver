@@ -212,7 +212,7 @@ function createExactJacFun(jac:: Dict{Expr,Union{Float64,Int,Symbol,Expr}},funNa
     def1=Dict{Symbol,Any}() #any changeto Union{expr,Symbol}  ????
     def1[:head] = :function
     def1[:name] = Symbol(:exactJac,funName)  
-    def1[:args] = [:(q::Vector{Taylor0}),:(cache::MVector{1,Float64}),:(i::Int),:(j::Int)]
+    def1[:args] = [:(q::Vector{Taylor0}),:(d::Vector{Float64}),:(cache::MVector{1,Float64}),:(i::Int),:(j::Int)]
     def1[:body] = myex1
     functioncode1=combinedef(def1)
 end

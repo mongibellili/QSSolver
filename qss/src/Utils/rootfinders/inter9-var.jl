@@ -299,7 +299,7 @@ end
 function quadRootv2(coeff::NTuple{3,Float64}) # 
 	mpr=(-1.0,-1.0) #size 2 to use mpr[2] in quantizer
 	a=coeff[1];b=coeff[2];c=coeff[3]
-	if a == 0.0 #|| (10000 * abs(a)) < abs(b)# coef3 is the coef of t^2
+	if a == 0.0 || (10000 * abs(a)) < abs(b)# coef3 is the coef of t^2
 		if b != 0.0
 		  if -c / b>0.0
 		   mpr = (-c / b,-1.0)

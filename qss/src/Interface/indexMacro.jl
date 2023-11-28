@@ -80,8 +80,12 @@ function arrangeProb(x::Expr) # replace symbols and params , extract info about 
                 else
                     discreteSize = length(rhs.args)  
                 end    
-            elseif y isa Expr && y.head == :ref && rhs isa Expr && rhs.head !=:vect#&& rhs.head==:call or ref # a diff equa not in a loop
+            elseif y isa Expr && y.head == :ref && (rhs isa Expr && rhs.head !=:vect)#&& rhs.head==:call or ref # a diff equa not in a loop
                 argI.args[2]=changeVarNames_params(rhs,stateVarName,:nothing,param,symDict)
+            elseif y isa Expr && y.head == :ref && rhs isa Symbol
+                if haskey(param, rhs)#symbol is a parameter
+                    argI.args[2]=copy(param[rhs]) 
+                end
             end
         elseif @capture(argI, for var_ in b_:niter_ loopbody__ end)
             argI.args[2]=changeVarNames_params(loopbody[1],stateVarName,var,param,symDict)

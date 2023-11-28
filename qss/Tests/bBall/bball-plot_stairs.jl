@@ -13,7 +13,7 @@ function test()
         u = [20.0,-0.001]
         discrete = [15.0]
         du[1] =u[2]
-        du[2] =-t
+        du[2] =-9.8
         if discrete[1]-u[1]>0   #5*discrte gave error
             u[2]=-u[2]*0.5   #discrete=0.0-->type Symbol has no field args...find to personalize error msg  
            # discrete[1]=discrete[1]-5.0          

@@ -5,7 +5,7 @@ function mLiQSS_integrate(Al::QSSAlgorithm{:nmliqss,O},CommonqssData::CommonQSS_
   #qminus= specialLiqssData.qminus
   buddySimul=specialLiqssData.buddySimul
   ft = CommonqssData.finalTime;initTime = CommonqssData.initialTime;relQ = CommonqssData.dQrel;absQ = CommonqssData.dQmin;maxErr=CommonqssData.maxErr;
-  
+  #setprecision(BigFloat,64)
   #savetimeincrement=CommonqssData.savetimeincrement;savetime = savetimeincrement
   quantum = CommonqssData.quantum;nextStateTime = CommonqssData.nextStateTime;nextEventTime = CommonqssData.nextEventTime;
   nextInputTime = CommonqssData.nextInputTime
@@ -221,10 +221,8 @@ end
 
 #@show temporaryhelper
  #= @timeit "createSol" =# 
- #createSol(Val(T),Val(O),savedTimes,savedVars, "nmliqss$O",string(odep.prname),absQ,totalStepswhenCycles,simulStepCount,numSteps,ft)
- #createSol(Val(T),Val(O),savedTimes,savedVars, "mliqss$O",string(odep.prname),absQ,totalSteps,simulStepCount,numSteps,ft)
- #createSol(Val(T),Val(O),savedTimes,savedVars, "mliqss$O",string(odep.prname),absQ,totalSteps,totalStepswhenCycles,simulStepCount,numSteps,ft)
- createSol(Val(T),Val(O),savedTimes,savedVars,savedVarsQ, "mliqss$O",string(odep.prname),absQ,totalSteps#= ,totalStepswhenCycles =#,simulStepCount,numSteps,ft)
+ createSol(Val(T),Val(O),savedTimes,savedVars, "mLiqss$O",string(odep.prname),absQ,totalSteps,simulStepCount,0,numSteps,ft)
+ #createSol(Val(T),Val(O),savedTimes,savedVars,savedVarsQ, "mliqss$O",string(odep.prname),absQ,totalSteps#= ,totalStepswhenCycles =#,simulStepCount,numSteps,ft)
      # change this to function /constrcutor...remember it is bad to access structs (objects) directly
   
 end

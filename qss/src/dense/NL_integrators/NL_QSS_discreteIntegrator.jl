@@ -50,7 +50,7 @@ for i=1:Z
   clearCache(taylorOpsCache,Val(CS),Val(O));f(-1,i,-1,x,d,t,taylorOpsCache)                     
   oldsignValue[i,2]=taylorOpsCache[1][0] #value
   oldsignValue[i,1]=sign(taylorOpsCache[1][0]) #sign modify 
-  computeNextEventTime(Val(O),i,taylorOpsCache[1],oldsignValue,initTime,  nextEventTime, quantum)
+  computeNextEventTime(Val(O),i,taylorOpsCache[1],oldsignValue,initTime,  nextEventTime, quantum,absQ)
 end
 
 ###################################################################################################################################################################
@@ -69,7 +69,7 @@ while simt<ft && totalSteps < 50000000
   end
   totalSteps+=1
   t[0]=simt
- 
+  DEBUG_time=DEBUG  && 0.0<=simt<=ft
   ##########################################state######################################## 
   if stepType == :ST_STATE
     statestep+=1
@@ -95,7 +95,7 @@ while simt<ft && totalSteps < 50000000
           elapsedq = simt - tq[b];if elapsedq>0 integrateState(Val(O-1),q[b],elapsedq);tq[b]=simt end
       end            
       clearCache(taylorOpsCache,Val(CS),Val(O));f(-1,j,-1,q,d,t,taylorOpsCache)   # run ZCF--------      
-      computeNextEventTime(Val(O),j,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum)
+      computeNextEventTime(Val(O),j,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum,absQ)
   end#end for SZ
 
    
@@ -111,8 +111,8 @@ while simt<ft && totalSteps < 50000000
       clearCache(taylorOpsCache,Val(CS),Val(O));f(-1,index,-1,q,d,t,taylorOpsCache)    # run ZCF-------- 
       if DEBUG  @show oldsignValue[index,2],taylorOpsCache[1][0]  end
       
-      if oldsignValue[index,2]*taylorOpsCache[1][0]>=0 && abs(taylorOpsCache[1][0])>1e-9*absQ # if both have same sign and zcf is not very small
-        computeNextEventTime(Val(O),index,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum) 
+   #=    if oldsignValue[index,2]*taylorOpsCache[1][0]>=0 && abs(taylorOpsCache[1][0])>1e-9*absQ # if both have same sign and zcf is not very small
+        computeNextEventTime(Val(O),index,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum,absQ) 
         if DEBUG  println("wrong estimation of event at $simt") end
         continue
       end
@@ -126,6 +126,36 @@ while simt<ft && totalSteps < 50000000
         if DEBUG  println("ZCF==oldZCF at $simt") end
         continue
       end
+      oldsignValue[index,2]=taylorOpsCache[1][0]
+      oldsignValue[index,1]=sign(taylorOpsCache[1][0]) =#
+
+
+
+      if oldsignValue[index,2]*taylorOpsCache[1][0]>=0  
+        if abs(taylorOpsCache[1][0])>1e-9*absQ # if both have same sign and zcf is not very small: zc=1e-9*absQ is allowed as an event
+                computeNextEventTime(Val(O),index,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum,absQ) 
+              #  @show index,countEvents
+              #  @show oldsignValue[index,2],taylorOpsCache[1][0]
+              if DEBUG_time  println("wrong estimation of event at $simt") end
+                continue
+        end
+      end
+      if abs(oldsignValue[index,2]) <=1e-9*absQ  #earlier zc=1e-9*absQ was considered event , so now it should be prevented from passing
+        nextEventTime[index]=Inf # at this instant next zc will be triggered now, and this will lead to infinite events, so cannot computenextevent here
+        continue
+      end
+      # needSaveEvent=true
+      
+      if taylorOpsCache[1][0]>oldsignValue[index,2] #scheduled rise
+        modifiedIndex=2*index-1 
+      elseif taylorOpsCache[1][0]<oldsignValue[index,2] #scheduled drop
+        modifiedIndex=2*index
+      else # == ( zcf==oldZCF)
+        if DEBUG_time  println("this should never be reached ZCF==oldZCF at $simt cuz small old not allowed and large zc not allowed!!") end
+        computeNextEventTime(Val(O),index,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum,absQ) 
+        continue
+      end
+      countEvents+=1
       oldsignValue[index,2]=taylorOpsCache[1][0]
       oldsignValue[index,1]=sign(taylorOpsCache[1][0])
       
@@ -146,7 +176,7 @@ while simt<ft && totalSteps < 50000000
             computeNextTime(Val(O), i, simt, nextStateTime, x, quantum) 
       end
      # nextEventTime[index]=Inf   #investigate more 
-      computeNextEventTime(Val(O),index,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum) # it could happen zcf=0.0 then infinite event
+      computeNextEventTime(Val(O),index,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum,absQ) # it could happen zcf=0.0 then infinite event
 
       for j in (HD[modifiedIndex]) # care about dependency to this event only     
           elapsedx = simt - tx[j];if elapsedx > 0 x[j].coeffs[1] = x[j](elapsedx);tx[j] = simt;#= @show j,x[j] =# end
@@ -166,7 +196,7 @@ while simt<ft && totalSteps < 50000000
                 end            
               clearCache(taylorOpsCache,Val(CS),Val(O));f(-1,j,-1,q,d,t,taylorOpsCache)  # run ZCF-------- 
               if VERBOSE @show j,oldsignValue[j,2],taylorOpsCache[1][0] end     
-              computeNextEventTime(Val(O),j,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum)  
+              computeNextEventTime(Val(O),j,taylorOpsCache[1],oldsignValue,simt,  nextEventTime, quantum,absQ)  
     
              
      end
@@ -179,8 +209,14 @@ while simt<ft && totalSteps < 50000000
 
   end#end state/input/event
   if stepType != :ST_EVENT
-      push!(savedVars[index],x[index][0])
-      push!(savedTimes[index],simt)
+    #=   push!(savedVars[index],x[index][0])
+      push!(savedTimes[index],simt) =#
+
+      for i =1:T 
+        push!(savedVars[i],x[i][0])
+        
+        push!(savedTimes[i],simt)
+      end
   else
     #if needSaveEvent
     for j in (HD[modifiedIndex])
@@ -196,5 +232,6 @@ end#end while
  
  @show countEvents,totalSteps
 
-createSol(Val(T),Val(O),savedTimes,savedVars, "qss$O",string(odep.prname),absQ,totalSteps,0,numSteps,ft)
+
+createSol(Val(T),Val(O),savedTimes,savedVars, "qss$O",string(odep.prname),absQ,totalSteps,0,countEvents,numSteps,ft)
 end#end integrate

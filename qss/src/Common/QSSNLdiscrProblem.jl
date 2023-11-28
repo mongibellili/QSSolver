@@ -143,20 +143,24 @@ function NLodeProblemFunc(odeExprs::Expr,::Val{T},::Val{D},::Val{Z},initCond::Ve
             posEv_conArrLHS= Vector{Int}()#@SVector fill(NaN, T)  
             posEv_conArrRHS=Vector{Int}()#@SVector zeros(T)    #to be used inside intgrator to updateOtherQs (intgrateState) before executing the event there is no discArrRHS because d is not changing overtime to be updated      
             for j = 1:length(posEvExp.args)  # j coressponds the number of statements under one posEvent
-                !(posEvExp.args[j]  isa Expr &&  posEvExp.args[j].head == :(=))  && error("event should be A=B")
-                poslhs=posEvExp.args[j].args[1];posrhs=posEvExp.args[j].args[2]
-                !(poslhs  isa Expr &&  poslhs.head == :ref && (poslhs.args[1]==:q || poslhs.args[1]==:d)) && error("lhs of events must be a continuous or a discrete variable")
-                if poslhs.args[1]==:q
-                    push!(posEv_conArrLHS,poslhs.args[2])
-                else # lhs is a disc var 
-                    push!(posEv_disArrLHS,poslhs.args[2])
-                end
-                #@show poslhs,posrhs
-                postwalk(posrhs) do a   #
-                    if a isa Expr && a.head == :ref && a.args[1]==:q# 
-                        push!(posEv_conArrRHS,  (a.args[2]))  #                    
+               # !(posEvExp.args[j]  isa Expr &&  posEvExp.args[j].head == :(=))  && error("event should be A=B")
+                if (posEvExp.args[j]  isa Expr &&  posEvExp.args[j].head == :(=)) 
+                        poslhs=posEvExp.args[j].args[1];posrhs=posEvExp.args[j].args[2]
+                       # !(poslhs  isa Expr &&  poslhs.head == :ref && (poslhs.args[1]==:q || poslhs.args[1]==:d)) && error("lhs of events must be a continuous or a discrete variable")
+                    if (poslhs  isa Expr &&  poslhs.head == :ref && (poslhs.args[1]==:q || poslhs.args[1]==:d))    
+                       if poslhs.args[1]==:q
+                            push!(posEv_conArrLHS,poslhs.args[2])
+                        else # lhs is a disc var 
+                            push!(posEv_disArrLHS,poslhs.args[2])
+                        end
+                        #@show poslhs,posrhs
+                        postwalk(posrhs) do a   #
+                            if a isa Expr && a.head == :ref && a.args[1]==:q# 
+                                push!(posEv_conArrRHS,  (a.args[2]))  #                    
+                            end
+                            return a 
+                        end
                     end
-                    return a 
                 end
             end
             #------------------neg Event--------------------#
@@ -275,7 +279,7 @@ dZ = Dict{Int64, Set{Int64}}(1 => Set([1])) =#
 jacVect=createJacVect(jac,Val(T))
 SDVect=createSDVect(jac,Val(T))
 #@show dD
-dDVect =createdDvect(dD)
+dDVect =createdDvect(dD,Val(D))
 #jacDiscreteVect=createJacVect(jacDiscrete,Val(T)) #
 SZvect=createSZvect(SZ,Val(T))
 #@show evsArr
@@ -324,10 +328,10 @@ end
 
 
 
-function createdDvect(dD::Dict{Union{Int64, Expr}, Set{Union{Int64, Expr, Symbol}}})
-    lendD = length(dD)
-    dDVect = Vector{Vector{Int}}(undef, lendD)
-    for ii=1:lendD
+function createdDvect(dD::Dict{Union{Int64, Expr}, Set{Union{Int64, Expr, Symbol}}},::Val{D})where{D}
+   
+    dDVect = Vector{Vector{Int}}(undef, D)
+    for ii=1:D
         dDVect[ii]=Vector{Int}()# define it so i can push elements as i find them below
     end
     for dictElement in dD

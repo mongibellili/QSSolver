@@ -10,10 +10,10 @@ function nmisCycle_and_simulUpdate(cacherealPosi,cacherealPosj,aij,aji,respp::Pt
 
 
    uii=dxaux[index][1]-aii*qaux[index][1]
-
    ui2=dxaux[index][2]-aii*qaux[index][2]
 
-
+  #=  uii=x[index][1]-aii*q[index][0]
+   ui2=x[index][2]-aii*q[index][1] =#
 
   xi=x[index][0];xj=x[j][0];qi=q[index][0];qj=q[j][0];qi1=q[index][1];qj1=q[j][1];xi1=x[index][1];xi2=2*x[index][2];xj1=x[j][1];xj2=2*x[j][2]
   #uii=u[index][index][1];ujj=u[j][j][1]#;uij=u[index][j][1];uji=u[j][index][1]#;uji2=u[j][index][2]
@@ -52,14 +52,18 @@ function nmisCycle_and_simulUpdate(cacherealPosi,cacherealPosj,aij,aji,respp::Pt
     if DEBUG2  @show ddxj end
   end
   iscycle=false
+
+
     qjplus=xjaux-sign(ddxj)*quanj
-    h=sqrt(2*quanj/abs(ddxj))#2*quantum funny oscillating graph; xj2 vibrating
-    α1=1-h*ajj
+    hj=sqrt(2*quanj/abs(ddxj))#
+    α1=1-hj*ajj
     if abs(α1)==0.0
       α1=1e-30
       @show α1
     end
-    dqjplus=(aji*(qi+h*qi1)+ajj*qjplus+uji+h*uji2)/α1
+    dqjplus=(aji*(qi+hj*qi1)+ajj*qjplus+uji+hj*uji2)/α1
+ 
+
     uij=uii-aij*qaux[j][1]
     # uij=u[index][j][1]
      uij2=ui2-aij*qj1#########qaux[j][2] updated in normal Qupdate..ft=20 slightly shifts up
@@ -77,9 +81,10 @@ function nmisCycle_and_simulUpdate(cacherealPosi,cacherealPosj,aij,aji,respp::Pt
       end
       hi=sqrt(2*quani/abs(ddxi))
       βidir=dxi+hi*ddxi/2
-      βjdir=dxj+h*ddxj/2
+      βjdir=dxj+hj*ddxj/2
       βidth=dxithrow+hi*ddxithrow/2
-      βj=xj1+h*xj2/2
+      αidir=xi1+hi*xi2/2
+      βj=xj1+hj*xj2/2
 ########condition:Union 
   #=   if (abs(dxj-xj1)>(abs(dxj+xj1)/2) || abs(ddxj-xj2)>(abs(ddxj+xj2)/2))  || dqjplus*newDiff<0.0 #(dqjplus*qj1)<=0.0 with dir is better since when dir =0 we do not enter
     
@@ -95,12 +100,39 @@ function nmisCycle_and_simulUpdate(cacherealPosi,cacherealPosj,aij,aji,respp::Pt
       end
     end =#
  ########condition:combineDer Union i
+
+
  if abs(βjdir-βj)>(abs(βjdir+βj)/2)  || dqjplus*newDiff<0.0 
     
-  if abs(βidir-βidth)>(abs(βidir+βidth)/2)  || βidir*dirI<0.0
-    iscycle=true
+          if abs(βidir-βidth)>(abs(βidir+βidth)/2)  || βidir*dirI<0.0
+            iscycle=true
+          end
+        coef_signig=100
+          if (abs(dxi)>(abs(xi1)*coef_signig) #= && (abs(ddxi)>(abs(xi2)*coef_signig)||abs(xi2)>(abs(ddxi)*coef_signig)) =#) || (abs(xi1)>(abs(dxi)*coef_signig) #= &&  (abs(ddxi)>(abs(xi2)*coef_signig)||abs(xi2)>(abs(ddxi)*coef_signig)) =#)
+            iscycle=true
+          end
+        #=  if abs(βidir-αidir)>(abs(βidir+αidir)/2)  
+            iscycle=true
+          end =#
+   end
+
+
+if (ddxithrow>0 && dxithrow<0 && qi1>0) || (ddxithrow<0 && dxithrow>0 && qi1<0)
+  xmin=xi-dxithrow*dxithrow/ddxithrow
+  if abs(xmin-xi)/abs(qi-xi)>0.8 # xmin is close to q and a change in q  might flip its sign of dq
+    iscycle=false #
   end
 end
+
+
+#= if (ddxi>0 && dxi<0 && qi1>0) || (ddxi<0 && dxi>0 && qi1<0)
+  xmin=xi-dxi*dxi/ddxi
+  if abs(xmin-xi)/abs(qi-xi)>0.8 # xmin is close to q and a change in q  might flip its sign of dq
+  
+    iscycle=false #
+  end
+
+end =#
 
 ########condition:kinda signif alone i
   #=   if (abs(dxj-xj1)>(abs(dxj+xj1)/2) || abs(ddxj-xj2)>(abs(ddxj+xj2)/2)) # || dqjplus*newDiff<0.0 
@@ -111,58 +143,80 @@ end
     end =#
 
      ########condition:cond1 
-  #=    if  dqjplus*newDiff<0.0 #= || (dqjplus==0.0 && newDiff!=0.0)  =##(dqjplus*qj1)<=0.0 with dir is better since when dir =0 we do not enter
+      #=    if  dqjplus*newDiff<0.0 #= || (dqjplus==0.0 && newDiff!=0.0)  =##(dqjplus*qj1)<=0.0 with dir is better since when dir =0 we do not enter
     
-      if βidir*dirI<0.0
-        iscycle=true
-      end
-    end
+                if βidir*dirI<0.0
+                  iscycle=true
+                end
+              end
 
-    if  dqjplus*newDiff<0.0 #= || (dqjplus==0.0 && newDiff!=0.0)  =##(dqjplus*qj1)<=0.0 with dir is better since when dir =0 we do not enter
-    
-      if (abs(dxi-xi1)>(abs(dxi+xi1)/2) || abs(ddxi-xi2)>(abs(ddxi+xi2)/2)) 
-        iscycle=true
-      end
-    end
+              if  dqjplus*newDiff<0.0 #= || (dqjplus==0.0 && newDiff!=0.0)  =##(dqjplus*qj1)<=0.0 with dir is better since when dir =0 we do not enter
+              
+                if (abs(dxi-xi1)>(abs(dxi+xi1)/2) || abs(ddxi-xi2)>(abs(ddxi+xi2)/2)) 
+                  iscycle=true
+                end
+              end
 
-    if (abs(dxj-xj1)>(abs(dxj+xj1)/2) || abs(ddxj-xj2)>(abs(ddxj+xj2)/2))   #= || (dqjplus==0.0 && newDiff!=0.0)  =##(dqjplus*qj1)<=0.0 with dir is better since when dir =0 we do not enter
-    
-      if  βidir*dirI<0.0
-        iscycle=true
-      end
+              if (abs(dxj-xj1)>(abs(dxj+xj1)/2) || abs(ddxj-xj2)>(abs(ddxj+xj2)/2))   #= || (dqjplus==0.0 && newDiff!=0.0)  =##(dqjplus*qj1)<=0.0 with dir is better since when dir =0 we do not enter
+              
+                if  βidir*dirI<0.0
+                  iscycle=true
+                end
     end =#
  
 
 
      ########condition:cond1 i
- #=     if  dqjplus*newDiff<0.0 #= || (dqjplus==0.0 && newDiff!=0.0)  =##(dqjplus*qj1)<=0.0 with dir is better since when dir =0 we do not enter
+     #=     if  dqjplus*newDiff<0.0 #= || (dqjplus==0.0 && newDiff!=0.0)  =##(dqjplus*qj1)<=0.0 with dir is better since when dir =0 we do not enter
     
-      if βidir*dirI<0.0
-        iscycle=true
-      end
-    end
+              if βidir*dirI<0.0
+                iscycle=true
+              end
+            end
 
-    if  dqjplus*newDiff<0.0 #= || (dqjplus==0.0 && newDiff!=0.0)  =##(dqjplus*qj1)<=0.0 with dir is better since when dir =0 we do not enter
-    
-      if (abs(dxi-dxithrow)>(abs(dxi+dxithrow)/2) || abs(ddxi-ddxithrow)>(abs(ddxi+ddxithrow)/2)) 
-        iscycle=true
-      end
-    end
+            if  dqjplus*newDiff<0.0 #= || (dqjplus==0.0 && newDiff!=0.0)  =##(dqjplus*qj1)<=0.0 with dir is better since when dir =0 we do not enter
+            
+              if (abs(dxi-dxithrow)>(abs(dxi+dxithrow)/2) || abs(ddxi-ddxithrow)>(abs(ddxi+ddxithrow)/2)) 
+                iscycle=true
+              end
+            end
 
-    if (abs(dxj-xj1)>(abs(dxj+xj1)/2) || abs(ddxj-xj2)>(abs(ddxj+xj2)/2))   #= || (dqjplus==0.0 && newDiff!=0.0)  =##(dqjplus*qj1)<=0.0 with dir is better since when dir =0 we do not enter
-    
-      if  βidir*dirI<0.0
-        iscycle=true
-      end
+            if (abs(dxj-xj1)>(abs(dxj+xj1)/2) || abs(ddxj-xj2)>(abs(ddxj+xj2)/2))   #= || (dqjplus==0.0 && newDiff!=0.0)  =##(dqjplus*qj1)<=0.0 with dir is better since when dir =0 we do not enter
+            
+              if  βidir*dirI<0.0
+                iscycle=true
+              end
     end =#
 
-   #=  if index==1 && j==4 && 0.1<simt<1.1
+       #=  if index==1 && j==4 && 0.1<simt<1.1
       iscycle=true
     end =#
+
+ #=    if DEBUG && 0.00047303128867631024 <=simt<=0.00047303497111002686 && (index==2 || index==1)
+      println("*****check cycle conditions*********")
+      println("i var: $index")
+      @show xi1,dxithrow,dxi 
+      @show xi2,ddxithrow,ddxi
+      @show aii,qi1,aij,dqjplus,uij2
+     #=  @show qi,hi
+      @show βidir,βidth , βidir,dirI
+      println("j var: $j")
+      @show dxj,xj1,hj
+      @show ddxj,xj2
+      @show x[j],q[j]
+      @show βjdir,βj ,dqjplus,newDiff =#
+    end
+ =#
+
      if iscycle
+      trackSimul[1]+=1 
+   
+
+
         h = ft-simt
-      
-        qi,qj,Δ1=simulQ(aii,aij,aji,ajj,h,xi,xjaux,uij,uij2,uji,uji2)
+        #h_=BigFloat(h)
+        #aii,aij,aji,ajj,xi,xjaux,uij,uij2,uji,uji2=BigFloat(aii),BigFloat(aij),BigFloat(aji),BigFloat(ajj),BigFloat(xi),BigFloat(xjaux),BigFloat(uij),BigFloat(uij2),BigFloat(uji),BigFloat(uji2)
+        qi,qj,Δ1=simulQ(quani,quanj,simt,aii,aij,aji,ajj,h,xi,xjaux,uij,uij2,uji,uji2)
         if (abs(qi - xi) > 2.0*quani || abs(qj - xjaux) > 2.0*quanj) 
           h1 = sqrt(abs(2*quani/xi2));h2 = sqrt(abs(2*quanj/xj2));   #later add derderX =1e-12 when x2==0
          # h1 = sqrt(abs(2*quani/ddxi));h2 = sqrt(abs(2*quanj/ddxj)); 
@@ -176,23 +230,31 @@ end
          end
          h1 = sqrt(abs(2*quani/xi2));h2 = sqrt(abs(2*quanj/xj2));  =#  #later add derderX =1e-12 when x2==0
           h=min(h1,h2)
-          qi,qj,Δ1=simulQ(aii,aij,aji,ajj,h,xi,xjaux,uij,uij2,uji,uji2)
+         # h_=BigFloat(h)
+          qi,qj,Δ1=simulQ(quani,quanj,simt,aii,aij,aji,ajj,h,xi,xjaux,uij,uij2,uji,uji2)
         end
         maxIter=10000
         while (abs(qi - xi) > 2.0*quani || abs(qj - xjaux) > 2.0*quanj) && (maxIter>0)
           maxIter-=1
           h1 = h * sqrt(quani / abs(qi - xi));
           h2 = h * sqrt(quanj / abs(qj - xjaux));
-         #=   h1 = h * (0.99*1.8*quani / abs(qi - xi));
+          #=  h1 = h * (0.99*1.8*quani / abs(qi - xi));
           h2 = h * (0.99*1.8*quanj / abs(qj - xjaux)); =#
           h=min(h1,h2)
-          qi,qj,Δ1=simulQ(aii,aij,aji,ajj,h,xi,xjaux,uij,uij2,uji,uji2)
+          #h_=BigFloat(h)
+          qi,qj,Δ1=simulQ(quani,quanj,simt,aii,aij,aji,ajj,h,xi,xjaux,uij,uij2,uji,uji2)
+        end
+
+        #qi,qj,Δ1=Float64(qi),Float64(qj),Float64(Δ1)
+        if maxIter<9000  #ie simul step failed
+          println("simulstep  $maxIter")
+        
         end
         if maxIter==0  #ie simul step failed
           println("simulstep failed maxiter")
           return false
         end
-        if  h<1e-30  #ie simul step failed
+        if  h<1e-20  #ie simul step failed
           println("simulstep failed small h=",h)
           @show simt,maxIter
           return false
@@ -211,29 +273,76 @@ end
         end
         q[index][1]=((1-h*ajj)/Δ1)*q1parti+(h*aij/Δ1)*q1partj# store back helper vars
         q[j][1]=(h*aji/Δ1)*q1parti+((1-h*aii)/Δ1)*q1partj
+       
+
+#= 
+        if DEBUG && 0.0004710504575258516 <=simt<=0.0004740759390735583 && (index==2 || index==1)
+          println("-------------end of simul------------")
+          @show simt,h
+          println("i var: $index")
+          @show x[index],q[index],quani
+          @show aij*qj+aii*qi+uij
+          @show aij*q[j][1]+aii*q[index][1]+uij2
+          println("j var: $j")
+          @show x[j],q[j],quanj
+          @show aji*qi+ajj*qj+uji
+          @show aji*q[index][1]+ajj*q[j][1]+uji2
+        end =#
+
+
       end #end if iscycle
-   
+    
+    
   return iscycle
 end
 
 
-@inline function simulQ(aii::Float64,aij::Float64,aji::Float64,ajj::Float64,h::Float64,xi::Float64,xjaux::Float64,uij::Float64,uij2::Float64,uji::Float64,uji2::Float64)
-  #use h_2=h*h/2
-  Δ1=(1-h*aii)*(1-h*ajj)-h*h*aij*aji
+@inline function simulQ(quani,quanj,simt,aii::Float64,aij::Float64,aji::Float64,ajj::Float64,h::Float64,xi::Float64,xjaux::Float64,uij::Float64,uij2::Float64,uji::Float64,uji2::Float64)
+#  @inline function simulQ(aii::BigFloat,aij::BigFloat,aji::BigFloat,ajj::BigFloat,h::BigFloat,xi::BigFloat,xjaux::BigFloat,uij::BigFloat,uij2::BigFloat,uji::BigFloat,uji2::BigFloat)
+ 
+  h_2=h*h;h_3=h_2*h;h_4=h_3*h;h_5=h_4*h;h_6=h_5*h
+  aiijj=aii+ajj
+  aiijj_=aij*aji-aii*ajj
+  #Δ1=(1-h*aii)*(1-h*ajj)-h*h*aij*aji
+  Δ1=1.0-h*(aiijj)-h_2*(aiijj_)
   if abs(Δ1)==0.0
     Δ1=1e-30
     @show Δ1
   end
-  αii=(aii*(1-h*ajj)+h*aij*aji)/Δ1
-  αij=((1-h*ajj)*aij+h*aij*ajj)/Δ1
-  αji=(aji*aii*h+(1-h*aii)*aji)/Δ1
-  αjj=(h*aji*aij+(1-h*aii)*ajj)/Δ1
-  βii=1+h*(αii-aii)-h*h*(aii*αii+aij*αji)/2
-  βij=h*(αij-aij)-h*h*(aii*αij+aij*αjj)/2
-  βji=h*(αji-aji)-h*h*(aji*αii+ajj*αji)/2
-  βjj=1+h*(αjj-ajj)-h*h*(aji*αij+ajj*αjj)/2
+  
+  Δ1_2=Δ1*Δ1
+  Δ1_2_=1.0-2.0*h*aiijj+h_2*(aiijj*aiijj-2.0*aiijj_)+2.0*h_3*aiijj*aiijj_+h_4*aiijj_*aiijj_
+  #= if abs(Δ1_2-Δ1_2_) >1e-3
+    @show Δ1_2,Δ1_2_
+  end =#
+  αii=(aii*(1.0-h*ajj)+h*aij*aji)/Δ1
+ # αij=((1-h*ajj)*aij+h*aij*ajj)/Δ1
+  αij=aij/Δ1
+  αji=aji/Δ1
+  αjj=(h*aji*aij+(1.0-h*aii)*ajj)/Δ1
+  βii_=1.0+h*(αii-aii)-h_2*(aii*αii+aij*αji)/2.0
+  βii=1.0+(h_2*(aij*aji+aii*aii)/(2.0*Δ1)+h_3*aii*(aiijj_)/(2.0*Δ1))
+  βij_=h*(αij-aij)-h_2*(aii*αij+aij*αjj)/2.0
+  βij=h_2*aij*(aiijj)/(2.0*Δ1)+h_3*aij*( aiijj_)/(2.0*Δ1)
+  βji_=h*(αji-aji)-h_2*(aji*αii+ajj*αji)/2.0
+  βji=h_2*aji*(aiijj)/(2.0*Δ1)+h_3*aji*(aiijj_)/(2.0*Δ1)
 
-  Δ2=βii*βjj-βij*βji
+  βjj_=1.0+h*(αjj-ajj)-h_2*(aji*αij+ajj*αjj)/2.0
+  #β__jj=1+(h*h*(aji*aij+ajj*ajj)/2+h*h*h*(ajj*aij*aji-aii*ajj*ajj)/2)/Δ1
+  βjj=1.0+(h_2*(aji*aij+ajj*ajj)/(2.0*Δ1)+h_3*ajj*( aiijj_)/(2.0*Δ1))
+  
+
+  Δ2__=βii*βjj-βij*βji
+  
+  
+  Δ2__=1.0+(h_2*(aii*aii+ajj*ajj+2.0*aij*aji)+h_3*(aiijj)*(aiijj_))/(2.0*Δ1)+(h_4*(aiijj_)*(aiijj_)-h_5*(aiijj)*(aiijj_)*(aiijj_)-h_6*aiijj_*aiijj_*aiijj_)/(4.0*Δ1*Δ1)
+  Δ2_=βii_*βjj_-βij_*βji_
+
+  Δ2=(4.0-8.0*h*aiijj+h_2*(6.0*aiijj*aiijj-4.0*aiijj_)+h_3*(6.0*aiijj*aiijj_-2.0*aiijj*aiijj*aiijj)+h_4*(aiijj_*aiijj_-4.0*aiijj_*aiijj*aiijj)-3.0*h_5*aiijj*aiijj_*aiijj_-h_6*aiijj_*aiijj_*aiijj_)/(4.0*Δ1*Δ1) 
+  if abs(Δ2-Δ2__) >10.0
+    @show Δ2,Δ2__
+    @show @show  aii,aij,aji,ajj,h,xi,xjaux,uij,uij2,uji,uji2
+  end
   if abs(Δ2)==0.0
     Δ2=1e-30
     @show Δ2
@@ -243,11 +352,43 @@ end
   λji=h*h*aji/2*(1-h*ajj)+(h*h*ajj/2-h)*h*aji
   λjj=h*h*h*aij*aji/2+(h*h*ajj/2-h)*(1-h*aii)
 
-  parti=((λii*(uij+h*uij2)+λij*(uji+h*uji2))/Δ1)+(xi+h*uij+h*h*uij2/2)#part1[1]+xpart2[1]#
-  partj=((λji*(uij+h*uij2)+λjj*(uji+h*uji2))/Δ1)+(xjaux+h*uji+h*h*uji2/2)#part1[2]+xpart2[2]#
+  parti_=((λii*(uij+h*uij2)+λij*(uji+h*uji2))/Δ1)+(xi+h*uij+h*h*uij2/2)#part1[1]+xpart2[1]#
+  parti=((xi-h*xi*(aiijj))-h_2*(aii*uij+aij*uji+uij2+2*xi*(aiijj_))/2+h_3*(-uij*(aiijj_)+uij2*ajj-aij*uji2)/2)/Δ1
+  #parti=xi-h*h*((aii+ajj)*uij+aij*uji+uij2)/(2*Δ1)+h*h*h*(uij*(aii*ajj-aij*aji)+uij2*ajj-aij*uji2)/(2*Δ1)
+ # parti=(-h*uij+h*h*(aii*uij-aij*uji+2*uij*ajj-2*uij2)/2+h*h*h*(aii*uij2-aii*ajj*uij+2*ajj*uij2+aji*aij*uij-aij*aii*uji-aij*uji2)/2+h*h*h*h*(aji*aij*uij2-aii*ajj*uij2)/2)/Δ1+(xi+h*uij+h*h*uij2/2)
+# parti=((uij+h*uij2)*(h*h*aii/2-h)*(1-h*ajj)+h*h*h*aji*aij*(uij+h*uij2)/2+(h*h*aii/2-h)*h*aij*(uji+h*uji2)+h*h*aij*(1-h*aii)*(uji+h*uji2)/2)/Δ1+(xi+h*uij+h*h*uij2/2)
+ #parti=(uij*h*h*aii/2-h*uij+h*h*h*aii*uij2/2-h*h*uij2-uij*h*h*h*aii*ajj/2+h*h*uij*ajj-h*h*h*h*ajj*aii*uij2/2+h*h*h*ajj*uij2+h*h*h*aji*aij*(uij+h*uij2)/2+(h*h*aii/2-h)*h*aij*(uji+h*uji2)+h*h*aij*(1-h*aii)*(uji+h*uji2)/2)/Δ1+(xi+h*uij+h*h*uij2/2)
+ #parti_=(-h*uij+h*h*(-aij*uji/2+uij*aii/2-uij2+uij*ajj)+h*h*h*(-aij*uji2/2+aji*aij*uij/2+ajj*uij2+aii*uij2/2-uij*aii*ajj/2)+h*h*h*h*(aji*aij*uij2/2-ajj*aii*uij2/2))/Δ1+(h*uij+h*h*uij2/2)+xi#
+ #parti=(-h*uij+h*h*(-aij*uji/2+uij*aii/2-uij2/2+uij*ajj)+h*h*h*(-aij*uji2/2+aji*aij*uij/2+ajj*uij2-ajj*uij2/2-uij*aii*ajj/2))/Δ1+h*uij+xi#
+# if abs(parti-parti_)>1e-15
+  #parti=parti_
+    #@show parti,parti_,h,Δ1
+    #@show  aii,aij,aji,ajj,h,xi,xjaux,uij,uij2,uji,uji2
+   #=  @show (h*uij+h*h*uij2/2)
+    @show uij,uij2 =#
+  #end
+  partj_=((λji*(uij+h*uij2)+λjj*(uji+h*uji2))/Δ1)+(xjaux+h*uji+h*h*uji2/2)#part1[2]+xpart2[2]#
+  partj=((xjaux-h*xjaux*(aiijj))-h_2*((ajj)*uji+aji*uij+uji2+2*xjaux*(aiijj_))/2+h_3*(-uji*(aiijj_)+uji2*aii-aji*uij2)/2)/Δ1
 
   qi=((βjj/Δ2)*parti-(βij/Δ2)*partj)
   qj=((βii/Δ2)*partj-(βji/Δ2)*parti)
+  qi_=((βjj_/Δ2_)*parti_-(βij_/Δ2_)*partj_)
+  qj_=((βii_/Δ2_)*partj_-(βji_/Δ2_)*parti_)
+ #=  if abs(qi-qi_)>1e-10
+    @show qi,qi_,xi,quani,h
+    @show simt
+  end
+  if abs(qj-qj_)>1e-10
+    @show qj,qj_,xjaux,quanj,h
+    @show simt
+  end =#
+ #=  if simt==11.163688670259043
+    @show simt
+    dif_=abs(xi-qi_);dif=abs(xi-qi)
+    @show qi_,qi,xi,quani,dif_,dif
+    difj_=abs(xjaux-qj_);difj=abs(xjaux-qj)
+    @show qj_,qj,xjaux,quanj,difj_,difj
+  end =#
   return (qi,qj,Δ1)
 end
 

@@ -31,7 +31,7 @@ end
   function minPosRootv1(coeff::NTuple{3,Float64}) #
     a=coeff[1];b=coeff[2];c=coeff[3]
   mpr=-1 #coef1=c, coef2=b, coef3=a
-  if a== 0 #|| (10000 * abs(coeff[3])) < abs(coeff[2])# coef3 is the coef of t^2
+  if a== 0 || 10000 * abs(a) < abs(b)# coef3 is the coef of t^2
       if b == 0
         mpr = Inf
       else 

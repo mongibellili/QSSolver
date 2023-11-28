@@ -78,8 +78,8 @@ function test()
                 discrete[4] = ROff
             end 
     end
-    tspan=(0.0,0.001)
-   sol= solve(odeprob,qss2(),abstol=1e-4,reltol=1e-3,tspan)
+    tspan=(0.0,0.0005)
+   sol= solve(odeprob,nmliqss2(),abstol=1e-4,reltol=1e-3,tspan)
   # @show sol
    save_Sol(sol)
   # save_Sol(sol,xlims=(0.0,15.0) ,ylims=(-2.04e-1,2.06e-1))

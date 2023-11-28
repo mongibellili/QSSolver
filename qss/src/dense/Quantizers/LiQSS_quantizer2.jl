@@ -1,8 +1,8 @@
 
 
 #iterations
-#= function updateQ(::Val{2},i::Int, xv::Vector{Taylor0},qv::Vector{Taylor0}, quantum::Vector{Float64},exacteA::Function,cacheA::MVector{1,Float64},dxaux::Vector{MVector{2,Float64}},qaux::Vector{MVector{2,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64, nextStateTime::Vector{Float64})
-    cacheA[1]=0.0;exacteA(qv,cacheA,i,i);a=cacheA[1]
+#= function updateQ(::Val{2},i::Int, xv::Vector{Taylor0},qv::Vector{Taylor0}, quantum::Vector{Float64},exacteA::Function,d::Vector{Float64},cacheA::MVector{1,Float64},dxaux::Vector{MVector{2,Float64}},qaux::Vector{MVector{2,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64, nextStateTime::Vector{Float64})
+    cacheA[1]=0.0;exacteA(qv,d,cacheA,i,i);a=cacheA[1]
    # exacteA(xv,cacheA,i,i);a=cacheA[1]
     q=qv[i][0] ;q1=qv[i][1]; x=xv[i][0];  x1=xv[i][1]; x2=xv[i][2]*2; #u1=uv[i][i][1]; u2=uv[i][i][2]
     qaux[i][1]=q+(simt-tq[i])*q1#appears only here...updated here and used in updateApprox and in updateQevent later
@@ -151,7 +151,7 @@
             if x1!=0.0
                 h=abs(quan/x1)
                 q=x+h*x1
-                q1=x1
+                q1=0#x#/2
             else
                 h=Inf
                 q=x
@@ -167,16 +167,23 @@
 
     return h
    
-end
- =#
+end  =#
+
 
 #analytic
- function updateQ(::Val{2},i::Int, xv::Vector{Taylor0},qv::Vector{Taylor0}, quantum::Vector{Float64},exacteA::Function,d::Vector{Float64},cacheA::MVector{1,Float64},dxaux::Vector{MVector{2,Float64}},qaux::Vector{MVector{2,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64, nextStateTime::Vector{Float64})
+function updateQ(::Val{2},i::Int, xv::Vector{Taylor0},qv::Vector{Taylor0}, quantum::Vector{Float64},exacteA::Function,d::Vector{Float64},cacheA::MVector{1,Float64},dxaux::Vector{MVector{2,Float64}},qaux::Vector{MVector{2,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64, nextStateTime::Vector{Float64})
     cacheA[1]=0.0;exacteA(qv,d,cacheA,i,i);a=cacheA[1]
    # exacteA(xv,cacheA,i,i);a=cacheA[1]
     q=qv[i][0] ;q1=qv[i][1]; x=xv[i][0];  x1=xv[i][1]; x2=xv[i][2]*2; #u1=uv[i][i][1]; u2=uv[i][i][2]
     qaux[i][1]=q+(simt-tq[i])*q1#appears only here...updated here and used in updateApprox and in updateQevent later
     qaux[i][2]=q1                     #appears only here...updated here and used in updateQevent
+
+
+
+  
+
+
+
 
     u1=x1-a*qaux[i][1]
     u2=x2-a*q1
@@ -199,7 +206,7 @@ end
         if a*a*x+a*u1+u2<0.0
             if -(a*a*x+a*u1+u2)/(a*a)<quan # asymptote<delta...no sol ...no need to check
                 h=Inf
-                q=-(a*u1+u2)/(a*a)
+                q=-(a*u1+u2)/(a*a)#q=x+asymp
             else
                 q=x+quan
                 coefi=NTuple{3,Float64}(((a*a*(x+quan)+a*u1+u2)/2,-a*quan,quan))
@@ -241,14 +248,14 @@ end
         else
            # println("x2==0")
             if x1!=0.0
-                h=abs(quan/x1)
-                #h=sqrt(abs(2*quan/x1)) # *2 just to widen the step otherwise it would behave like 1st order
+                #quantum[i]=1quan
+                h=abs(1*quan/x1)   # *10 just to widen the step otherwise it would behave like 1st order
                 q=x+h*x1
-                q1=x1
+                q1=0.0
             else
                 h=Inf
                 q=x
-                q1=x1
+                q1=0.0
             end
         end 
 
@@ -257,10 +264,23 @@ end
     qv[i][0]=q
     qv[i][1]=q1  
    nextStateTime[i]=simt+h
-
+ #=   if 11.163688670259043<simt<12.165
+    @show simt, q,q1,x,x1,h,x2,quan
+   end =#
+ #=   if DEBUG && 0.0004710504575258516 <=simt<=0.0004740759390735583 && (i==2 || i==1)
+            println("-------------end of updateQ------------")
+            @show simt,i,h
+            @show xv[i],qv[i],quan
+            @show a*q+u1,a*q1+u2
+            hh=h
+            if hh==Inf hh=10000.0 end
+            qf=q+hh*q1;xf=x+hh*(a*q+u1)+hh*hh*(a*q1+u2)/2
+            @show qf,xf
+  
+    end =#
     return h
    
-end  
+end   
 #= 
 function nupdateQ(::Val{2}#= ,cacheA::MVector{1,Float64},map::Function =#,i::Int, xv::Vector{Taylor0},qv::Vector{Taylor0}, quantum::Vector{Float64},av::Vector{Vector{Float64}},uv::Vector{Vector{MVector{O,Float64}}},qaux::Vector{MVector{O,Float64}},olddx::Vector{MVector{O,Float64}},tx::Vector{Float64},tq::Vector{Float64},simt::Float64,ft::Float64, nextStateTime::Vector{Float64})where{O}
     #a=getA(Val(Sparsity),cacheA,av,i,i,map)
@@ -388,10 +408,13 @@ function Liqss_reComputeNextTime(::Val{2}, i::Int, simt::Float64, nextStateTime:
         end
 
 
-        if nextStateTime[i]<simt # this is coming from the fact that a variable can reach 2quan distance when it is not its turn, then computation above gives next=simt+(p-p)/dx...p-p should be zero but it can be very small negative
-            nextStateTime[i]=simt+1e-15
+        if nextStateTime[i]<=simt # this is coming from the fact that a variable can reach 2quan distance when it is not its turn, then computation above gives next=simt+(p-p)/dx...p-p should be zero but it can be very small negative
+            nextStateTime[i]=simt+Inf#1e-14
            # @show simt,nextStateTime[i],i,x,q,quantum[i],xv[i][1]
         end
+       #=  if 11.163688670259043<simt<12.165
+            @show simt,i,nextStateTime,x,q
+        end =#
 
     end
 end

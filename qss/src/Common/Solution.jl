@@ -11,19 +11,40 @@ struct LightSol{T,O}<:Sol{T,O}
   totalSteps::Int
   #stepsaftersimul::Int
   simulStepCount::Int
+  evCount::Int
   numSteps ::Vector{Int}
   ft::Float64
 end
 
 
-
-
-@inline function createSol(::Val{T},::Val{O}, savedTimes:: Vector{Vector{Float64}},savedVars :: Vector{Vector{Float64}},solver::String,nameof_F::String,absQ::Float64,totalSteps::Int#= ,stepsaftersimul::Int =#,simulStepCount::Int,numSteps ::Vector{Int},ft::Float64#= ,simulStepsVals :: Vector{Vector{Float64}},  simulStepsDers :: Vector{Vector{Float64}}  ,simulStepsTimes :: Vector{Vector{Float64}} =#)where {T,O}
- # println("light")
-  sol=LightSol(Val(T),Val(O),savedTimes, savedVars,solver,nameof_F,absQ,totalSteps#= ,stepsaftersimul =#,simulStepCount,numSteps,ft#= ,simulStepsVals,simulStepsDers,simulStepsTimes =#)
+struct HeavySol{T,O}<:Sol{T,O}
+  size::Val{T}
+  order::Val{O}
+  savedTimes::Vector{Vector{Float64}}
+  savedVars::Vector{Vector{Float64}}
+  savedDers::Vector{Vector{Float64}}
+  #savedVarsQ::Vector{Vector{Float64}}
+  algName::String
+  sysName::String
+  absQ::Float64
+  totalSteps::Int
+  #stepsaftersimul::Int
+  simulStepCount::Int
+  evCount::Int
+  numSteps ::Vector{Int}
+  ft::Float64
 end
 
 
+@inline function createSol(::Val{T},::Val{O}, savedTimes:: Vector{Vector{Float64}},savedVars :: Vector{Vector{Float64}},solver::String,nameof_F::String,absQ::Float64,totalSteps::Int#= ,stepsaftersimul::Int =#,simulStepCount::Int,evCount::Int,numSteps ::Vector{Int},ft::Float64#= ,simulStepsVals :: Vector{Vector{Float64}},  simulStepsDers :: Vector{Vector{Float64}}  ,simulStepsTimes :: Vector{Vector{Float64}} =#)where {T,O}
+ # println("light")
+  sol=LightSol(Val(T),Val(O),savedTimes, savedVars,solver,nameof_F,absQ,totalSteps#= ,stepsaftersimul =#,simulStepCount,evCount,numSteps,ft#= ,simulStepsVals,simulStepsDers,simulStepsTimes =#)
+end
+
+@inline function createSol(::Val{T},::Val{O}, savedTimes:: Vector{Vector{Float64}},savedVars :: Vector{Vector{Float64}},savedDers :: Vector{Vector{Float64}},solver::String,nameof_F::String,absQ::Float64,totalSteps::Int#= ,stepsaftersimul::Int =#,simulStepCount::Int,evCount::Int,numSteps ::Vector{Int},ft::Float64#= ,simulStepsVals :: Vector{Vector{Float64}},  simulStepsDers :: Vector{Vector{Float64}}  ,simulStepsTimes :: Vector{Vector{Float64}} =#)where {T,O}
+  # println("light")
+   sol=HeavySol(Val(T),Val(O),savedTimes, savedVars,savedDers,solver,nameof_F,absQ,totalSteps#= ,stepsaftersimul =#,simulStepCount,evCount,numSteps,ft#= ,simulStepsVals,simulStepsDers,simulStepsTimes =#)
+ end
 
 function getindex(s::Sol, i::Int64)
   if i==1
@@ -95,7 +116,7 @@ function solInterpolated(sol::Sol{T,O},step::Float64)where {T,O}
           allInterpTimes[index]=interpTimes
   end
   #(interpTimes,interpValues)
-  createSol(Val(T),Val(O),allInterpTimes,interpValues,sol.algName,sol.sysName,sol.absQ,sol.totalSteps#= ,sol.stepsaftersimul =#,sol.simulStepCount,sol.numSteps,sol.ft#= ,sol.simulStepsVals,sol.simulStepsDers,sol.simulStepsVals =#)
+  createSol(Val(T),Val(O),allInterpTimes,interpValues,sol.algName,sol.sysName,sol.absQ,sol.totalSteps#= ,sol.stepsaftersimul =#,sol.simulStepCount,sol.evCount,sol.numSteps,sol.ft#= ,sol.simulStepsVals,sol.simulStepsDers,sol.simulStepsVals =#)
 end
 
 function evaluateSimpleSol(sol::Sol,index::Int,t::Float64)

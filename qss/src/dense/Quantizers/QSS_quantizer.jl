@@ -30,7 +30,19 @@ function computeNextTime(::Val{2}, i::Int, simt::Float64, nextTime::Vector{Float
             if DEBUG  println("qssQuantizer: smalldelta in compute next") end
           end
       else
-        nextTime[i] = Inf
+        if (x[i].coeffs[2]) != 0
+          #quantum[i]=2*quantum[i]
+          tempTime=max(abs(quantum[i] /(x[i].coeffs[2])),absDeltaT)# i can avoid the use of max
+          if tempTime!=absDeltaT #normal
+              nextTime[i] = simt + tempTime#sqrt(abs(quantum[i] / ((x[i].coeffs[3])*2))) #*2 cuz coeff contains fact()
+          else#usual (quant/der) is very small
+            x[i].coeffs[2]=sign(x[i].coeffs[2])*(abs(quantum[i])/absDeltaT)# adjust  derivative if it is too high
+            nextTime[i] = simt + tempTime
+            if DEBUG  println("qssQuantizer: smalldelta in compute next") end
+          end
+        else
+          nextTime[i] = Inf
+        end
       end
       return nothing
 end
@@ -215,12 +227,13 @@ end
 
 
 
-function computeNextEventTime(::Val{O},j::Int,ZCFun::Taylor0,oldsignValue,simt,  nextEventTime, quantum::Vector{Float64}) where {O}
-  if ZCFun[0]==0.0 && oldsignValue[j,1] !=0.0#abs(oldsignValue[j,1])>1e-15
-    if DEBUG println("qss quantizer:zcf$j ZCF=0.0 (rare) immediate event at simt= $simt oldzcf value= $(oldsignValue[j,2])  ") end
+function computeNextEventTime(::Val{O},j::Int,ZCFun::Taylor0,oldsignValue,simt,  nextEventTime, quantum::Vector{Float64},absQ::Float64) where {O}
+ #=  if ZCFun[0]==0.0 && oldsignValue[j,1] !=0.0#abs(oldsignValue[j,1])>1e-15
+    if DEBUG2 println("qss quantizer:zcf$j ZCF=0.0 (rare) immediate event at simt= $simt oldzcf value= $(oldsignValue[j,2])  ") end
     nextEventTime[j]=simt 
-  elseif (oldsignValue[j,1] != sign(ZCFun[0])) && oldsignValue[j,1] !=0.0 #prevent double tapping: when zcf is leaving zero it should be considered an event
-    if DEBUG  println("qss quantizer:zcf$j immediate event at simt= $simt oldzcf value= $(oldsignValue[j,2])  newZCF value= $(ZCFun[0])") end
+  else =#
+  if (oldsignValue[j,1] != sign(ZCFun[0])) && abs(oldsignValue[j,2]) >1e-9*absQ #prevent double tapping: when zcf is leaving zero it should be considered an event
+    if DEBUG  println("qss quantizer:zcf$j immediate event at simt= $simt oldzcf value= $(oldsignValue[j,2])  newZCF value= $(ZCFun[0])");  end
     nextEventTime[j]=simt 
   else # old and new ZCF both pos or both neg
    # coef=@SVector [ZCFun[0],ZCFun[1],ZCFun[2]]
