@@ -196,75 +196,54 @@ end =#
 
   if iscycle
       trackSimul[1]+=1 
-      aiijj=aii+ajj
-      aiijj_=aij*aji-aii*ajj
-
-      coefΔh0=4.0
-      coefΔh1=-8.0*aiijj
-      coefΔh2=6.0*aiijj*aiijj-4.0*aiijj_
-      coefΔh3=6.0*aiijj*aiijj_-2.0*aiijj*aiijj*aiijj
-      coefΔh4=aiijj_*aiijj_-4.0*aiijj_*aiijj*aiijj
-      coefΔh5=-3.0*aiijj*aiijj_*aiijj_
-      coefΔh6=-aiijj_*aiijj_*aiijj_
-      
-    
-      if abs(Δ22)==0.0
-        Δ22=1e-30
-        @show Δ22
-      end
-      coefH0=4.0*xi
-      coefH1=-8.0*xi*aiijj
-      coefH2=2.0*(-aii*uij-aij*uji-uij2+xi*(-2.0*aiijj_+2.0*aiijj*aiijj+2.0*aii*ajj-aji*aij+ajj*ajj)-aij*aiijj*xjaux)
-      coefH3=2.0*((-uij*aiijj_+ajj*uij2-aij*uji2)+aiijj*(aii*uij+aij*uji+uij2+2.0*xi*aiijj_)-xi*aiijj*(2.0*aii*ajj-aji*aij+ajj*ajj)+ajj*aiijj_*xi+aij*aiijj*aiijj*xjaux-aij*aiijj_*xjaux)
-      coefH4=2.0*(aiijj*(uij*aiijj_-ajj*uij2+aij*uji2)-0.5*(2.0*aii*ajj-aji*aij+ajj*ajj)*(aii*uij+aij*uji+uij2+2.0*xi*aiijj_)-ajj*aiijj_*aiijj*xi+0.5*aij*aiijj*(ajj*uji+aji*uij+uji2+2.0*xjaux*aiijj_)+aij*aiijj_*aiijj*xjaux)
-      coefH5=(2.0*aii*ajj-aji*aij+ajj*ajj)*(ajj*uij2-uij*aiijj_-aij*uji2)-ajj*aiijj_*(aii*uij+aij*uji+uij2+2.0*xi*aiijj_)-aij*aiijj*(aii*uji2-uji*aiijj_-aji*uij2)+aij*aiijj_*(ajj*uji+aji*uij+uji2+2.0*xjaux*aiijj_)
-      coefH6=ajj*aiijj_*(ajj*uij2-uij*aiijj_-aij*uji2)-aij*aiijj_*(aii*uji2-uji*aiijj_-aji*uij2)
-      
-      coefH0j=4.0*xjaux
-      coefH1j=-8.0*xjaux*aiijj
-      coefH2j=2.0*(-ajj*uji-aji*uij-uji2+xjaux*(-2.0*aiijj_+2.0*aiijj*aiijj+2.0*ajj*aii-aij*aji+aii*aii)-aji*aiijj*xi)
-      coefH3j=2.0*((-uji*aiijj_+aii*uji2-aji*uij2)+aiijj*(ajj*uji+aji*uij+uji2+2.0*xjaux*aiijj_)-xjaux*aiijj*(2.0*ajj*aii-aij*aji+aii*aii)+aii*aiijj_*xjaux+aji*aiijj*aiijj*xi-aji*aiijj_*xi)
-      coefH4j=2.0*(aiijj*(uji*aiijj_-aii*uji2+aji*uij2)-0.5*(2.0*ajj*aii-aij*aji+aii*aii)*(ajj*uji+aji*uij+uji2+2.0*xjaux*aiijj_)-aii*aiijj_*aiijj*xjaux+0.5*aji*aiijj*(aii*uij+aij*uji+uij2+2.0*xi*aiijj_)+aji*aiijj_*aiijj*xi)
-      coefH5j=(2.0*ajj*aii-aij*aji+aii*aii)*(aii*uji2-uji*aiijj_-aji*uij2)-aii*aiijj_*(ajj*uji+aji*uij+uji2+2.0*xjaux*aiijj_)-aji*aiijj*(ajj*uij2-uij*aiijj_-aij*uji2)+aji*aiijj_*(aii*uij+aij*uji+uij2+2.0*xi*aiijj_)
-      coefH6j=aii*aiijj_*(aii*uji2-uji*aiijj_-aji*uij2)-aji*aiijj_*(ajj*uij2-uij*aiijj_-aij*uji2)
-
-
-      coefi=NTuple{6,Float64}((coefH6-coefΔh6*(xi+quani),coefH5-coefΔh5*(xi+quani),coefH4-coefΔh4*(xi+quani),coefH3-coefΔh3*(xi+quani),coefH2-coefΔh2*(xi+quani),coefH1-coefΔh1*(xi+quani)))
-      coefi2=NTuple{6,Float64}((coefH6-coefΔh6*(xi-quani),coefH5-coefΔh5*(xi-quani),coefH4-coefΔh4*(xi-quani),coefH3-coefΔh3*(xi-quani),coefH2-coefΔh2*(xi-quani),coefH1-coefΔh1*(xi-quani)))
-
-      coefj=NTuple{6,Float64}((coefH6-coefΔh6*(xjaux+quanj),coefH5-coefΔh5*(xjaux+quanj),coefH4-coefΔh4*(xjaux+quanj),coefH3-coefΔh3*(xjaux+quanj),coefH2-coefΔh2*(xjaux+quanj),coefH1-coefΔh1*(xjaux+quanj)))
-      coefj2=NTuple{6,Float64}((coefH6-coefΔh6*(xjaux-quanj),coefH5-coefΔh5*(xjaux-quanj),coefH4-coefΔh4*(xjaux-quanj),coefH3-coefΔh3*(xjaux-quanj),coefH2-coefΔh2*(xjaux-quanj),coefH1-coefΔh1*(xjaux-quanj)))
-
-
-
-   unsafe_store!(respp, -1.0, 1);unsafe_store!(respp, -1.0, 2)
-      allrealrootintervalnewtonregulafalsi(coefi,respp,pp)
-      resi1,resi2=unsafe_load(respp,1),unsafe_load(respp,2) 
    
-      unsafe_store!(respp, -1.0, 1);unsafe_store!(respp, -1.0, 2)
-      allrealrootintervalnewtonregulafalsi(coefi2,respp,pp)
-      resi3,resi4=unsafe_load(respp,1),unsafe_load(respp,2) 
-  
-      unsafe_store!(respp, -1.0, 1);unsafe_store!(respp, -1.0, 2)
-      allrealrootintervalnewtonregulafalsi(coefj,respp,pp)
-      resj1,resj2=unsafe_load(respp,1),unsafe_load(respp,2) 
-     
-      unsafe_store!(respp, -1.0, 1);unsafe_store!(respp, -1.0, 2)
-      allrealrootintervalnewtonregulafalsi(coefj2,respp,pp)
-      resj3,resj4=unsafe_load(respp,1),unsafe_load(respp,2) 
 
 
+        h = ft-simt
+        #h_=BigFloat(h)
+        #aii,aij,aji,ajj,xi,xjaux,uij,uij2,uji,uji2=BigFloat(aii),BigFloat(aij),BigFloat(aji),BigFloat(ajj),BigFloat(xi),BigFloat(xjaux),BigFloat(uij),BigFloat(uij2),BigFloat(uji),BigFloat(uji2)
+        qi,qj,Δ1=simulQ(quani,quanj,simt,aii,aij,aji,ajj,h,xi,xjaux,uij,uij2,uji,uji2)
+        if (abs(qi - xi) > 2.0*quani || abs(qj - xjaux) > 2.0*quanj) 
+          h1 = sqrt(abs(2*quani/xi2));h2 = sqrt(abs(2*quanj/xj2));   #later add derderX =1e-12 when x2==0
+         # h1 = sqrt(abs(2*quani/ddxi));h2 = sqrt(abs(2*quanj/ddxj)); 
+        #=  if xi2==0.0
+          xi2=1e-30
+          @show xi2
+         end
+         if xj2==0.0
+          xj2=1e-30
+          @show xj2
+         end
+         h1 = sqrt(abs(2*quani/xi2));h2 = sqrt(abs(2*quanj/xj2));  =#  #later add derderX =1e-12 when x2==0
+          h=min(h1,h2)
+         # h_=BigFloat(h)
+          qi,qj,Δ1=simulQ(quani,quanj,simt,aii,aij,aji,ajj,h,xi,xjaux,uij,uij2,uji,uji2)
+        end
+        maxIter=10000
+        while (abs(qi - xi) > 2.0*quani || abs(qj - xjaux) > 2.0*quanj) && (maxIter>0)
+          maxIter-=1
+          h1 = h * sqrt(quani / abs(qi - xi));
+          h2 = h * sqrt(quanj / abs(qj - xjaux));
+          #=  h1 = h * (0.99*1.8*quani / abs(qi - xi));
+          h2 = h * (0.99*1.8*quanj / abs(qj - xjaux)); =#
+          h=min(h1,h2)
+          #h_=BigFloat(h)
+          qi,qj,Δ1=simulQ(quani,quanj,simt,aii,aij,aji,ajj,h,xi,xjaux,uij,uij2,uji,uji2)
+        end
 
-
-      Δ22=4.0+h*coefΔh1+h_2*(coefΔh2)+h_3*(coefΔh3)+h_4*(coefΔh4)+h_5*coefΔh5+h_6*coefΔh6
-      qi=(4.0*xi+h*coefH1+h_2*coefH2+h_3*coefH3+h_4*coefH4+h_5*coefH5+h_6*coefH6)/Δ22
-      qj=(4.0*xjaux+h*coefH1j+h_2*coefH2j+h_3*coefH3j+h_4*coefH4j+h_5*coefH5j+h_6*coefH6j)/Δ22
-
-        #Δ1=(1-h*aii)*(1-h*ajj)-h*h*aij*aji
-        Δ1=1.0-h*(aiijj)-h_2*(aiijj_)
-        if abs(Δ1)==0.0
-          Δ1=1e-30
-          @show Δ1
+        #qi,qj,Δ1=Float64(qi),Float64(qj),Float64(Δ1)
+        if maxIter<9800  #ie simul step failed
+          println("simulstep  $maxIter")
+        
+        end
+        if maxIter==0  #ie simul step failed
+          println("simulstep failed maxiter")
+          return false
+        end
+        if  h<1e-20  #ie simul step failed
+          println("simulstep failed small h=",h)
+          @show simt,maxIter
+          return false
         end
         q[index][0]=qi# store back helper vars
         q[j][0]=qj     
@@ -281,7 +260,23 @@ end =#
         q[index][1]=((1-h*ajj)/Δ1)*q1parti+(h*aij/Δ1)*q1partj# store back helper vars
         q[j][1]=(h*aji/Δ1)*q1parti+((1-h*aii)/Δ1)*q1partj
        
-  end #end if iscycle
+
+#= 
+        if DEBUG && 0.0004710504575258516 <=simt<=0.0004740759390735583 && (index==2 || index==1)
+          println("-------------end of simul------------")
+          @show simt,h
+          println("i var: $index")
+          @show x[index],q[index],quani
+          @show aij*qj+aii*qi+uij
+          @show aij*q[j][1]+aii*q[index][1]+uij2
+          println("j var: $j")
+          @show x[j],q[j],quanj
+          @show aji*qi+ajj*qj+uji
+          @show aji*q[index][1]+ajj*q[j][1]+uji2
+        end =#
+
+
+      end #end if iscycle
     
     
   return iscycle
@@ -301,7 +296,6 @@ end
     @show Δ1
   end
 
-
   coefΔh1=-8.0*aiijj
   coefΔh2=6.0*aiijj*aiijj-4.0*aiijj_
   coefΔh3=6.0*aiijj*aiijj_-2.0*aiijj*aiijj*aiijj
@@ -318,21 +312,21 @@ end
     Δ22=1e-30
     @show Δ22
   end
-  coefH1=-4.0*xi*aiijj
-  coefH2=-aii*uij-aij*uji-uij2+xi*(-2.0*aiijj_+2.0*aiijj*aiijj+2.0*aii*ajj-aji*aij+ajj*ajj)-aij*aiijj*xjaux
-  coefH3=(-uij*aiijj_+ajj*uij2-aij*uji2)+aiijj*(aii*uij+aij*uji+uij2+2.0*xi*aiijj_)-xi*aiijj*(2.0*aii*ajj-aji*aij+ajj*ajj)+ajj*aiijj_*xi+aij*aiijj*aiijj*xjaux-aij*aiijj_*xjaux
-  coefH4=aiijj*(uij*aiijj_-ajj*uij2+aij*uji2)-0.5*(2.0*aii*ajj-aji*aij+ajj*ajj)*(aii*uij+aij*uji+uij2+2.0*xi*aiijj_)-ajj*aiijj_*aiijj*xi+0.5*aij*aiijj*(ajj*uji+aji*uij+uji2+2.0*xjaux*aiijj_)+aij*aiijj_*aiijj*xjaux
-  coefH5=0.5*(2.0*aii*ajj-aji*aij+ajj*ajj)*(ajj*uij2-uij*aiijj_-aij*uji2)-0.5*ajj*aiijj_*(aii*uij+aij*uji+uij2+2.0*xi*aiijj_)-0.5*aij*aiijj*(aii*uji2-uji*aiijj_-aji*uij2)+0.5*aij*aiijj_*(ajj*uji+aji*uij+uji2+2.0*xjaux*aiijj_)
-  coefH6=0.5*ajj*aiijj_*(ajj*uij2-uij*aiijj_-aij*uji2)-0.5*aij*aiijj_*(aii*uji2-uji*aiijj_-aji*uij2)
-  qi=2*(2.0*xi+h*coefH1+h_2*coefH2+h_3*coefH3+h_4*coefH4+h_5*coefH5+h_6*coefH6)/Δ22
+  coefH1=-8.0*xi*aiijj
+  coefH2=2.0*(-aii*uij-aij*uji-uij2+xi*(-2.0*aiijj_+2.0*aiijj*aiijj+2.0*aii*ajj-aji*aij+ajj*ajj)-aij*aiijj*xjaux)
+  coefH3=2.0*((-uij*aiijj_+ajj*uij2-aij*uji2)+aiijj*(aii*uij+aij*uji+uij2+2.0*xi*aiijj_)-xi*aiijj*(2.0*aii*ajj-aji*aij+ajj*ajj)+ajj*aiijj_*xi+aij*aiijj*aiijj*xjaux-aij*aiijj_*xjaux)
+  coefH4=2.0*(aiijj*(uij*aiijj_-ajj*uij2+aij*uji2)-0.5*(2.0*aii*ajj-aji*aij+ajj*ajj)*(aii*uij+aij*uji+uij2+2.0*xi*aiijj_)-ajj*aiijj_*aiijj*xi+0.5*aij*aiijj*(ajj*uji+aji*uij+uji2+2.0*xjaux*aiijj_)+aij*aiijj_*aiijj*xjaux)
+  coefH5=(2.0*aii*ajj-aji*aij+ajj*ajj)*(ajj*uij2-uij*aiijj_-aij*uji2)-ajj*aiijj_*(aii*uij+aij*uji+uij2+2.0*xi*aiijj_)-aij*aiijj*(aii*uji2-uji*aiijj_-aji*uij2)+aij*aiijj_*(ajj*uji+aji*uij+uji2+2.0*xjaux*aiijj_)
+  coefH6=ajj*aiijj_*(ajj*uij2-uij*aiijj_-aij*uji2)-aij*aiijj_*(aii*uji2-uji*aiijj_-aji*uij2)
+  qi=(4.0*xi+h*coefH1+h_2*coefH2+h_3*coefH3+h_4*coefH4+h_5*coefH5+h_6*coefH6)/Δ22
 
-  coefH1j=-4.0*xjaux*aiijj
-  coefH2j=-ajj*uji-aji*uij-uji2+xjaux*(-2.0*aiijj_+2.0*aiijj*aiijj+2.0*ajj*aii-aij*aji+aii*aii)-aji*aiijj*xi
-  coefH3j=(-uji*aiijj_+aii*uji2-aji*uij2)+aiijj*(ajj*uji+aji*uij+uji2+2.0*xjaux*aiijj_)-xjaux*aiijj*(2.0*ajj*aii-aij*aji+aii*aii)+aii*aiijj_*xjaux+aji*aiijj*aiijj*xi-aji*aiijj_*xi
-  coefH4j=aiijj*(uji*aiijj_-aii*uji2+aji*uij2)-0.5*(2.0*ajj*aii-aij*aji+aii*aii)*(ajj*uji+aji*uij+uji2+2.0*xjaux*aiijj_)-aii*aiijj_*aiijj*xjaux+0.5*aji*aiijj*(aii*uij+aij*uji+uij2+2.0*xi*aiijj_)+aji*aiijj_*aiijj*xi
-  coefH5j=0.5*(2.0*ajj*aii-aij*aji+aii*aii)*(aii*uji2-uji*aiijj_-aji*uij2)-0.5*aii*aiijj_*(ajj*uji+aji*uij+uji2+2.0*xjaux*aiijj_)-0.5*aji*aiijj*(ajj*uij2-uij*aiijj_-aij*uji2)+0.5*aji*aiijj_*(aii*uij+aij*uji+uij2+2.0*xi*aiijj_)
-  coefH6j=0.5*aii*aiijj_*(aii*uji2-uji*aiijj_-aji*uij2)-0.5*aji*aiijj_*(ajj*uij2-uij*aiijj_-aij*uji2)
-  qj=2*(2.0*xjaux+h*coefH1j+h_2*coefH2j+h_3*coefH3j+h_4*coefH4j+h_5*coefH5j+h_6*coefH6j)/Δ22
+  coefH1j=-8.0*xjaux*aiijj
+  coefH2j=2.0*(-ajj*uji-aji*uij-uji2+xjaux*(-2.0*aiijj_+2.0*aiijj*aiijj+2.0*ajj*aii-aij*aji+aii*aii)-aji*aiijj*xi)
+  coefH3j=2.0*((-uji*aiijj_+aii*uji2-aji*uij2)+aiijj*(ajj*uji+aji*uij+uji2+2.0*xjaux*aiijj_)-xjaux*aiijj*(2.0*ajj*aii-aij*aji+aii*aii)+aii*aiijj_*xjaux+aji*aiijj*aiijj*xi-aji*aiijj_*xi)
+  coefH4j=2.0*(aiijj*(uji*aiijj_-aii*uji2+aji*uij2)-0.5*(2.0*ajj*aii-aij*aji+aii*aii)*(ajj*uji+aji*uij+uji2+2.0*xjaux*aiijj_)-aii*aiijj_*aiijj*xjaux+0.5*aji*aiijj*(aii*uij+aij*uji+uij2+2.0*xi*aiijj_)+aji*aiijj_*aiijj*xi)
+  coefH5j=(2.0*ajj*aii-aij*aji+aii*aii)*(aii*uji2-uji*aiijj_-aji*uij2)-aii*aiijj_*(ajj*uji+aji*uij+uji2+2.0*xjaux*aiijj_)-aji*aiijj*(ajj*uij2-uij*aiijj_-aij*uji2)+aji*aiijj_*(aii*uij+aij*uji+uij2+2.0*xi*aiijj_)
+  coefH6j=aii*aiijj_*(aii*uji2-uji*aiijj_-aji*uij2)-aji*aiijj_*(ajj*uij2-uij*aiijj_-aij*uji2)
+  qj=(4.0*xjaux+h*coefH1j+h_2*coefH2j+h_3*coefH3j+h_4*coefH4j+h_5*coefH5j+h_6*coefH6j)/Δ22
 
   return (qi,qj,Δ1)
 end

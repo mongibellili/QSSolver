@@ -2,7 +2,7 @@
 using qss
 #using XLSX
 #using BenchmarkTools
-#using BSON
+using BSON
 #using TimerOutputs
 #using Plots
 function test(case,solvr)
@@ -40,7 +40,7 @@ function test(case,solvr)
 
 
     
-      #BSON.@load "qss/ref_bson/solVect_Tyson_Rodas5Pe-12.bson" solRodas5PVectorTyson
+      BSON.@load "qss/ref_bson/solVect_Tyson_Rodas5Pe-12.bson" solRodas5PVectorTyson
      odeprob = @NLodeProblem begin
          name=(tyson,)
          u = [0.0,0.75,0.25,0.0,0.0,0.0]
@@ -60,12 +60,12 @@ function test(case,solvr)
 
 
     # save_Sol(solnmliqss,1,note="x1 intrval13  ",xlims=(4.0,4.38),ylims=(0.0007,0.000723))
- #=     solnmliqssInterp=solInterpolated(solnmliqss,0.01)
+     solnmliqssInterp=solInterpolated(solnmliqss,0.01)
     err3=getAverageErrorByRefs(solRodas5PVectorTyson,solnmliqssInterp) 
 
   # timenmliqss=@belapsed solve($odeprob,$solvr,abstol=$absTol,saveat=0.01,reltol=$relTol,tspan#= ,maxErr=1000*$relTol =#)
     resnmliqss11E_2= ("$(solnmliqss.algName)",relTol,err3,solnmliqss.totalSteps,solnmliqss.simulStepCount,timenmliqss)
-    @show resnmliqss11E_2  =#
+    @show resnmliqss11E_2 
      
 
 
