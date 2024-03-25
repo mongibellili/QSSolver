@@ -120,3 +120,6 @@ end
 case="order1_"
 test(case,nmliqss1())
 #test(case,nmliqss2())
+
+
+#old mliqss without modifications is found under fromalqss repository...
