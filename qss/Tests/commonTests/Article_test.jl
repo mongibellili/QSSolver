@@ -8,7 +8,7 @@ using BSON
 function test(case,solvr)
   absTol=1e-5
      relTol=1e-2
-     #=  odeprob = @NLodeProblem begin
+      odeprob = @NLodeProblem begin
          #sys b53
          name=(sysb53,)
          u = [-1.0, -2.0]
@@ -35,7 +35,7 @@ function test(case,solvr)
      er2=getError(solnmliqssInterp,2,x2) 
    # timenmliqss=@belapsed solve($odeprob,$solvr,abstol=$absTol,saveat=0.01,reltol=$relTol,tspan#= ,maxErr=1000*$relTol =#)
      resnmliqss1E_2= ("$(solnmliqss.algName)",relTol,(er1+er2)/2,solnmliqss.totalSteps,solnmliqss.simulStepCount,timenmliqss)
-     @show resnmliqss1E_2 =#
+     @show resnmliqss1E_2
 
 
 
@@ -69,7 +69,7 @@ function test(case,solvr)
      
 
 
- #=      BSON.@load "qss/ref_bson/solVectAdvection_N1000d01_Feagin14e-12.bson" solFeagin14VectorN1000d01
+      BSON.@load "qss/ref_bson/solVectAdvection_N1000d01_Feagin14e-12.bson" solFeagin14VectorN1000d01
     prob=@NLodeProblem begin
         name=(adrN1000d01,)
         u[1:333]=1.0
@@ -99,7 +99,7 @@ function test(case,solvr)
 
   # ttnmliqss=@belapsed solve($prob,$solvr,abstol=$absTol,saveat=0.01,reltol=$relTol,tspan)
     resnmliqss12E_2= ("$(solnmliqss.algName)",relTol,err4,solnmliqss.totalSteps,solnmliqss.simulStepCount,ttnmliqss)
-    @show resnmliqss12E_2    =#
+    @show resnmliqss12E_2   
 
 
 
@@ -118,5 +118,5 @@ function test(case,solvr)
 end
 
 case="order1_"
-test(case,mliqss1())
+test(case,nmliqss1())
 #test(case,nmliqss2())
