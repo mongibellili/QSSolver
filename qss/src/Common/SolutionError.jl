@@ -10,7 +10,12 @@ function getError(sol::Sol{T,O},index::Int,f::Function)where{T,O}
     sumDiffSqr+=(sol.savedVars[index][i]-ts)*(sol.savedVars[index][i]-ts)
     sumTrueSqr+=ts*ts
   end
-  relerror=sqrt(sumDiffSqr/sumTrueSqr)
+  #relerror=sqrt(sumDiffSqr/sumTrueSqr)
+  if  abs(sumTrueSqr)>1e-12
+    relerror=sqrt(sumDiffSqr/sumTrueSqr)
+    else
+      relerror=0.0
+    end
   return relerror
 end
 

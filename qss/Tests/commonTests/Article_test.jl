@@ -38,7 +38,7 @@ function test(case,solvr)
      @show resnmliqss1E_2
 
 
-
+#= 
     
       BSON.@load "qss/ref_bson/solVect_Tyson_Rodas5Pe-12.bson" solRodas5PVectorTyson
      odeprob = @NLodeProblem begin
@@ -101,7 +101,7 @@ function test(case,solvr)
     resnmliqss12E_2= ("$(solnmliqss.algName)",relTol,err4,solnmliqss.totalSteps,solnmliqss.simulStepCount,ttnmliqss)
     @show resnmliqss12E_2   
 
-
+ =#
 
     #=  XLSX.openxlsx("3sys $(solvr)_$(case)_$(relTol).xlsx", mode="w") do xf
         sheet = xf[1]

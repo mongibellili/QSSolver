@@ -46,7 +46,7 @@ cc=184882.09294849282
 delta=6032.086629145888
 @show (bb+cc)/delta
 @show bb/delta+cc/delta =#
-setprecision(BigFloat,80)
+#setprecision(BigFloat,80)
 #= delta=BigFloat(1.135700289678955e7)
 h=9.852699092995836
 uij, uij2 = 0.057013364027397984, -0.04983356413099216
@@ -104,4 +104,11 @@ d2_=Float64(res)
  yy=BigFloat(1e20)+BigFloat(1e4)-BigFloat(1e20)
  zz=BigFloat(1e4)
  @show xx,yy,zz =#
+#= 
+Bs=1
 
+ if isnan(Bs)
+    println("NON A NUMBER! Bs = ", Bs)
+else
+    println("OK, Bs is ", Bs)
+end =#

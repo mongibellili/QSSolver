@@ -69,10 +69,12 @@ end
         a=(f2-f1)/(t2-t1)
         b=(f1*t2-f2*t1)/(t2-t1)
         x=a*t+b
+        if isnan(x) @show f2,f1,t2,t1 end
        # println("1st case")
         return x#taylor evaluation after small elapsed with the point before (i-1)
       elseif sol[1][index][i]==t # i-1 is closest lower point
         x=sol[2][index][i]
+        
       #  println("2nd case")
         return x
       end
@@ -95,20 +97,24 @@ function solInterpolated(sol::Sol{T,O},step::Float64)where {T,O}
   push!(interpTimes,sol.ft)
   numInterpPoints=length(interpTimes)
   #display(interpTimes)
-  interpValues=nothing
-  if sol isa LightSol
+#  interpValues=nothing
+ # if sol isa LightSol
     interpValues=Vector{Vector{Float64}}(undef, T)
   #= elseif sol isa HeavySol
     interpValues=Vector{Array{Taylor0}}(undef, T) =#
-  end
+ # end
+ 
   for index=1:T
           interpValues[index]=[]
+        
           push!(interpValues[index],sol[2][index][1]) #1st element is the init cond (true value)
          # end
         for i=2:numInterpPoints-1
           # for index=1:T
           # 
-          push!(interpValues[index],evaluateSol(sol,index,interpTimes[i]))
+          bs=evaluateSol(sol,index,interpTimes[i])
+          
+          push!(interpValues[index],bs)
           #  end
         end
           # for index=1:T

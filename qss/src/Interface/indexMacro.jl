@@ -109,3 +109,11 @@ end#end function
 
 
 
+# this pkg deals only with order 1
+# 6 algs names , each two share val(o) which will change the single update of q
+mliqss1_SimulIter()=(Val(:SimulIter),Val(1))
+mliqss1_SimulAna()=(Val(:SimulAna),Val(1))
+mliqss2_SimulIter()=(Val(:SimulIter),Val(2))
+mliqss2_SimulAna()=(Val(:SimulAna),Val(2))
+mliqss3_SimulIter()=(Val(:SimulIter),Val(3)) 
+mliqss3_SimulAna()=(Val(:SimulAna),Val(3))

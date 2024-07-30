@@ -1,11 +1,12 @@
 #hold helper datastructures needed for simulation, can be seen as the model in the qss architecture (model-integrator-quantizer)
-struct CommonQSS_data{Z}
+struct CommonQSS_data{SN,O,Z}
+    solvername::Val{SN}
+    solvertype::Val{O}
     quantum :: Vector{Float64} 
     x :: Vector{Taylor0}  #MVector cannot hold non-isbits
     q :: Vector{Taylor0}
     tx ::  Vector{Float64} 
     tq :: Vector{Float64} 
-    d::Vector{Float64} 
     nextStateTime :: Vector{Float64}    
     nextInputTime :: Vector{Float64} # 
     nextEventTime :: MVector{Z,Float64}  
@@ -20,17 +21,16 @@ struct CommonQSS_data{Z}
     maxErr ::Float64  
     savedTimes :: Vector{Vector{Float64}}
     savedVars:: Vector{Vector{Float64}}
-    
 end
-struct LiQSS_data{O,Sparsity}
-   vs::Val{Sparsity}
-   a::Vector{Vector{Float64}}
-   # u:: Vector{Vector{MVector{O,Float64}}}
-    qaux::Vector{MVector{O,Float64}}
-    olddx::Vector{MVector{O,Float64}}
-    dxaux::Vector{MVector{O,Float64}}
-    olddxSpec::Vector{MVector{O,Float64}}
-end
+struct LiQSS_data{Detection}
+    detection::Val{Detection}
+    a::Vector{Vector{Float64}}
+    # u:: Vector{Vector{MVector{O,Float64}}}
+     qaux::Vector{MVector{1,Float64}}
+     olddx::Vector{MVector{1,Float64}}
+     dxaux::Vector{MVector{1,Float64}}
+     olddxSpec::Vector{MVector{1,Float64}}
+ end
 struct LightSpecialQSS_data{O1,Lightness}<:SpecialQSS_data{O1,Lightness}
     ls::Val{Lightness}
     p::Val{O1}
