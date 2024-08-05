@@ -38,9 +38,9 @@ end
 
 BSON.@load "qss/ref_bson/solVect_Tyson_Rodas5Pe-12.bson" solRodas5PVectorTyson
 note="iters_abs-5"
-resmliqss10=tyson(solRodas5PVectorTyson,note,mliqss1_SimulIter(),0)
+#resmliqss10=tyson(solRodas5PVectorTyson,note,mliqss1_SimulIter(),0)
 resmliqss11=tyson(solRodas5PVectorTyson,note,mliqss1_SimulIter(),1)
-resmliqss12=tyson(solRodas5PVectorTyson,note,mliqss1_SimulIter(),2)
+#= resmliqss12=tyson(solRodas5PVectorTyson,note,mliqss1_SimulIter(),2)
 resmliqss13=tyson(solRodas5PVectorTyson,note,mliqss1_SimulIter(),3)
 resmliqss14=tyson(solRodas5PVectorTyson,note,mliqss1_SimulIter(),4)
 
@@ -54,9 +54,9 @@ resmliqss30=tyson(solRodas5PVectorTyson,note,mliqss3_SimulIter(),0)
 resmliqss31=tyson(solRodas5PVectorTyson,note,mliqss3_SimulIter(),1)
 resmliqss32=tyson(solRodas5PVectorTyson,note,mliqss3_SimulIter(),2)
 resmliqss33=tyson(solRodas5PVectorTyson,note,mliqss3_SimulIter(),3)
-resmliqss34=tyson(solRodas5PVectorTyson,note,mliqss3_SimulIter(),4)
+resmliqss34=tyson(solRodas5PVectorTyson,note,mliqss3_SimulIter(),4) =#
 
-XLSX.openxlsx("tyson_solvers_$note.xlsx", mode="w") do xf
+#= XLSX.openxlsx("tyson_solvers_$note.xlsx", mode="w") do xf
   sheet = xf[1]
   sheet["A1"] = "tyson_solvers__$note)"
   sheet["A4"] = collect(("solver","Tolerance","error","totalSteps","simul_steps","time"))
@@ -78,4 +78,4 @@ XLSX.openxlsx("tyson_solvers_$note.xlsx", mode="w") do xf
   sheet["A18"] = collect(resmliqss33)
   sheet["A19"] = collect(resmliqss34)
  
-end 
+end  =#

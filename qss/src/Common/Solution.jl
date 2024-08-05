@@ -1,4 +1,25 @@
+struct Stats
+  totalSteps::Int
+  simulStepCount::Int
+  evCount::Int
+  numSteps ::Vector{Int}
+end
 
+"""LightSol{T,O}
+A struct that holds the solution of a system of ODEs. It has the following fields:\n
+    - size: The number of continuous variables T\n
+    - order: The order of the algorithm O\n
+    - savedTimes: A vector of vectors of Float64 that holds the times at which the continuous variables were saved\n
+    - savedVars: A vector of vectors of Float64 that holds the values of the continuous variables at the times they were saved\n
+    - algName: The name of the algorithm used to solve the system\n
+    - sysName: The name of the system\n
+    - absQ: The absolute tolerance used in the simulation\n
+    - totalSteps: The total number of steps taken by the algorithm\n
+    - simulStepCount: The number of simultaneous updates during the simulation\n
+    - evCount: The number of events that occurred during the simulation\n
+    - numSteps: A vector of Int that holds the number of steps taken by the algorithm for each continuous variable\n
+    - ft: The final time of the simulation
+"""
 struct LightSol{T,O}<:Sol{T,O}
   size::Val{T}
   order::Val{O}
@@ -8,58 +29,34 @@ struct LightSol{T,O}<:Sol{T,O}
   algName::String
   sysName::String
   absQ::Float64
-  totalSteps::Int
-  #stepsaftersimul::Int
-  simulStepCount::Int
-  evCount::Int
-  numSteps ::Vector{Int}
+  stats::Stats
   ft::Float64
 end
 
-
-struct HeavySol{T,O}<:Sol{T,O}
-  size::Val{T}
-  order::Val{O}
-  savedTimes::Vector{Vector{Float64}}
-  savedVars::Vector{Vector{Float64}}
-  savedDers::Vector{Vector{Float64}}
-  #savedVarsQ::Vector{Vector{Float64}}
-  algName::String
-  sysName::String
-  absQ::Float64
-  totalSteps::Int
-  #stepsaftersimul::Int
-  simulStepCount::Int
-  evCount::Int
-  numSteps ::Vector{Int}
-  ft::Float64
-end
-
-
-@inline function createSol(::Val{T},::Val{O}, savedTimes:: Vector{Vector{Float64}},savedVars :: Vector{Vector{Float64}},solver::String,nameof_F::String,absQ::Float64,totalSteps::Int#= ,stepsaftersimul::Int =#,simulStepCount::Int,evCount::Int,numSteps ::Vector{Int},ft::Float64#= ,simulStepsVals :: Vector{Vector{Float64}},  simulStepsDers :: Vector{Vector{Float64}}  ,simulStepsTimes :: Vector{Vector{Float64}} =#)where {T,O}
+@inline function createSol(::Val{T},::Val{O}, savedTimes:: Vector{Vector{Float64}},savedVars :: Vector{Vector{Float64}},solver::String,nameof_F::String,absQ::Float64,stats::Stats,ft::Float64)where {T,O}
  # println("light")
-  sol=LightSol(Val(T),Val(O),savedTimes, savedVars,solver,nameof_F,absQ,totalSteps#= ,stepsaftersimul =#,simulStepCount,evCount,numSteps,ft#= ,simulStepsVals,simulStepsDers,simulStepsTimes =#)
+  sol=LightSol(Val(T),Val(O),savedTimes, savedVars,solver,nameof_F,absQ,stats,ft#= ,simulStepsVals,simulStepsDers,simulStepsTimes =#)
 end
-
-@inline function createSol(::Val{T},::Val{O}, savedTimes:: Vector{Vector{Float64}},savedVars :: Vector{Vector{Float64}},savedDers :: Vector{Vector{Float64}},solver::String,nameof_F::String,absQ::Float64,totalSteps::Int#= ,stepsaftersimul::Int =#,simulStepCount::Int,evCount::Int,numSteps ::Vector{Int},ft::Float64#= ,simulStepsVals :: Vector{Vector{Float64}},  simulStepsDers :: Vector{Vector{Float64}}  ,simulStepsTimes :: Vector{Vector{Float64}} =#)where {T,O}
-  # println("light")
-   sol=HeavySol(Val(T),Val(O),savedTimes, savedVars,savedDers,solver,nameof_F,absQ,totalSteps#= ,stepsaftersimul =#,simulStepCount,evCount,numSteps,ft#= ,simulStepsVals,simulStepsDers,simulStepsTimes =#)
- end
-
-function getindex(s::Sol, i::Int64)
+function getindex(s::Sol, i::Int64)#helper for calling savedTimes & savedVars
   if i==1
      return s.savedTimes
-  elseif i==2
-     return s.savedVars
+  #elseif i==2
   else
-     error("sol has 2 attributes: time and states")
+     return s.savedVars
+  #= else
+     error("sol has 2 attributes: time and states") =#
   end
 end
 
-
-
-@inline function evaluateSol(sol::LightSol{T,O},index::Int,t::Float64)where {T,O}
-  (t>sol.ft) && error("given point is outside the sol range")
+@inline function evaluateSol(sol::Sol{T,O},index::Int,t::Float64)where {T,O}
+  (t>sol.ft) && error("given point is outside the solution range! Verify where you want to evaluate the solution")
+  if index==0
+    eval_All=Vector{Float64}(undef, T)
+    for index=1:T
+      eval_All[index] =evaluateSol(sol,index,t)
+    end
+    eval_All
+  else
 
   x=sol[2][index][end] 
   #integratorCache=Taylor0(zeros(O+1),O)
@@ -69,12 +66,10 @@ end
         a=(f2-f1)/(t2-t1)
         b=(f1*t2-f2*t1)/(t2-t1)
         x=a*t+b
-        if isnan(x) @show f2,f1,t2,t1 end
        # println("1st case")
         return x#taylor evaluation after small elapsed with the point before (i-1)
       elseif sol[1][index][i]==t # i-1 is closest lower point
         x=sol[2][index][i]
-        
       #  println("2nd case")
         return x
       end
@@ -82,10 +77,8 @@ end
  # println("3rd case")
   return x #if var never changed then return init cond or if t>lastSavedTime for this var then return last value
 end
-
+end
 function solInterpolated(sol::Sol{T,O},step::Float64)where {T,O}
-  #(sol.ft>sol[1][end]) && error("given point is outside the sol range")
-  #numPoints=length(sol.savedTimes)
   interpTimes=Float64[]
   allInterpTimes=Vector{Vector{Float64}}(undef, T)
   t=0.0  #later can change to init_time which could be diff than zero
@@ -96,74 +89,56 @@ function solInterpolated(sol::Sol{T,O},step::Float64)where {T,O}
   end
   push!(interpTimes,sol.ft)
   numInterpPoints=length(interpTimes)
-  #display(interpTimes)
-#  interpValues=nothing
+  interpValues=nothing
  # if sol isa LightSol
     interpValues=Vector{Vector{Float64}}(undef, T)
-  #= elseif sol isa HeavySol
-    interpValues=Vector{Array{Taylor0}}(undef, T) =#
- # end
- 
+  #end
   for index=1:T
-          interpValues[index]=[]
-        
+          interpValues[index]=Float64[]
           push!(interpValues[index],sol[2][index][1]) #1st element is the init cond (true value)
-         # end
         for i=2:numInterpPoints-1
-          # for index=1:T
-          # 
-          bs=evaluateSol(sol,index,interpTimes[i])
-          
-          push!(interpValues[index],bs)
-          #  end
+          push!(interpValues[index],evaluateSol(sol,index,interpTimes[i]))
         end
-          # for index=1:T
           push!(interpValues[index],sol[2][index][end]) #last pt @ft
           allInterpTimes[index]=interpTimes
   end
-  #(interpTimes,interpValues)
-  createSol(Val(T),Val(O),allInterpTimes,interpValues,sol.algName,sol.sysName,sol.absQ,sol.totalSteps#= ,sol.stepsaftersimul =#,sol.simulStepCount,sol.evCount,sol.numSteps,sol.ft#= ,sol.simulStepsVals,sol.simulStepsDers,sol.simulStepsVals =#)
+  createSol(Val(T),Val(O),allInterpTimes,interpValues,sol.algName,sol.sysName,sol.absQ,sol.stats,sol.ft#= ,sol.simulStepsVals,sol.simulStepsDers,sol.simulStepsVals =#)
 end
-
-function evaluateSimpleSol(sol::Sol,index::Int,t::Float64)
-  for i=2:length(sol[1])#savedTimes after the init time...init time is at index i=1
-      if sol[1][i]>=t # i-1 is closest lower point
-          return sol[2][index][i-1](t-sol[1][i-1])#taylor evaluation after small elapsed with the point before (i-1)
-      end
-  end
-end
-function simpleSolInterpolated(sol::Sol,index::Int,step::Float64,ft::Float64)
-  numPoints=length(sol.savedTimes)
-  interpTimes=[]
+function solInterpolated(sol::Sol{T,O},index::Int,step::Float64)where {T,O}
+  interpTimes=Float64[]
+  allInterpTimes=Vector{Vector{Float64}}(undef, 1)
   t=0.0  #later can change to init_time which could be diff than zero
   push!(interpTimes,t)
-  while t+step<ft
+  while t+step<sol.ft
     t=t+step
-    push!(interpTimes,t)
-    
+    push!(interpTimes,t) 
   end
-  push!(interpTimes,ft)
+  push!(interpTimes,sol.ft)
   numInterpPoints=length(interpTimes)
-  #display(interpTimes)
-  interpValues=[]
-  push!(interpValues,sol[2][index][1][0]) #1st element is the init cond (true value)
-
-  for i=2:numInterpPoints-1
-    push!(interpValues,evaluateSol(sol,index,interpTimes[i]))
-  end
-  push!(interpValues,sol[2][index][numPoints][0]) #last pt @ft
-  (interpTimes,interpValues)
+  #interpValues=nothing
+ # if sol isa LightSol
+    interpValues=Vector{Vector{Float64}}(undef, 1)
+  #end
+ # for index=1:T
+          interpValues[1]=[]
+          push!(interpValues[1],sol[2][index][1]) #1st element is the init cond (true value)
+        for i=2:numInterpPoints-1
+          push!(interpValues[1],evaluateSol(sol,index,interpTimes[i]))
+        end
+          push!(interpValues[1],sol[2][index][end]) #last pt @ft
+          allInterpTimes[1]=interpTimes
+  #end
+  createSol(Val(T),Val(O),allInterpTimes,interpValues,sol.algName,sol.sysName,sol.absQ,sol.stats,sol.ft#= ,sol.simulStepsVals,sol.simulStepsDers,sol.simulStepsVals =#)
 end
 (sol::Sol)(index::Int,t::Float64) = evaluateSol(sol,index,t)
-####################################################################################################
+(sol::Sol)(t::Float64;idxs=0::Int) = evaluateSol(sol,idxs,t)
+
+
+
+function show(io::IO, a::Stats)
+  println("The total simulation steps: $(a.totalSteps)")
+  println("The simultaneous  steps: $(a.simulStepCount)")
+  println("The number of events: $(a.evCount)")
+  println("The simulation steps per variable: $(a.numSteps)")
   
-function plotElapsed(sol::Sol)
-  numVars=length(sol.savedVars)
-  p1=plot()
-  for k=1:numVars#T
-    p1=plot!(p1,sol.et[k], sol.hv[k],marker=(:xcross),markersize=3,label="x$(k)_hqThrow"#= ,xlims=(877.5,877.8),ylims=(-0.01,0.03) =#)
-    p1=plot!(p1,sol.ets[k], sol.hvs[k],marker=(:star8),markersize=3,title="$(sol.algName)_$(sol.absQ)",label="x$(k)_SimulhqThrow"#= ,xlims=(877.5,877.8),ylims=(-0.01,0.03) =#)
-    p1=plot!(legend=:topleft,xlims=(16.0,20.0),ylims=(0.0,0.5))
-  end
-  savefig(p1, "trackELAPSED_$(sol.sysName)_$(sol.algName)_$(sol.absQ).png")
 end

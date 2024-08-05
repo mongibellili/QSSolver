@@ -1,12 +1,12 @@
-#hold helper datastructures needed for simulation, can be seen as the model in the qss architecture (model-integrator-quantizer)
-struct CommonQSS_data{SN,O,Z}
-    solvername::Val{SN}
-    solvertype::Val{O}
+
+ #= """ hold helper datastructures needed for simulation, can be seen as the model in the qss architecture (model-integrator-quantizer)""" =#
+struct CommonQSS_data{Z}
     quantum :: Vector{Float64} 
     x :: Vector{Taylor0}  #MVector cannot hold non-isbits
     q :: Vector{Taylor0}
     tx ::  Vector{Float64} 
     tq :: Vector{Float64} 
+    d::Vector{Float64} 
     nextStateTime :: Vector{Float64}    
     nextInputTime :: Vector{Float64} # 
     nextEventTime :: MVector{Z,Float64}  
@@ -19,42 +19,33 @@ struct CommonQSS_data{SN,O,Z}
     dQmin ::Float64    
     dQrel ::Float64  
     maxErr ::Float64  
+    maxiters ::Int
     savedTimes :: Vector{Vector{Float64}}
     savedVars:: Vector{Vector{Float64}}
+    
 end
-struct LiQSS_data{Detection}
-    detection::Val{Detection}
-    a::Vector{Vector{Float64}}
-    # u:: Vector{Vector{MVector{O,Float64}}}
-     qaux::Vector{MVector{1,Float64}}
-     olddx::Vector{MVector{1,Float64}}
-     dxaux::Vector{MVector{1,Float64}}
-     olddxSpec::Vector{MVector{1,Float64}}
- end
-struct LightSpecialQSS_data{O1,Lightness}<:SpecialQSS_data{O1,Lightness}
-    ls::Val{Lightness}
-    p::Val{O1}
-    savedVars :: Vector{Vector{Float64}} #has to be vector (not SA) cuz to be resized in integrator
-   
-end
-
-#= struct HeavySpecialQSS_data{T,O1,Lightness}<:SpecialQSS_data{T,O1,Lightness}
-    ls::Val{Lightness}
-    savedVars :: Vector{Array{Taylor0}} #has to be vector (not SA) cuz to be resized in integrator
-    prevStepVal ::MVector{T,MVector{O1,Float64}} #use 
-end =#
-
-struct SpecialLiQSS_data<:SpecialLiqssQSS_data
+#= ```
+data needed only for implicit case
+``` =#
+struct AexprLiQSS_data{O,M} <: LiQSS_data{O,M}
+    cycleDetection::Val{M}
     cacheA::MVector{1,Float64}
-    direction::Vector{Float64}
-    qminus::Vector{Float64}
-    buddySimul::MVector{2,Int}
-    prevStepVal ::Vector{Float64} 
+    qaux::Vector{MVector{O,Float64}}
+    dxaux::Vector{MVector{O,Float64}}
+end
+struct AmanualLiQSS_data{O,M}<: LiQSS_data{O,M}
+    cycleDetection::Val{M}
+    a::Vector{Vector{Float64}}
+    qaux::Vector{MVector{O,Float64}}
+    dxaux::Vector{MVector{O,Float64}}
+    olddx::Vector{MVector{O,Float64}}
+end
+  
+struct Options{SU,DU} #single update, double update
+    singleUpdate::Val{SU}
+    SimulUpdate::Val{DU}
+    multiplier::Float64
 end
 
+option(su,du,multiplier)=Options(Val(su),Val(du),multiplier)
 
-#= function createSpecialQSS_data(savedVars :: Vector{Array{Taylor0}}, prevStepVal::MVector{T,MVector{O1,Float64}},cacheA::MVector{1,Int}) where {T,O1}
-    hv=HeavySpecialQSS_data(savedVars,prevStepVal,cacheA)
- end
- =#
- 

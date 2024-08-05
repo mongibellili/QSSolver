@@ -1,6 +1,5 @@
-
-
-macro NLodeProblem(odeExprs)
+#macro NLodeProblem(odeExprs)
+macro NLodeProblem(odeExprs) 
     Base.remove_linenums!(odeExprs)
     if VERBOSE println("starting prob parsing...") end 
     probHelper=arrangeProb(odeExprs)# replace symbols and params , extract info about size,symbols,initconds
@@ -27,7 +26,36 @@ macro NLodeProblem(odeExprs)
     NLodeProblemFunc(odeExprs,Val(probSize),Val(discSize),Val(zcSize),initConds,du,symDict)     #returns  prob   
 end
 
-
+"""NLodeProblem(odeExprs) 
+This function parses the user code to dispatches on a specific problem construction.
+It returns a Problem object to be passed to the solve function.
+"""
+function NLodeProblem(odeExprs) 
+    Base.remove_linenums!(odeExprs)
+    if VERBOSE println("starting prob parsing...") end 
+    probHelper=arrangeProb(odeExprs)# replace symbols and params , extract info about size,symbols,initconds
+    probSize=probHelper.problemSize
+    discSize=probHelper.discreteSize
+    zcSize=probHelper.numZC
+    initConds=probHelper.initConditions # vector
+    symDict=probHelper.symDict
+    du=probHelper.du
+    if length(initConds)==0  #user chose shortcuts...initcond saved in a dict
+        initConds=zeros(probSize)# vector of init conds to be created
+        savedinitConds=probHelper.savedInitCond #init conds already created in a dict
+        for i in savedinitConds
+            if i[1] isa Int #if key (i[1]) is an integer
+            initConds[i[1]]=i[2]
+            else # key is an expression
+                for j=(i[1].args[1]):(i[1].args[2])  
+                    initConds[j]=i[2]
+                end
+            end
+        end
+    end
+   # @show odeExprs
+    NLodeProblemFunc(odeExprs,Val(probSize),Val(discSize),Val(zcSize),initConds,du,symDict)     #returns  prob   
+end
 struct probHelper #helper struct to return stuff from arrangeProb
     problemSize::Int
     discreteSize::Int
@@ -37,7 +65,7 @@ struct probHelper #helper struct to return stuff from arrangeProb
     du::Symbol
     symDict::Dict{Symbol,Expr}
 end
-function arrangeProb(x::Expr) # replace symbols and params , extract info about size,symbols,initconds
+function arrangeProb(x::Expr) # replace symbols and params , extract info about sizes,symbols,initconds
     param=Dict{Symbol,Union{Float64,Expr}}()
     symDict=Dict{Symbol,Expr}()
     stateVarName=:q
@@ -60,8 +88,7 @@ function arrangeProb(x::Expr) # replace symbols and params , extract info about 
                     stateVarName=y.args[1]   #extract var name
                     if du==:nothing du=Symbol(:d,stateVarName) end # construct symbol du
                     if  y.args[2] isa Expr && y.args[2].args[1]== :(:)  #u[a:b]=N
-
-                            length(y.args[2].args)==3 || error(" use syntax u[a:b]") # not needed
+                           # length(y.args[2].args)==3 || error(" use syntax u[a:b]") # not needed
                             savedInitCond[:(($(y.args[2].args[2]),$(y.args[2].args[3])))]=rhs# dict {expr->float}
                             if problemSize < y.args[2].args[3]
                                 problemSize=y.args[2].args[3] #largest b determines probSize
@@ -93,7 +120,7 @@ function arrangeProb(x::Expr) # replace symbols and params , extract info about 
             numZC+=1
             (length(argI.args)!=3 && length(argI.args)!=2) && error("use format if A>0 B else C or if A>0 B")
             !(argI.args[1] isa Expr && argI.args[1].head==:call && argI.args[1].args[1]==:> && (argI.args[1].args[3]==0||argI.args[1].args[3]==0.0)) && error("use the format 'if a>0: change if a>b to if a-b>0")
-              !(argI.args[1].args[2] isa Expr) && error("LHS of >  must be be an expression!")
+           #   !(argI.args[1].args[2] isa Expr) && error("LHS of >  must be be an expression!")
               argI.args[1].args[2]=changeVarNames_params(argI.args[1].args[2],stateVarName,:nothing,param)#zcf
               # name changes have to be per block
               if length(argI.args)==2 #user used if a b
@@ -106,14 +133,3 @@ function arrangeProb(x::Expr) # replace symbols and params , extract info about 
     end#end for argI in args
     p=probHelper(problemSize,discreteSize,numZC,savedInitCond,initConditions,du,symDict)
 end#end function
-
-
-
-# this pkg deals only with order 1
-# 6 algs names , each two share val(o) which will change the single update of q
-mliqss1_SimulIter()=(Val(:SimulIter),Val(1))
-mliqss1_SimulAna()=(Val(:SimulAna),Val(1))
-mliqss2_SimulIter()=(Val(:SimulIter),Val(2))
-mliqss2_SimulAna()=(Val(:SimulAna),Val(2))
-mliqss3_SimulIter()=(Val(:SimulIter),Val(3)) 
-mliqss3_SimulAna()=(Val(:SimulAna),Val(3))

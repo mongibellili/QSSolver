@@ -5,26 +5,17 @@ const global VERBOSE=false
 const global DEBUG=false
 const global DEBUG2=false
 
-#using ResumableFunctions
+
 using RuntimeGeneratedFunctions
 using StaticArrays
 using SymEngine
-#using Reexport
-#@reexport using StaticArrays
-#@reexport using ResumableFunctions
-#using SymEngine##########might not need
+
 using ExprTools  #combineddef
 using MacroTools: postwalk,prewalk, @capture#, isexpr,
-#= import Base.:-
-import Base.:+
-import Base.:* =#
-
-using Plots: plot!,plot,savefig
+using Plots: savefig
 using Dates: now,year,month,day,hour,minute,second #fortimestamp
-#using TimerOutputs########################################################temporary
-#using Profile################################################################temporary
 RuntimeGeneratedFunctions.init(@__MODULE__)
-
+import Plots: plot!,plot
 
 #this section belongs to taylorseries subcomponent
 import Base: ==, +, -, *, /, ^   
@@ -47,14 +38,14 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
 
 
     # list of public (API) to the user, not between files as those are linked as if in one file
-    export mliqss1_SimulIter,mliqss2_SimulIter,mliqss3_SimulIter,mliqss1_SimulAna,mliqss2_SimulAna,mliqss3_SimulAna,saveat
-    export save_Sol,save_SolDer,save_SimulSol#,stacksave_Sol,plotSol,stackplotSol,plot_save_Sol,stackplot_save_Sol,plot_save_SolVars,plotSol_Der1,evaluateSol,save_SolVar,save_SolZoomed
-    
+   # export option11,option12,option21,option22,option31,option32
+    export nmliqss1,nmliqss2,mliqss1,mliqss2,save_Sol,save_SolDer,save_SimulSol#,stacksave_Sol,plotSol,stackplotSol,plot_save_Sol,stackplot_save_Sol,plot_save_SolVars,plotSol_Der1,evaluateSol,save_SolVar,save_SolZoomed
+    export option
     export plotRelativeError#,stackplotRelativeError,plot_save_RelativeError,stackplot_save_RelativeError,saveRelativeError,stacksaveRelativeError
     export plotAbsoluteError#,stackplotAbsoluteError,plot_save_AbsoluteError,stackplot_save_AbsoluteError,saveAbsoluteError,stacksaveAbsoluteError
     export getError,getPlot,getPlot!#,plotCumulativeSquaredRelativeError,plotMSE,getIntervalError,plotElapsed
 
-    export  @NLodeProblem,QSS_Solve,solInterpolated
+    export  NLodeProblem, @NLodeProblem,solve,solInterpolated
     export Sol,getErrorByRodas,getAllErrorsByRefs,getAverageErrorByRefs
 
     export Taylor0,mulT,mulTT,createT,addsub,negateT,subsub,subadd,subT,addT,muladdT,mulsub,divT # in case to save into a file, otherwise remove
@@ -72,10 +63,7 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
     include("ownTaylor/functionsT.jl")
     include("ownTaylor/power.jl")
     include("ownTaylor/powerT.jl")
-    include("ownTaylor/auxiliary.jl") 
-    include("ownTaylor/calculus.jl")    
-    include("ownTaylor/other_functions.jl")
-    include("ownTaylor/evaluate.jl")       
+     
        
     #Utils
     include("Utils/rootfinders/SimUtils.jl") 
@@ -88,7 +76,7 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
     include("Common/QSSNL_AbstractTypes.jl")
     include("Common/Solution.jl")
     include("Common/SolutionPlot.jl")
-    include("Common/SolutionDerPlot.jl")
+   
     include("Common/SolutionError.jl")
 
 
@@ -114,8 +102,8 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
    
 
    #implicit intgrators used to show improvement of modifications
-    include("dense/NL_integrators/NL_mLiQSS_Integrator.jl")
- #  include("dense/NL_integrators/NL_nLiQSS_Integrator.jl")
+    include("dense/NL_integrators/NL_nmLiQSS_Integrator.jl")
+   include("dense/NL_integrators/NL_mLiQSS_Integrator.jl")
     
    include("dense/Quantizers/Quantizer_Common.jl")
    include("dense/Quantizers/QSS_quantizer.jl")
@@ -124,14 +112,15 @@ import Base:  sqrt, exp, log, sin, cos, sincos, tan,
     include("dense/Quantizers/mLiQSS_quantizer1.jl")
   
 
-
+    include("dense/Quantizers/LiQSS_quantizer2.jl")
+  
+    include("dense/Quantizers/mLiQSS_quantizer2.jl")
   
 
 
    #main entrance/ Interface
    include("Interface/indexMacro.jl")
    include("Interface/QSS_Solve.jl")
-  
  
 
 end # module
