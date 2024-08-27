@@ -1,2 +1,2 @@
 # QS_Solver
-liqss order1 that uses expression to compute a
+liqss and mliqss that compare different versions of the single updateQ, the simultaneous update, cycle detection, the way the coefficient a is computed.
