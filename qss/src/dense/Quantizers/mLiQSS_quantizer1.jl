@@ -241,6 +241,7 @@ else
   return false
 end
 end
+
 function detect1(::Val{2},ẋi,dxP,dxi,ẋj,dxj)
 if (dxj*ẋj)<=0.0 && (dxi*dxP)<=0.0
   
@@ -271,3 +272,166 @@ else
   return false
 end
 end
+
+function detect1(::Val{5},ẋi,dxP,dxi,ẋj,dxj)
+  if ((abs(dxj)>3*abs(ẋj)||3*abs(dxj)<abs(ẋj)) && dxi*ẋi<0.0) || ((abs(dxi)>3*abs(ẋi)||3*abs(dxi)<abs(ẋi)) && dxj*ẋj<0.0) || ((dxj*ẋj)<0.0 && (dxi*ẋi)<0.0)
+   
+      return true
+   
+  else  
+    return false
+  end
+  end
+  function detect1(::Val{6},ẋi,dxP,dxi,ẋj,dxj)
+    if ((abs(dxj)>3*abs(ẋj)||3*abs(dxj)<abs(ẋj)) && dxi*dxP<0.0) || ((abs(dxi)>3*abs(dxP)||3*abs(dxi)<abs(dxP)) && dxj*ẋj<0.0) || ((dxj*ẋj)<0.0 && (dxi*dxP)<0.0)
+     
+        return true
+     
+    else  
+      return false
+    end
+    end
+#cases to remove: one value null and other very small
+
+function detect1(::Val{7},ẋi,dxP,dxi,ẋj,dxj)
+  if (dxj*ẋj)<=0.0 && (dxi*ẋi)<=0.0
+    if (dxj)==0.0 && abs(ẋj)<1e-9
+      return false
+    end
+    if (ẋj)==0.0 && abs(dxj)<1e-9
+      return false
+    end
+    if (dxi)==0.0 && abs(ẋi)<1e-9
+      return false
+    end
+    if (ẋi)==0.0 && abs(dxi)<1e-9
+      return false
+    end
+      return true
+    
+  else  
+    return false
+  end
+  end
+  function detect1(::Val{8},ẋi,dxP,dxi,ẋj,dxj)
+  if (dxj*ẋj)<=0.0 && (dxi*dxP)<=0.0
+    if (dxj)==0.0 && abs(ẋj)<1e-9
+      return false
+    end
+    if (ẋj)==0.0 && abs(dxj)<1e-9
+      return false
+    end
+    if (dxi)==0.0 && abs(dxP)<1e-9
+      return false
+    end
+    if (dxP)==0.0 && abs(dxi)<1e-9
+      return false
+    end
+      return true
+    
+  else  
+    #@show dxj,ẋj,dxi,dxP
+    return false
+  end
+  end
+  
+  function detect1(::Val{9},ẋi,dxP,dxi,ẋj,dxj)
+  if abs(dxj-ẋj)>abs(dxj+ẋj)/2 && abs(dxi-ẋi)>abs(dxi+ẋi)/2
+    if (dxj)==0.0 && abs(ẋj)<1e-9
+      return false
+    end
+    if (ẋj)==0.0 && abs(dxj)<1e-9
+      return false
+    end
+    if (dxi)==0.0 && abs(ẋi)<1e-9
+      return false
+    end
+    if (ẋi)==0.0 && abs(dxi)<1e-9
+      return false
+    end
+      return true
+   
+  else  
+    return false
+  end
+  end
+  
+  function detect1(::Val{10},ẋi,dxP,dxi,ẋj,dxj)
+  if abs(dxj-ẋj)>abs(dxj+ẋj)/2 && abs(dxi-dxP)>abs(dxi+dxP)/2
+    if (dxj)==0.0 && abs(ẋj)<1e-9
+      return false
+    end
+    if (ẋj)==0.0 && abs(dxj)<1e-9
+      return false
+    end
+    if (dxi)==0.0 && abs(dxP)<1e-9
+      return false
+    end
+    if (dxP)==0.0 && abs(dxi)<1e-9
+      return false
+    end
+      return true
+   
+  else  
+    return false
+  end
+  end
+
+  function detect1(::Val{11},ẋi,dxP,dxi,ẋj,dxj)
+    if (dxj*ẋj)<0.0 && (dxi*ẋi)<0.0
+      
+        return true
+      
+    else  
+      return false
+    end
+    end
+
+    function detect1(::Val{12},ẋi,dxP,dxi,ẋj,dxj)
+      if  (dxi*dxP)<0.0
+        
+          return true
+        
+      else  
+        return false
+      end
+      end
+
+      function detect1(::Val{13},ẋi,dxP,dxi,ẋj,dxj)
+        if  (dxi*dxP)<=0.0
+          
+            return true
+          
+        else  
+          return false
+        end
+        end
+
+        
+
+        function detect1(::Val{14},ẋi,dxP,dxi,ẋj,dxj)
+        if (abs(dxj)*3<abs(ẋj) || abs(dxj)>3*abs(ẋj) || (dxj*ẋj)<0.0)
+          cancelCriteria=1e-6*quani
+          if abs(dxi)>3*abs(dxithrow) || abs(dxi)*3<abs(dxithrow) ||  (dxi*dxithrow)<0.0  
+              iscycle=true
+              if abs(dxi)<cancelCriteria && abs(dxithrow)<cancelCriteria #significant change is relative to der values. cancel if all values are small
+                iscycle=false
+               # println("cancel dxi & dxthr small")
+              end
+          end
+          if  abs(dxi)>10*abs(ẋi) || abs(dxi)*10<abs(ẋi) #||  (dxi*ẋi)<0.0 
+            iscycle=true
+            if abs(dxi)<cancelCriteria && abs(ẋi)<cancelCriteria #significant change is relative to der values. cancel if all values are small
+              iscycle=false
+             # println("cancel dxi & ẋi small")
+            end
+          end
+          
+          if abs(dxj)<1e-6*quanj && abs(ẋj)<1e-6*quanj #significant change is relative to der values. cancel if all values are small
+            iscycle=false
+            #println("cancel dxj & ẋj small")
+          end
+    
+        end  
+
+      end

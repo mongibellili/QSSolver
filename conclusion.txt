@@ -1,0 +1,10 @@
+Conclusion1:
+all the hiccups in all the graphs are due to one of these:
+
+-a case where dxi and der(xi) have same dir while dxP does not  ==> use dxP
+-a case in iterations in updateQ where a small d/h is found     ==> do not use iterations for update Q or inhance to avoid small d.
+-cases in analytic simultaneous updates where near eqilibruim or root finding fails in an untamed quadrature equation.  ==> use iterations for simultaneous updates
+
+Conclusion2:
+
+It is obvious in all graphs that A_expr is more efficient than A_manual

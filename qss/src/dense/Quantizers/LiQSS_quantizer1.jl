@@ -29,19 +29,23 @@ function updateQ(::Val{1},opt::Options{1,DU}, i::Int, xv::Vector{Taylor0}, qv::V
     multiplier=opt.multiplier
     qplus=x+sign(x1)*Δ
     dxplus=a*(qplus)+u
+ 
     if x1*dxplus>0.0
         q=qplus
     else
         if a!=0.0
             q=-u/a
+           
         else
             q=x
         end
     end
     if (q-x)>1*Δ
         q=x+1*Δ
+   
     elseif (q-x)<-1*Δ
         q=x-1*Δ
+  
     end
     if x1!=0.0
         if q!=x
@@ -52,9 +56,9 @@ function updateQ(::Val{1},opt::Options{1,DU}, i::Int, xv::Vector{Taylor0}, qv::V
     else
         nextStateTime[i]=Inf
     end
-   #=  if abs(q - x) > 1 * quantum[i]+1e-12
-        println("updateQ what ! simt: ", simt)
-    end =#
+  
+  
+ 
     qv[i][0]=q
     return nothing
 end

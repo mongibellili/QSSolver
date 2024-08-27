@@ -249,5 +249,6 @@ function integrate(Al::QSSAlgorithm{:nmliqss,O},options::Options{SU,DU}, Commonq
     push!(savedTimes[index], simt)
   end#end while
   stats=Stats(totalSteps,simulStepCount,0,numSteps)
-  createSol(Val(T), Val(O), savedTimes, savedVars, "nmliqss$(O)_single$(SU)_simul$(DU)_detect$(M)", string(odep.prname), absQ, stats, ft)
+  #createSol(Val(T), Val(O), savedTimes, savedVars, "nmliqss$(O)_single$(SU)_simul$(DU)_detect$(M)", string(odep.prname), absQ, stats, ft)
+  createSol(Val(T), Val(O), savedTimes, savedVars, "_single$(SU)_simul$(DU)_detect$(M)", string(odep.prname), absQ, stats, ft)
 end
