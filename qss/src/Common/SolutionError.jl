@@ -35,7 +35,7 @@ function getErrorByRefs(sol::Sol{T,O},index::Int,solRef::Vector{Any})where{T,O}
     relerror=sqrt(sumDiffSqr/sumTrueSqr)
     else
       relerror=0.0
-    end
+    end 
   return relerror
 end
 
@@ -53,6 +53,7 @@ end
 """
 function getAverageErrorByRefs(sol::Sol{T,O},solRef::Vector{Any}) where{T,O}
   numPoints=length(sol.savedTimes[1])
+  #@show length(solRef),numPoints
   allErrors=0.0
   for index=1:T
       sumTrueSqr=0.0
@@ -64,12 +65,12 @@ function getAverageErrorByRefs(sol::Sol{T,O},solRef::Vector{Any}) where{T,O}
           sumDiffSqr+=(Ns-ts)*(Ns-ts)
           sumTrueSqr+=ts*ts
       end
-      if  abs(sumTrueSqr)>1e-12
+      if  abs(sumTrueSqr)>1e-9
       relerror=sqrt(sumDiffSqr/sumTrueSqr)
       else
         relerror=0.0
       end
-      
+      #@show relerror,index
       allErrors+= relerror
   end
   return allErrors/T

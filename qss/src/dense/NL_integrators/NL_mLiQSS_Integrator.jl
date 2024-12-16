@@ -150,7 +150,7 @@ function integrate(Al::QSSAlgorithm{:mliqss,O},options::Options{SU,DU}, Commonqs
        
         if j != index && aij * aji != 0.0
           integrateVarJ(j,x,tx,simt,olddx)
-           if nmisCycle_and_simulUpdate(Val(O),options,Val(M),cacheRootsi, cacheRootsj, acceptedi, acceptedj, aii,aij, aji,ajj, respp, pp, trackSimul,  index, j, dirI, x, q, quantum,  dxaux, qaux, tx, tq, simt, ft)  
+           if nmisCycle_and_simulUpdate(Val(O),options,Val(M),cacheRootsi, cacheRootsj, acceptedi, acceptedj, aii,aij, aji,ajj, respp, pp, trackSimul,  index, j, dirI, x, q, quantum,  dxaux, qaux, tx, tq, simt, ft,d)  
             simulStepCount += 1
             clearCache(taylorOpsCache, Val(CS), Val(O))
             f(index, q, t, taylorOpsCache)

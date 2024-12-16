@@ -1,0 +1,14 @@
+Simulation time: 0.729848 ms
+CPU time per transition: 0.000712742
+Simulation output:
+Variable C2 changes: 123
+Variable CP changes: 123
+Variable pM changes: 250
+Variable M changes: 249
+Variable Y changes: 69
+Variable yP changes: 216
+Simulation transitions: 1024
+Initialization time: 2.43271 ms
+Save data time: 1.76478 ms
+Total time: 4.92733 ms
+

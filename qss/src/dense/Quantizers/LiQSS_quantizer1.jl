@@ -24,107 +24,45 @@ function updateQ(::Val{1},opt::Options{1,DU}, i::Int, xv::Vector{Taylor0}, qv::V
     dxaux[i][1]=x1
     h=0.0
     Δ=quantum[i]
-
-    u=x1-a*q
-    multiplier=opt.multiplier
-    qplus=x+sign(x1)*Δ
-    dxplus=a*(qplus)+u
- 
-    if x1*dxplus>0.0
-        q=qplus
-    else
-        if a!=0.0
-            q=-u/a
-           
+    if a != 0.0
+        qplus=x+sign(x1)*Δ
+        dxplus=a*(qplus)+u
+    
+        if x1*dxplus>0.0
+            q=qplus
+            h=Δ/abs(dxplus)
         else
-            q=x
+            q=-u/a
+            h=Inf
+        end
+    else
+        if x1 > 0.0
+            q = x + Δ
+        else
+            q = x - Δ
+        end
+        if x1 != 0
+            h = (abs(Δ / x1))
+        else
+            h = Inf
         end
     end
-    if (q-x)>1*Δ
+    if (q-x)>1*Δ # this is for q=-u/a
         q=x+1*Δ
-   
     elseif (q-x)<-1*Δ
         q=x-1*Δ
-  
     end
-    if x1!=0.0
-        if q!=x
-            nextStateTime[i]=simt+abs((q-x)/x1)
-        else
-            nextStateTime[i]=Inf
-        end
-    else
-        nextStateTime[i]=Inf
-    end
-  
-  
- 
-    qv[i][0]=q
+    qv[i][0] = q
+    nextStateTime[i] = simt + h
     return nothing
 end
 
+
+
+
+
+
 function updateQ(::Val{1},opt::Options{2,DU}, i::Int, xv::Vector{Taylor0}, qv::Vector{Taylor0}, quantum::Vector{Float64},a::Float64, dxaux::Vector{MVector{1,Float64}}, qaux::Vector{MVector{1,Float64}}, tx::Vector{Float64}, tq::Vector{Float64}, simt::Float64, ft::Float64, nextStateTime::Vector{Float64})where{DU}
-     
-    q = qv[i][0]
-    x = xv[i][0]
-    x1 = xv[i][1]
-    qaux[i][1] = q
-    u = x1 - a * q
-    dxaux[i][1] = x1
-    dx=x1
-    h=0.0
-    Δ=quantum[i]
-    multiplier=opt.multiplier
-   if a !=0.0
-       if dx==0.0
-           dx=u+(q)*a
-           if dx==0.0
-               dx=1e-26
-           end
-       end
-   #for order1 finding h is easy but for higher orders iterations are cheaper than finding exact h using a quadratic,cubic...
-   #exacte for order1: h=-2Î”/(u+xa-2aÎ”) or h=2Î”/(u+xa+2aÎ”)
-       h = ft-simt
-       q = (x + h * u) /(1 - h * a)
-      if (abs(q - x) > multiplier* Δ) 
-         h = (abs( Δ / dx));
-         q= (x + h * u) /(1 - h * a)
-       end
-       while (abs(q - x) > multiplier* Δ) 
-         #h = h * 0.98*(quantum[i] / abs(q - x));
-         h = h *sqrt(Δ / abs(q - x))
-         q= (x + h * u) /(1 - h * a)
-       end 
-      
-   else
-       dx=u
-       if dx>0.0
-           q=x+Δ# 
-       else
-           q=x-Δ
-       end
-       if dx!=0
-       h=(abs(Δ/dx))
-       else
-           h=Inf
-       end
-   end
-   qv[i][0]=q
-  # println("inside single updateQ: q & qaux[$i][1]= ",q," ; ",qaux[i][1])
-  nextStateTime[i]=simt+h
-  if (q-x)>multiplier*Δ
-    q=x+multiplier*Δ
-  elseif (q-x)<-multiplier*Δ
-    q=x-multiplier*Δ
-    
-end
-   return nothing
-end
-
-
-
-
-function updateQ(::Val{1},opt::Options{3,DU}, i::Int, xv::Vector{Taylor0}, qv::Vector{Taylor0}, quantum::Vector{Float64},a::Float64, dxaux::Vector{MVector{1,Float64}}, qaux::Vector{MVector{1,Float64}}, tx::Vector{Float64}, tq::Vector{Float64}, simt::Float64, ft::Float64, nextStateTime::Vector{Float64})where{DU}
     
     q = qv[i][0]
     x = xv[i][0]
@@ -134,7 +72,6 @@ function updateQ(::Val{1},opt::Options{3,DU}, i::Int, xv::Vector{Taylor0}, qv::V
     dxaux[i][1] = x1
     h = 0.0
     Δ = quantum[i]
-    multiplier=opt.multiplier
     if a != 0.0
         α = -(a * x + u) / a
         h1denom = a * (x + Δ) + u
@@ -181,16 +118,62 @@ function updateQ(::Val{1},opt::Options{3,DU}, i::Int, xv::Vector{Taylor0}, qv::V
             h = Inf
         end
     end
-    qv[i][0] = q
-    nextStateTime[i] = simt + h
-    if (q-x)>1*Δ
+    if (q-x)>1*Δ # this is for q=-u/a
         q=x+1*Δ
     elseif (q-x)<-1*Δ
         q=x-1*Δ
-        
     end
+    qv[i][0] = q
+    nextStateTime[i] = simt + h
     return nothing
 end
+
+
+function updateQ(::Val{1},opt::Options{3,DU}, i::Int, xv::Vector{Taylor0}, qv::Vector{Taylor0}, quantum::Vector{Float64},a::Float64, dxaux::Vector{MVector{1,Float64}}, qaux::Vector{MVector{1,Float64}}, tx::Vector{Float64}, tq::Vector{Float64}, simt::Float64, ft::Float64, nextStateTime::Vector{Float64})where{DU}
+    q = qv[i][0]
+    x = xv[i][0]
+    x1 = xv[i][1]
+    qaux[i][1] = q
+    u = x1 - a * q
+    dxaux[i][1] = x1
+    dx=x1
+    h=0.0
+    Δ=quantum[i]
+   if a !=0.0
+       h = ft-simt
+       if (1 - h * a)!=0 q = (x + h * u) /(1 - h * a) end
+      if (abs(q - x) > 1* Δ) 
+         h = (abs( Δ / x1));
+         if (1 - h * a)!=0 q= (x + h * u) /(1 - h * a) end
+       end
+       if (abs(q - x) > 1* Δ) 
+         h = h *sqrt(Δ / abs(q - x))
+         if (1 - h * a)!=0 q= (x + h * u) /(1 - h * a)  end
+       end 
+      
+    else
+        if x1 > 0.0
+            q = x + Δ
+        else
+            q = x - Δ
+        end
+        if x1 != 0
+            h = (abs(Δ / x1))
+        else
+            h = Inf
+        end
+    end
+    if (q-x)>1*Δ# this is for "if (abs(q - x) > 1* Δ) "
+        q=x+1*Δ
+      elseif (q-x)<-1*Δ
+        q=x-1*Δ
+      end
+    qv[i][0] = q
+    nextStateTime[i] = simt + h
+    return nothing
+end
+
+
 function Liqss_reComputeNextTime(::Val{1}, i::Int, simt::Float64, nextStateTime::Vector{Float64}, xv::Vector{Taylor0}, qv::Vector{Taylor0}, quantum::Vector{Float64})
     dt = 0.0
     q = qv[i][0]

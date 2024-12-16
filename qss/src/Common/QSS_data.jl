@@ -44,7 +44,7 @@ end
 struct Options{SU,DU} #single update, double update
     singleUpdate::Val{SU}
     SimulUpdate::Val{DU}
-    multiplier::Float64
+    multiplier::Int
 end
 
 option(su,du,multiplier)=Options(Val(su),Val(du),multiplier)
